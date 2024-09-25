@@ -82,7 +82,7 @@
             $.cubewp_form_builder.remove_field(this);
         }
     );
-    if(!jQuery('body').hasClass('cubewp-addon-frontend-pro-active')){
+    if(!jQuery('body').hasClass('cubewp_page_cubewp-loop-builder')){
         
         $(document).on(
             'click',
