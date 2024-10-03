@@ -107,6 +107,10 @@ class CubeWp_Query{
             }
         }
 
+        if(isset($args['order']) && !empty($args['order'])){
+            $query['order'] = $args['order'];
+        }
+
         // Extra Meta Query
         $extra_meta_query = isset($args['meta_query']) && !empty($args['meta_query']) ? $args['meta_query'] : array();
        

@@ -158,6 +158,9 @@ class CubeWp_Post_Types {
                 return '';
             
             $CPT_slug = sanitize_text_field($_POST['cwp']['postType']['slug']);
+            if(is_numeric($CPT_slug)){
+                return '';
+            }
             $cpt = array(
                 $CPT_slug                     => array(
                     'label'                   => sanitize_text_field($_POST['cwp']['postType']['label']),

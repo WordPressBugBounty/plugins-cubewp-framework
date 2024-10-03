@@ -132,6 +132,9 @@ class CubeWp_taxonomy {
             
             
             $ctax_slug = sanitize_text_field($_POST['cwp']['CWPterm']['slug']);
+            if(is_numeric($ctax_slug)){
+                return '';
+            }
             $ctax = array(
                 $ctax_slug                => array(
                     'slug'                => sanitize_text_field($_POST['cwp']['CWPterm']['slug']),

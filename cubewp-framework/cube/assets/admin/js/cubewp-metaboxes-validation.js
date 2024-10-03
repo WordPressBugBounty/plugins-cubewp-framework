@@ -1,28 +1,44 @@
 jQuery(document).ready(function ($) {
-    jQuery(document).on("input", "#post_type_slug", function (event) {
-        var thisObj = jQuery(this), value = cubewp_validate_input_value(thisObj.val()),
+    jQuery(document).on("input keyup", "#post_type_slug", function (event) {
+        var thisObj = jQuery(this),
+            value = cubewp_validate_input_value(thisObj.val()),
             prev_slug = thisObj.data('prev_slug');
         thisObj.prop('value', value);
         thisObj.closest('td').find('.cwp-error-message').remove();
-
-        if (cubewp_metaboxes_validation_params.existing_post_types.hasOwnProperty(value) && value !== prev_slug) {
+        // Check if the value is numeric-only
+        if (/^\d+$/.test(value)) {
+            thisObj.closest('td').append(`<div class="cwp-notice cwp-error-message"><p>${cubewp_metaboxes_validation_params.num_value_msg}</p></div>`);
+            jQuery('.cwp-save-button').prop('disabled', true);
+        }
+        // Check if the value exists in existing post types and is not the previous slug
+        else if (cubewp_metaboxes_validation_params.existing_post_types.hasOwnProperty(value) && value !== prev_slug) {
             thisObj.closest('td').append(`<div class="cwp-notice cwp-error-message"><p>${cubewp_metaboxes_validation_params.name_exist_msg}</p></div>`);
             jQuery('.cwp-save-button').prop('disabled', true);
-        } else {
+        }
+        // Otherwise, enable the save button
+        else {
             jQuery('.cwp-save-button').prop('disabled', false);
         }
     });
-
-    jQuery(document).on("input", "#taxonomy_slug", function (event) {
-        var thisObj = jQuery(this), value = cubewp_validate_input_value(thisObj.val()),
+    
+    jQuery(document).on("input keyup", "#taxonomy_slug", function (event) {
+        var thisObj = jQuery(this),
+            value = cubewp_validate_input_value(thisObj.val()),
             prev_slug = thisObj.data('prev_slug');
         thisObj.prop('value', value);
         thisObj.closest('td').find('.cwp-error-message').remove();
-
-        if (cubewp_metaboxes_validation_params.existing_taxonomies.hasOwnProperty(value) && value !== prev_slug) {
+        // Check if the value is numeric-only
+        if (/^\d+$/.test(value)) {
+            thisObj.closest('td').append(`<div class="cwp-notice cwp-error-message"><p>${cubewp_metaboxes_validation_params.num_value_msg}</p></div>`);
+            jQuery('.cwp-save-button').prop('disabled', true);
+        }
+        // Check if the value exists in existing taxonomies and is not the previous slug
+        else if (cubewp_metaboxes_validation_params.existing_taxonomies.hasOwnProperty(value) && value !== prev_slug) {
             thisObj.closest('td').append(`<div class="cwp-notice cwp-error-message"><p>${cubewp_metaboxes_validation_params.name_exist_msg}</p></div>`);
             jQuery('.cwp-save-button').prop('disabled', true);
-        } else {
+        }
+        // Otherwise, enable the save button
+        else {
             jQuery('.cwp-save-button').prop('disabled', false);
         }
     });

@@ -525,7 +525,8 @@ class CubeWp_Admin_Enqueue{
             case 'cubewp-metaboxes-validation':
 				$params = array(
                     'name_exist_msg'   =>   esc_html__( 'This Name already exists, Please choose something different', 'cubewp-framework' ),
-                    'existing_post_types'    =>   self::get_registered_types_types(),
+                    'num_value_msg'   =>   esc_html__( 'Only Numeric values are not allowed.', 'cubewp-framework' ),
+					'existing_post_types'    =>   self::get_registered_types_types(),
                     'existing_taxonomies'    =>   self::get_registered_taxonomies(),
                 );
 				if(CWP()->is_admin_screen('custom_fields') || CWP()->is_admin_screen('user_custom_fields') || CWP()->is_admin_screen('settings_custom_fields'))

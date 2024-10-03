@@ -72,12 +72,12 @@ class CubeWp_Shortcode_Posts {
             $row_class = 'list-view';
 		}
 		$query = new CubeWp_Query($args);
-		
 		$posts = $query->cubewp_post_query();
 		$load_btn = $post_markup = '';
+		$conatiner_open = '<div class="cubewp-posts-shortcode cwp-row">';
+		$conatiner_close = '</div>';
+		
 		if ($posts->have_posts()) {
-
-			$conatiner_open = '<div class="cubewp-posts-shortcode cwp-row">';
 
 			if($show_boosted_posts == 'yes'){
                 if(class_exists('CubeWp_Booster_Load')){
@@ -98,7 +98,7 @@ class CubeWp_Shortcode_Posts {
                     $post_markup .= CubeWp_frontend_grid_HTML(get_the_ID(), '', $style);
 				endwhile;
             }
-			if(isset($parameters['load_more'])){
+			if(isset($parameters['load_more']) && $parameters['load_more'] == 'yes'){
 				if(isset($parameters['page_num'])){
 					$parameters['page_num'] = $parameters['page_num'] + 1;
 				}else{
@@ -115,7 +115,7 @@ class CubeWp_Shortcode_Posts {
 					</button>
 				</div>';
 			}
-			$conatiner_close = '</div>';
+			
 		}else{
             $post_markup = self::cwp_no_result_found();
         }
@@ -144,4 +144,8 @@ class CubeWp_Shortcode_Posts {
 
 		return $output;
 	}
+
+	private static function cwp_no_result_found(){
+        return '<div class="cwp-empty-search"><img class="cwp-empty-search-img" src="'.esc_url(CWP_PLUGIN_URI.'cube/assets/frontend/images/no-result.png').'" alt=""><h2>'.esc_html__('No Results Found','cubewp-framework').'</h2><p>'.esc_html__('There are no results matching your search.','cubewp-framework').'</p></div>';
+    }
 }

@@ -355,7 +355,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base {
 		$termArray = [];
 		if(!empty($object)){
 			foreach($object as $key => $terms){
-				$termArray['['.$terms['taxonomy'].']'.$terms['slug']] = $terms['name'];
+				$termArray['['.$terms['taxonomy'].']'.$key] = $terms['name'];
 			}
 		}
 	 
