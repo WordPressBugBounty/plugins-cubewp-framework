@@ -178,6 +178,17 @@ class CubeWp_Frontend_Templates {
     public function cubewp_single_template($template = '',$type = '',$templates = '') {
         if ( !$this->elementor_single_template_include() ) {
 
+            // If bricks builder is active and single page tempplate is built with bricks
+            if (class_exists('Bricks\Helpers') && method_exists('Bricks\Helpers', 'render_with_bricks')) {
+                $post_id = get_the_ID(); // Get the current post/page ID                
+                // Now call the method safely
+                if (Bricks\Helpers::render_with_bricks( $post_id, 'content') && !CubeWp_Theme_Builder::is_cubewp_theme_builder_active('single')) {
+                    // If the method returns true, the post is built with Bricks Builder
+                    return $template;
+                }
+            }
+
+            // If post type created with CubeWP and single page template not created with theme builder
             if (
                 !array_key_exists(get_post_type(), CWP_types())
                 && !is_singular( 'cubewp-tb' ) 
@@ -207,6 +218,19 @@ class CubeWp_Frontend_Templates {
      */
     public function cubewp_archive_template($template = '',$type = '',$templates = '') {
         if ( !$this->elementor_archive_template_include() ) {
+
+            // If bricks builder is active and Archive page template is built with bricks
+            if (class_exists('Bricks\Database') && method_exists('Bricks\Database', 'get_template_data')) {
+                // Now call the method safely
+                if (
+                    (Bricks\Database::get_template_data('archive') || Bricks\Database::get_template_data('search'))
+                    && !CubeWp_Theme_Builder::is_cubewp_theme_builder_active('archive')
+                    )
+                {
+                    // If the method returns true, the Archive is built with Bricks Builder
+                    return $template;
+                }
+            }
 
             $current_term = get_queried_object();
             

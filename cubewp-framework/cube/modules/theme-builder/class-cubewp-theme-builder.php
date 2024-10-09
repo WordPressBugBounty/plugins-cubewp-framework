@@ -223,12 +223,10 @@ class CubeWp_Theme_Builder {
         // FOR EDITING EXISTING TEMPLATE
         if (isset($form_data['ctb_edit_template_id']) && !empty($form_data['ctb_edit_template_id'])) {
             $post_id = $form_data['ctb_edit_template_id'];
-            if ( get_post_status ( $post_id ) == 'inactive' ) {
-                wp_update_post(array(
-                    'ID' => $post_id,
-                    'post_status' => 'publish'
-                ));
-            }
+            wp_update_post(array(
+                'ID' => $post_id,
+                'post_title' => $template_name,
+            ));
         }
 
         // Query for existing posts with the same name and location
