@@ -700,7 +700,7 @@ class CubeWp_Form_Builder {
 
     public static function cubewp_search_filters_builder_settings( $form_fields ) {
         $output             = '<div class="cwpform-setting-field">';
-        $output             .= '<label>' . esc_html__( "Enable Conditional Fields", "cubewp-framework" ) . '</label>';
+        $output             .= '<label>' . esc_html__( "Enable Taxonomy-Based Conditional Fields in Filters", "cubewp-framework" ) . '</label>';
         $input_attrs = array(
             'name'        => 'conditional_filters',
             'class'       => 'form-field conditional_filters',

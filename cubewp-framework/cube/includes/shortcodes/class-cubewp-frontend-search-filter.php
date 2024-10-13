@@ -363,8 +363,8 @@ class CubeWp_Frontend_Search_Filter {
                 if(isset($fieldOptions['group_id']) && !empty($fieldOptions['group_id'])){
                     $terms  = get_post_meta($fieldOptions['group_id'], '_cwp_group_terms', true);
                     if(isset($terms) && !empty($terms)){
-                        $termSLug = cwp_term_by('id','comma', $terms, false);
-                        $fieldOptions['container_attrs'] = ' data-terms="'. $termSLug .'"';
+                        //$termSLug = cwp_term_by('id','comma', $terms, false);
+                        $fieldOptions['container_attrs'] = ' data-terms="'. $terms .'"';
                         $fieldOptions['container_class'] = ' cwp-conditional-by-term';
                     }
                 }

@@ -698,8 +698,8 @@ button .dashicons {
 .form-settings .cwpform-settings .cwpform-setting-fields .cwpform-setting-field label {
     width: 200px;
     text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
+    /* white-space: nowrap;
+    overflow: hidden; */
 }
 .form-settings .cwpform-settings .cwpform-setting-fields .cwpform-setting-field input,
 .form-settings .cwpform-settings .cwpform-setting-fields .cwpform-setting-field select
