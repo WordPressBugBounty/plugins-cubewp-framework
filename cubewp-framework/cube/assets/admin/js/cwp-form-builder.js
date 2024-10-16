@@ -82,7 +82,13 @@
             $.cubewp_form_builder.remove_field(this);
         }
     );
-    if(!jQuery('body').hasClass('cubewp_page_cubewp-loop-builder')){
+    var trigger = false;
+    if(jQuery('body').hasClass('cubewp-addon-frontend-pro-active') && !jQuery('body').hasClass('cubewp_page_cubewp-loop-builder')){
+        trigger = true;
+    }else if(!jQuery('body').hasClass('cubewp-addon-frontend-pro-active')){
+        trigger = true;
+    }
+    if(trigger){
         
         $(document).on(
             'click',

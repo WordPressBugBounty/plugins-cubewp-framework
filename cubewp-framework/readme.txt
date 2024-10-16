@@ -5,7 +5,7 @@ Tags: custom fields, custom post types, custom taxonomies, acf, metabox
 Requires at least: 5.0
 Requires PHP: 7.4
 Tested up to: 6.4.3
-Stable tag: 1.1.20
+Stable tag: 1.1.21
 License: GPLv2 or later
 
 CubeWP is an end-to-end dynamic content framework for WordPress to help you shrink time and cut cost of development up to 90%.
@@ -375,6 +375,12 @@ To getting started with the plugin, please go to [Documentation](https://support
 
 
 == Changelog ==
+
+= 1.1.21 2024-10-16
+
+- FIXED: Post-Card Customizer Code editor issue.
+- FIXED: Google fonts subsets and variants issue in CubeWP Settings.
+- FIXED: "cubewp/settings/google_fonts" Hooks added to include your own fonts in CubeWP Settings for font selection.
 
 = 1.1.20 2024-10-13
 

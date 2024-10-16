@@ -142,13 +142,13 @@ jQuery(document).ready(function () {
         var s_font_subset = thisObj.closest('.cwp-typography-container').find('.typography-subset select').data('val');
 
         jQuery.ajax({
-            type: 'POST', url: cwp_settings.ajax_url, dataType: 'json', data: {
+            type: 'POST', url: cubewp_settings_params.ajax_url, dataType: 'json', data: {
                 action: 'cwp_get_font_attributes', font_family: _val,
             }, success: function (response) {
                 thisObj.closest('.cwp-typography-container').find('.typography-style select').html(response.font_styles);
-                thisObj.closest('.cwp-typography-container').find('.typography-style select').val(s_font_style).select2("destroy").select2();
+                //thisObj.closest('.cwp-typography-container').find('.typography-style select').val(s_font_style).select2("destroy").select2();
                 thisObj.closest('.cwp-typography-container').find('.typography-subset select').html(response.font_subsets);
-                thisObj.closest('.cwp-typography-container').find('.typography-subset select').val(s_font_subset).select2("destroy").select2();
+                //thisObj.closest('.cwp-typography-container').find('.typography-subset select').val(s_font_subset).select2("destroy").select2();
             }
         });
 
