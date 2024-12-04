@@ -603,6 +603,32 @@ if ( ! function_exists("get_author_contact_info")) {
 }
 
 /**
+ * Method cubewp_initialize_modules
+ *
+ *
+ * @return void
+ * @since  1.0.0
+ */
+if ( ! function_exists('cubewp_initialize_modules')) {
+	function cubewp_initialize_modules() {
+		$modules = CWP()->cubewp_get_modules();
+		foreach ($modules as $index  => $module) {
+			$module_slug      = $module['slug'];
+			$module_class    = $module['load'];
+			$options = CWP()->cubewp_options($module_slug);
+			$validation_property = CubeWp_Add_Ons::LIC.CubeWp_Add_Ons::ENSE;
+			if (isset($options->$validation_property) && $options->$validation_property == 'valid') {
+				if (class_exists($module_class)) {
+					$module_class::instance();
+				}
+			}
+		}
+	}
+
+	add_action('cubewp_loaded', 'cubewp_initialize_modules', 10);
+}
+
+/**
  * Get custom post types
  *
  * @return array $post_types List of Custom Post Types.
@@ -1650,32 +1676,6 @@ if ( ! function_exists('cubewp_get_template_path')) {
 }
 
 /**
- * Method cubewp_extra_features
- *
- *
- * @return class
- * @since  1.0.0
- */
-if ( ! function_exists('cubewp_extra_features')) {
-	function cubewp_extra_features() {
-		$add_ons = CubeWp_Add_Ons::cubewp_add_ons();
-		foreach ($add_ons as $key => $add_on) {
-			$slug     = $add_on['slug'];
-			$load   = $add_on['load'];
-			$cubewp = CWP()->cubewp_options($slug);
-			$lic = CubeWp_Add_Ons::LIC.CubeWp_Add_Ons::ENSE;
-			if (isset($cubewp->$lic) && $cubewp->$lic == 'valid') {
-				if (class_exists($load)) {
-					$load::instance();
-				}
-			}
-		}
-	}
-
-	add_action('cubewp_loaded', 'cubewp_extra_features', 10);
-}
-
-/**
  * Method cwp_get_current_user_roles
  *
  * @return array
@@ -2350,7 +2350,8 @@ function cwp_hide_custom_post_types_for_subscribers() {
     // Get an array of custom post types
     $custom_post_types = cwp_post_types();
     // Check if the current user is a subscriber
-    if (current_user_can('subscriber')) {
+    $user = wp_get_current_user();
+    if (!empty($user->roles) && in_array('subscriber', (array) $user->roles, true) && count($user->roles) === 1) {
         global $submenu;
         // Loop through each custom post type
         foreach ($custom_post_types as $slug => $name) {
@@ -2381,14 +2382,46 @@ function cubewp_post_card_styles($post_type = '') {
 
 	if($post_type == '') return [];
 
-    $cubewp_styles = [];
+    $cubewp_styles = $cubewp_cards = [];
 	if(class_exists('CubeWp_Loop_Builder')){
-		$cubewp_cards = CubeWp_Loop_Builder::$cubewp_style_options;
+		$post_types = CWP_all_post_types();
+		foreach ( $post_types as $_post_type => $label ) {
+			$cubewp_cards[ $_post_type ]['label']       	= $label;
+			$cubewp_cards[ $_post_type ]['loop-styles'] = cwp_get_loop_styles_by_post_type($_post_type);
+		}
 		if(isset($cubewp_cards[$post_type]['loop-styles'])){
             $cubewp_styles = apply_filters( 'cubewp/post/card/styles', $cubewp_cards[$post_type]['loop-styles'], $post_type);
 		}
 	}
     return $cubewp_styles;
+}
+
+/**
+ * Method cwp_get_loop_styles_by_post_type
+ *
+ * @param $post_type 
+ *
+ * @return array
+ */
+function cwp_get_loop_styles_by_post_type($post_type) {
+    global $cwpOptions;
+    $custom_styles = isset($cwpOptions['cwp_loop_style'][$post_type]) && !empty($cwpOptions['cwp_loop_style'][$post_type]) ? explode(',', $cwpOptions['cwp_loop_style'][$post_type]) : [];
+
+    $default_styles = [
+        'default_style' => esc_html__('Basic Style', 'cubewp-framework')
+    ];
+
+    $_custom_styles = [];
+    foreach ($custom_styles as $style) {
+        $key = str_replace(' ', '_', $style);
+        $_custom_styles[$key] = $style;
+    }
+
+    $filter_styles = apply_filters("cubewp/loop/builder/{$post_type}/styles", []);
+    $filter_styles = is_array($filter_styles) ? $filter_styles : [];
+
+    $loop_styles = array_merge($default_styles, $_custom_styles, $filter_styles);
+	return $loop_styles;
 }
 
 

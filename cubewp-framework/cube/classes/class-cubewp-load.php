@@ -20,7 +20,7 @@ final class CubeWp_Load {
      *
      * @var string
      */
-    public static $CubeWp_version = '1.1.22';
+    public static $CubeWp_version = '1.1.23';
     
     /**
      * Wordpress required version.
@@ -151,6 +151,44 @@ final class CubeWp_Load {
         self::load_plugin_textdomain();
         // Set Cubewp settings.
         self::cwp_get_option();
+    }
+
+    /**
+     * cubewp_get_modules
+     *
+     * @return array
+     * @since 1.1.23
+     */
+    public function cubewp_get_modules()
+    {
+        // Define the path to the addons.json file
+        $file_path = CUBEWP_FILES . 'modules/modules.json';
+
+        // Check if the file exists
+        if (!file_exists($file_path)) {
+            return [];
+        }
+
+        // Read the file contents
+        $json_content = file_get_contents($file_path);
+
+        // Decode the JSON content
+        $modules = json_decode($json_content, true);
+
+        if (!$modules) {
+            return [];
+        }
+
+        // Dynamically update the `path` values for each module
+        foreach ($modules as $key => &$module) {
+            if (isset($module['base'])) {
+                // Extract directory name from the 'base' value
+                $base_dir = dirname($module['base']);
+                $module['path'] = plugin_dir_path(dirname(dirname(__DIR__))) . $base_dir . '/cube/';
+            }
+        }
+
+        return $modules;
     }
     
         
