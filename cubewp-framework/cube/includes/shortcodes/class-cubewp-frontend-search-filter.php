@@ -132,35 +132,49 @@ class CubeWp_Frontend_Search_Filter {
     }
 
     public function cwp_filter_parent( $params = array(), $content = null ) {
-        extract(shortcode_atts(array(
-                'type'                  => '',
-                'page_num'              => '1',
-                'form_container_class'  => '',
-                'form_class'            => '',
-                'form_id'               => '',
-            ), $params)
-        );        
-        global $cwpOptions;
+		$atts = shortcode_atts(array(
+			'type'                  => '',
+			'page_num'              => '1',
+			'form_container_class'  => '',
+			'form_class'            => '',
+			'form_id'               => '',
+		), $params, 'cwpFilter');
 
-        /* Calling all css and JS files for filters */
-        CubeWp_Enqueue::enqueue_script( 'cwp-search-filters' );
-        CubeWp_Enqueue::enqueue_script( 'select2' );
-        CubeWp_Enqueue::enqueue_style( 'select2' );
-        CubeWp_Enqueue::enqueue_script( 'jquery-ui-datepicker' );
-        CubeWp_Enqueue::enqueue_style( 'frontend-fields' );
+		// Get allowed types from system
+		$allowed_types = array_keys(CWP_all_post_types('search_filters'));
 
-        // Archive map script and style.
-        CubeWp_Enqueue::enqueue_script('cwp-frontend-fields');
-        self::$post_type = $type;
+		// Sanitize and validate 'type'
+		$type = sanitize_text_field($atts['type']);
+		if (!in_array($type, $allowed_types, true)) {
+			return '<div class="cwp-warning">Invalid type provided.</div>';
+		}
 
-        ob_start();
+		// Sanitize other attributes
+		$page_num             = absint($atts['page_num']);
+		$form_container_class = esc_attr($atts['form_container_class']);
+		$form_class           = esc_attr($atts['form_class']);
+		$form_id              = esc_attr($atts['form_id']);
 
-        echo self::get_filters_wrap_start($type,$page_num);
-        self::get_hidden_field_if_tax();
-        echo do_shortcode($content);
+		global $cwpOptions;
 
-        return ob_get_clean();
-    }
+		/* Load necessary scripts and styles */
+		CubeWp_Enqueue::enqueue_script('cwp-search-filters');
+		CubeWp_Enqueue::enqueue_script('select2');
+		CubeWp_Enqueue::enqueue_style('select2');
+		CubeWp_Enqueue::enqueue_script('jquery-ui-datepicker');
+		CubeWp_Enqueue::enqueue_style('frontend-fields');
+		CubeWp_Enqueue::enqueue_script('cwp-frontend-fields');
+
+		self::$post_type = $type;
+
+		ob_start();
+
+		echo self::get_filters_wrap_start($type, $page_num); // Make sure this method escapes output inside
+		self::get_hidden_field_if_tax();
+		echo do_shortcode($content); // Ensure any user-supplied content is secured upstream
+
+		return ob_get_clean();
+	}
 
     public static function cwp_filter_field( $params = array(), $content = null ){
         // default parameters

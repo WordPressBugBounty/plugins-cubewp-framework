@@ -690,7 +690,11 @@ class CubeWp_Rest_API extends WP_REST_Controller {
 	 */
 	public static function update_user_meta( $data, $object ) {
 		$data = is_array( $data ) ? $data : array();
+		$allowed_fields = self::get_all_cwp_field_names_by_roles();
 		foreach ( $data as $field_id => $value ) {
+			if ( !in_array( $field_id, $allowed_fields, true ) ) {
+				continue;
+			}
 			$options = get_user_field_options($field_id);
 			$meta_val = isset($value['meta_value']) ? $value['meta_value'] : '';
 			if($options['type'] == 'google_address'){
@@ -743,7 +747,41 @@ class CubeWp_Rest_API extends WP_REST_Controller {
 			}
 		}
 	}
+	
+	/**
+	 * Get supported meta keys.
+	 *
+	 * @return array
+	 */
+	public function get_all_cwp_field_names_by_roles() {
+		global $wp_roles;
 
+		$all_roles = $wp_roles->roles;
+		$field_names = array();
+		$processed_group_ids = array(); // Prevent duplicate processing
+
+		foreach ($all_roles as $role_key => $role_data) {
+			$group_ids = cwp_get_groups_by_user_role($role_key);
+
+			if (!empty($group_ids)) {
+				foreach ($group_ids as $group_id) {
+					if (in_array($group_id, $processed_group_ids)) {
+						continue;
+					}
+
+					$processed_group_ids[] = $group_id;
+
+					$fields = cwp_get_user_fields_by_group_id($group_id);
+					if (!empty($fields) && is_array($fields)) {
+						$field_names = array_merge($field_names, $fields);
+					}
+				}
+			}
+		}
+
+		return array_unique($field_names); // Remove duplicates
+	}
+	
 	/**
 	 * Get supported types in Rest API.
 	 *
