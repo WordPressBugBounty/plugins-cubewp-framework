@@ -46,12 +46,13 @@ class CubeWp_Shortcode_Posts
 		$autoplay_speed = isset($parameters['autoplay_speed']) ? intval($parameters['autoplay_speed']) : 2000;
 		$speed = isset($parameters['speed']) ? intval($parameters['speed']) : 500;
 		$infinite = isset($parameters['infinite']) && $parameters['infinite'] ? 'true' : 'false';
+		$fade_effect = isset($parameters['fade_effect']) && $parameters['fade_effect'] ? 'true' : 'false';
 		$variable_width = isset($parameters['variable_width']) && $parameters['variable_width'] ? 'true' : 'false';
 		$custom_arrows = isset($parameters['custom_arrows']) && $parameters['custom_arrows'] ? 'true' : 'false';
 		$custom_dots = isset($parameters['custom_dots']) && $parameters['custom_dots'] ? 'true' : 'false';
 		$enable_progress_bar = isset($parameters['enable_progress_bar']) && $parameters['enable_progress_bar'] ? 'true' : 'false';
+		$enable_wrap_dots_arrows = isset($parameters['enable_wrap_dots_arrows']) && $parameters['enable_wrap_dots_arrows'] ? 'true' : 'false';
 
-		
 		$next_icon_type = isset($parameters['next_icon_type']) && $parameters['next_icon_type'] ? 'true' : 'false';
 		$prev_icon_type = isset($parameters['prev_icon_type']) && $parameters['prev_icon_type'] ? 'true' : 'false';
 
@@ -79,15 +80,31 @@ class CubeWp_Shortcode_Posts
 		if (class_exists('CubeWp_Booster_Load')) {
 			$show_boosted_posts = $parameters['boosted_only'];
 		}
-		if (isset($parameters['post__in']) && ! empty($parameters['post__in']) && is_array($parameters['post__in'])) {
-			$args['post__in'] = $parameters['post__in'];
+		if (!empty($parameters['post__in'])) {
+			$post_ids = is_array($parameters['post__in']) ? $parameters['post__in'] : explode(',', $parameters['post__in']);
+			$args['post__in'] = array_filter(array_map('intval', array_map('trim', $post_ids)));
 		}
+
 		if (isset($parameters['taxonomy']) && ! empty($parameters['taxonomy']) && is_array($parameters['taxonomy'])) {
 			foreach ($parameters['taxonomy'] as $taxonomy) {
 				if (isset($parameters[$taxonomy . '-terms']) && ! empty($parameters[$taxonomy . '-terms'])) {
-					$terms           = $parameters[$taxonomy . '-terms'];
-					$terms           = implode(',', $terms);
-					$args[$taxonomy] = $terms;
+					$terms_raw = $parameters[$taxonomy . '-terms'];
+					$term_ids  = array();
+					foreach ($terms_raw as $term_value) {
+						if (is_numeric($term_value)) {
+							// If it's numeric, treat as term ID
+							$term_ids[] = (int) $term_value;
+						} else {
+							// Otherwise, treat as slug and try to get term ID
+							$term = get_term_by('slug', $term_value, $taxonomy);
+							if ($term && ! is_wp_error($term)) {
+								$term_ids[] = $term->term_id;
+							}
+						}
+					}
+					if (! empty($term_ids)) {
+						$args[$taxonomy] = implode(',', $term_ids);
+					}
 				}
 			}
 		}
@@ -119,10 +136,12 @@ class CubeWp_Shortcode_Posts
 		$container_open .= ' data-autoplay-speed="' . esc_attr($autoplay_speed) . '"';
 		$container_open .= ' data-speed="' . esc_attr($speed) . '"';
 		$container_open .= ' data-infinite="' . esc_attr($infinite) . '"';
+		$container_open .= ' data-fade="' . esc_attr($fade_effect) . '"';
 		$container_open .= ' data-variable-width="' . esc_attr($variable_width) . '"';
 		$container_open .= ' data-custom-arrows="' . esc_attr($custom_arrows) . '"';
 		$container_open .= ' data-custom-dots="' . esc_attr($custom_dots) . '"';
 		$container_open .= ' data-enable-progress-bar="' . esc_attr($enable_progress_bar) . '"';
+		$container_open .= ' data-enable-wrapper="' . esc_attr($enable_wrap_dots_arrows) . '"';
 		$container_open .= '>';
 		$container_close = '</div>';
 

@@ -3,7 +3,7 @@
 * Plugin Name: CubeWP Framework
 * Plugin URI: https://cubewp.com/
 * Description: CubeWP is an end-to-end dynamic content framework for WordPress to help you save up to 90% of your coding time.
-* Version: 1.1.24
+* Version: 1.1.25
 * Author: CubeWP
 * Author URI: https://cubewp.com
 * Text Domain: cubewp-framework
@@ -33,10 +33,13 @@ if ( !defined( 'CWP_PLUGIN_URI' ) ) {
 
 /* CUBEWP_POST_CARD_PATH Defines Cubewp Post cards path */
 /* CUBEWP_POST_CARDS_URL Defines Cubewp Post cards URL */
-if ( ! defined('CUBEWP_POST_CARDS_DIR')) {
-	$upload_dir = wp_upload_dir();
-	define('CUBEWP_POST_CARDS_DIR', $upload_dir['basedir'] . '/cubewp-post-cards');
-	define('CUBEWP_POST_CARDS_URL', $upload_dir['baseurl'] . '/cubewp-post-cards');
+if (! defined('CUBEWP_POST_CARDS_DIR')) {
+    $upload_dir = wp_upload_dir();
+    define('CUBEWP_POST_CARDS_DIR', $upload_dir['basedir'] . '/cubewp-post-cards');
+    // Ensure correct protocol based on current request
+    $current_scheme = is_ssl() ? 'https' : 'http';
+    $baseurl = preg_replace('/^https?:/', $current_scheme . ':', $upload_dir['baseurl']);
+    define('CUBEWP_POST_CARDS_URL', $baseurl . '/cubewp-post-cards');
 }
 
 /* CWP_PLUGIN_FILE Defines for file access */

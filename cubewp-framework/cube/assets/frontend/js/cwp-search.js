@@ -1,19 +1,19 @@
 jQuery(document).ready(function () {
-    
+
     if (jQuery(".cwp-submit-search").length > 0) {
         jQuery(document).on("click", ".cwp-submit-search", function () {
             jQuery(this).addClass('cubewp-processing-ajax');
         });
     }
 
-    jQuery(document).on("change", '.cwp-search-form input[type="radio"]', function() {
+    jQuery(document).on("change", '.cwp-search-form input[type="radio"]', function () {
         jQuery(this).closest('.cwp-field-radio-container').find('input[type="radio"]').prop('checked', false);
         jQuery(this).prop('checked', true);
         var hidden_radio = jQuery(this).closest('.cwp-radio-container').find('input[type="hidden"]');
         var hidden_vals = jQuery(this).val();
         hidden_radio.val(hidden_vals);
     });
-    
+
     // if(jQuery(".cwp-field-container input[name=s]").length > 0 ){
     //     jQuery(document).on("keyup", '.cwp-field-container input[name=s]', function() {
     //         let thisobj = jQuery(this),
@@ -46,32 +46,32 @@ jQuery(document).ready(function () {
     //         })
     //     });
     // }
-    
-    if(jQuery(".cwp-search-field-checkbox").length > 0 ){
-        jQuery(document).on("change", '.cwp-search-field-checkbox input[type="checkbox"]', function() {
+
+    if (jQuery(".cwp-search-field-checkbox").length > 0) {
+        jQuery(document).on("change", '.cwp-search-field-checkbox input[type="checkbox"]', function () {
 
             var hidden_checkbox = jQuery(this).closest('.cwp-search-field-checkbox').find('input[type="hidden"]');
             var hidden_vals = hidden_checkbox.val();
-            if(jQuery(this).is(':checked')){
-                if( hidden_vals == '' ){
+            if (jQuery(this).is(':checked')) {
+                if (hidden_vals == '') {
                     hidden_vals = jQuery(this).val();
-                }else{
-                    hidden_vals += ','+ jQuery(this).val();
+                } else {
+                    hidden_vals += ',' + jQuery(this).val();
                 }
                 jQuery(this).prop('checked', true);
-            }else{
+            } else {
                 jQuery(this).prop('checked', false);
-                hidden_vals = cwp_remove_string_value(hidden_vals, jQuery(this).val() );
+                hidden_vals = cwp_remove_string_value(hidden_vals, jQuery(this).val());
             }
             hidden_checkbox.val(hidden_vals);
         });
     }
-    
-    if(jQuery(".cwp-search-field select").length > 0 ){
-        jQuery(document).on("change", '.cwp-search-field select', function() {
-            if(jQuery(this).hasClass('multi-select')){
+
+    if (jQuery(".cwp-search-field select").length > 0) {
+        jQuery(document).on("change", '.cwp-search-field select', function () {
+            if (jQuery(this).hasClass('multi-select')) {
                 var value = jQuery(this).val();
-                if( value != '' ){
+                if (value != '') {
                     value.join(',');
                 }
                 jQuery(this).closest('.cwp-search-field-dropdown').find('input[type="hidden"]').val(value);
@@ -80,33 +80,52 @@ jQuery(document).ready(function () {
         });
     }
 
-    if(jQuery(".cubewp-date-range-picker").length > 0 ) {
+    if (jQuery(".cubewp-date-range-picker").length > 0) {
         jQuery('.cubewp-date-range-picker').each(function () {
             var $this = jQuery(this),
                 from = $this.find(".cubewp-date-range-picker-from")
-                    .datepicker({
-                        dateFormat: "mm/dd/yy",
-                        defaultDate: "+1w", changeMonth: true, numberOfMonths: 1
-                    })
-                    .on("change", function () {
-                        to.datepicker("option", "minDate", getDate(this));
-                        $this.find('.cubewp-date-range-picker-input').val(getDateRange(from, to)).trigger('input');
-                    }),
+                .datepicker({
+                    dateFormat: "mm/dd/yy",
+                    defaultDate: "+1w",
+                    changeMonth: true,
+                    numberOfMonths: 1
+                })
+                .on("change", function () {
+                    to.datepicker("option", "minDate", getDate(this));
+                    $this.find('.cubewp-date-range-picker-input').val(getDateRange(from, to)).trigger('input');
+                }),
                 to = $this.find(".cubewp-date-range-picker-to").datepicker({
                     dateFormat: "mm/dd/yy",
-                    defaultDate: "+1w", changeMonth: true, numberOfMonths: 1
+                    defaultDate: "+1w",
+                    changeMonth: true,
+                    numberOfMonths: 1
                 })
-                    .on("change", function () {
-                        from.datepicker("option", "maxDate", getDate(this));
-                        $this.find('.cubewp-date-range-picker-input').val(getDateRange(from, to)).trigger('input');
-                    });
+                .on("change", function () {
+                    from.datepicker("option", "maxDate", getDate(this));
+                    $this.find('.cubewp-date-range-picker-input').val(getDateRange(from, to)).trigger('input');
+                });
 
         });
     }
+
+    // Check if Bootstrap's tab event is missing
+    var bootstrapMissing = typeof bootstrap === 'undefined' || typeof bootstrap.Tab === 'undefined';
+    if (bootstrapMissing) {
+        $('#cubewp_searchTab .tabber-btn').on('click', function (e) {
+            e.preventDefault();
+            var $this = $(this);
+            var target = $this.attr('data-bs-target');
+            $('#cubewp_searchTab .tabber-btn').removeClass('active').attr('aria-selected', 'false');
+            $this.addClass('active').attr('aria-selected', 'true');
+            $('.tab-content .tab-pane').removeClass('show active');
+            $(target).addClass('show active');
+        });
+    }
 });
+
 function getDateRange(from, to, separator = '-') {
     var from_val = from.val(),
-        to_val   = to.val();
+        to_val = to.val();
 
     if (from_val === '' && to_val === '') return '';
     return from_val + separator + to_val;

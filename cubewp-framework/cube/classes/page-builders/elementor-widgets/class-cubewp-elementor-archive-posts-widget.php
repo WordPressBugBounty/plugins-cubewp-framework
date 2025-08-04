@@ -22,7 +22,7 @@ use Elementor\Widget_Base;
     }
 
     public function get_title() {
-        return __( 'Archive Posts Display', 'elementor' );
+        return __( 'Archive Posts Display', 'cubewp-framework' );
     }
 
     public function get_icon() {
@@ -40,7 +40,7 @@ use Elementor\Widget_Base;
         $this->start_controls_section(
             'section_map',
             [
-                'label' => __( 'Search Posts Settings', 'elementor' ),
+                'label' => __( 'Search Posts Settings', 'cubewp-framework' ),
             ]
         );
         $this->add_post_type_controls();
@@ -90,7 +90,6 @@ use Elementor\Widget_Base;
 	}
 
 	private function add_card_style_controls($post_type) {
-		if(class_exists('CubeWp_Frontend_Load')){
 			if(!empty(cubewp_post_card_styles($post_type))){
 				$this->add_control( $post_type.'_card_style', array(
 					'type'        => Controls_Manager::SELECT,
@@ -102,7 +101,6 @@ use Elementor\Widget_Base;
 					)
 				) );
 			}
-		}
 	}
 
     protected function render() {
@@ -116,6 +114,7 @@ use Elementor\Widget_Base;
         echo CubeWp_Frontend_Search_Filter::cwp_filter_results(); 
         echo '<form name="cwp-search-filters" class="cwp-search-filters" method="post">';
             echo CubeWp_Frontend_Search_Filter::filter_hidden_fields($type,$page_num,$card_style);
+            echo CubeWp_Frontend_Search_Filter::get_hidden_field_if_tax();
         echo '</form>';
 
         //Only to load data while editing in elementor

@@ -19,7 +19,6 @@ class CubeWp_User_Meta
         );
         $allGroups = get_posts($args);
         return $allGroups;
-
     }
 
     private static function get_group_fields($groupID = 0)
@@ -74,9 +73,9 @@ class CubeWp_User_Meta
             if (isset($user->roles) && !empty($user->roles) && get_current_user_id() == $user->ID && !in_array($user->roles[0], $group_user_roles)) {
                 continue;
             }
-            $output .= '<div class="cwp-validation userbox cwp-metaboxes cwp-user-meta-fields" data-role="' . esc_attr(implode(',', $group_user_roles)) . '"' . $user_group_display . '>'; 
+            $output .= '<div class="cwp-validation userbox cwp-metaboxes cwp-user-meta-fields" data-role="' . esc_attr(implode(',', $group_user_roles)) . '"' . $user_group_display . '>';
             $output .= '<h2' . $user_group_display . '>' . esc_html($group->post_title) . '</h2>';
-            $output .= '<div class="inside">'; 
+            $output .= '<div class="inside">';
             $output .= '<table class="form-table">';
             $output .= '<tbody>';
 
@@ -103,93 +102,114 @@ class CubeWp_User_Meta
                     }
 
                     $output .= apply_filters("cubewp/admin/post/{$field['type']}/field", '', $field);
-
                 }
             }
 
             $output .= '</tbody>';
             $output .= '</table>';
             $output .= '</div>';
-            $output .= '</div>'; 
-
+            $output .= '</div>';
         }
         echo cubewp_core_data($output);
-
     }
 
     public static function cwp_save_user_fields($user_id = '')
     {
-
-        if (isset($_POST['cwp_meta'])) {
-
-            // verify nonce
-            if (!wp_verify_nonce($_POST['cwp_meta_box_nonce'], basename(__FILE__))) {
-                return $user_id;
-            }
-
-            // check autosave
-            if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
-                return $user_id;
-            }
-
-            // check permissions
-            if (!current_user_can('edit_user', $user_id)) {
-                return $user_id;
-            }
-
-            $fields = CubeWp_Sanitize_Fields_Array($_POST['cwp_meta'], 'user');
-
-            $fieldOptions = CWP()->get_custom_fields('user');
-
-            foreach ($fields as $key => $value) {
-
-                $_key = str_replace('cwp-', '', $key);
-                $singleFieldOptions = isset($fieldOptions[$_key]) ? $fieldOptions[$_key] : array();
-                $_val = $value;
-                if ((isset($singleFieldOptions['type']) && isset($singleFieldOptions['relationship']) && $singleFieldOptions['type'] == 'post' && $singleFieldOptions['relationship']) && is_array($singleFieldOptions) && count($singleFieldOptions) > 0) {
-                    if (!is_array($_val)) {
-                        $_val = array($_val);
-                    }
-                    if (!empty($_val) && count($_val) > 0) {
-                        (new CubeWp_Relationships)->save_relationship($user_id, $_val, $_key, 'UTP');
-                    }
-                } else if ((isset($singleFieldOptions['type']) && isset($singleFieldOptions['relationship']) && $singleFieldOptions['type'] == 'user' && $singleFieldOptions['relationship']) && is_array($singleFieldOptions) && count($singleFieldOptions) > 0) {
-                    if (!is_array($_val)) {
-                        $_val = array($_val);
-                    }
-                    if (!empty($_val) && count($_val) > 0) {
-                        (new CubeWp_Relationships)->save_relationship($user_id, $_val, $_key, 'UTU');
-                    }
-                }
-
-                if (!empty($singleFieldOptions) && isset($singleFieldOptions['type']) && $singleFieldOptions['type'] == 'repeating_field') {
-                    $arr = array();
-                    foreach ($value as $_key => $_val) {
-                        foreach ($_val as $field_key => $field_val) {
-                            $arr[$field_key][$_key] = $field_val;
-                        }
-                    }
-
-                    if (isset($arr) && !empty($arr)) {
-                        $_arr = array_filter($arr);
-                        update_user_meta($user_id, $key, $_arr);
-                    } else {
-                        delete_user_meta($user_id, $key);
-                    }
-                } else {
-                    $old = get_post_meta($user_id, $key, true);
-                    $new = $fields[$key];
-                    if ($new) {
-                        if ($new != $old) {
-                            update_user_meta($user_id, $key, $new);
-                        }
-                    } else {
-                        delete_user_meta($user_id, $key);
-                    }
-                }
-            }
+        if (!isset($_POST['cwp_meta']) || empty($user_id)) {
+            return $user_id;
         }
 
-    }
+        // Verify nonce
+        if (!wp_verify_nonce($_POST['cwp_meta_box_nonce'], basename(__FILE__))) {
+            return $user_id;
+        }
 
+        // Check autosave
+        if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+            return $user_id;
+        }
+
+        // Check permissions - must be able to edit the target user
+        if (!current_user_can('edit_user', $user_id)) {
+            return $user_id;
+        }
+
+        // Get allowed field options
+        $fieldOptions = CWP()->get_custom_fields('user');
+        $allowed_meta_keys = array_keys($fieldOptions);
+
+        // Add prefix to allowed keys
+        $prefixed_allowed_keys = array_map(function ($key) {
+            return 'cwp-' . $key;
+        }, $allowed_meta_keys);
+
+        // Sanitize input
+        $fields = CubeWp_Sanitize_Fields_Array($_POST['cwp_meta'], 'user');
+
+        foreach ($fields as $key => $value) {
+            // Skip if key is not in our allowed list
+            if (!in_array($key, $prefixed_allowed_keys)) {
+                continue;
+            }
+
+            $_key = str_replace('cwp-', '', $key);
+            $singleFieldOptions = $fieldOptions[$_key] ?? array();
+
+            // Special handling for sensitive fields
+            if (in_array($_key, array('capabilities', 'user_level'))) {
+                if (!current_user_can('promote_users')) {
+                    continue; // Only admins can modify these
+                }
+            }
+
+            // Handle relationship fields
+            if (isset($singleFieldOptions['type']) && isset($singleFieldOptions['relationship'])) {
+                if (!is_array($value)) {
+                    $value = array($value);
+                }
+
+                if (!empty($value)) {
+                    $relationship_type = '';
+                    if ($singleFieldOptions['type'] == 'post' && $singleFieldOptions['relationship']) {
+                        $relationship_type = 'UTP';
+                    } else if ($singleFieldOptions['type'] == 'user' && $singleFieldOptions['relationship']) {
+                        $relationship_type = 'UTU';
+                    }
+
+                    if ($relationship_type && current_user_can('edit_users')) {
+                        (new CubeWp_Relationships)->save_relationship($user_id, $value, $_key, $relationship_type);
+                    }
+                }
+                continue;
+            }
+
+            // Handle repeating fields
+            if (!empty($singleFieldOptions) && isset($singleFieldOptions['type']) && $singleFieldOptions['type'] == 'repeating_field') {
+                $arr = array();
+                foreach ($value as $_key => $_val) {
+                    foreach ($_val as $field_key => $field_val) {
+                        $arr[$field_key][$_key] = $field_val;
+                    }
+                }
+
+                if (!empty($arr)) {
+                    $_arr = array_filter($arr);
+                    update_user_meta($user_id, $key, $_arr);
+                } else {
+                    delete_user_meta($user_id, $key);
+                }
+                continue;
+            }
+
+            // Standard field update
+            $old = get_user_meta($user_id, $key, true);
+            $new = $fields[$key];
+
+            if ($new && $new != $old) {
+                update_user_meta($user_id, $key, $new);
+            } elseif (empty($new)) {
+                delete_user_meta($user_id, $key);
+            }
+        }
+    }
 }

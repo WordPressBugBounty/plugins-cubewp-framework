@@ -45,89 +45,7 @@ jQuery(document).ready(function () {
             }
         });
     }
-    //JQuery For CubeWP Post Slider 
-    if (jQuery('.cubewp-post-slider').length > 0) {
-        jQuery('.cubewp-post-slider').each(function () {
-            var sliderElement = jQuery(this);
-            var prevArrowHtml = sliderElement.data('prev-arrow');
-            var nextArrowHtml = sliderElement.data('next-arrow');
-            var previcon_type = sliderElement.data('prev-icon-type');
-            var nexticon_type = sliderElement.data('next-icon-type');
-            var slidesToShow = sliderElement.data('slides-to-show');
-            var slidesToScroll = sliderElement.data('slides-to-scroll');
-            var slidesToShowTablet = sliderElement.data('slides-to-show-tablet');
-            var slidesToShowTabletPortrait = sliderElement.data('slides-show-tablet-portrait');
-            var slidesToShowMobile = sliderElement.data('slides-to-show-mobile');
-            var slidesToScrollTablet = sliderElement.data('slides-to-scroll-tablet');
-            var slidesToScrollTabletPortrait = sliderElement.data('slides-scroll-tablet-portrait');
-            var slidesToScrollMobile = sliderElement.data('slides-to-scroll-mobile');
-            var autoplay = sliderElement.data('autoplay') === true || sliderElement.data('autoplay') === 'true';
-            var autoplaySpeed = sliderElement.data('autoplay-speed');
-            var Speed = sliderElement.data('speed');
-            var infinite = sliderElement.data('infinite') === true || sliderElement.data('infinite') === 'true';
-            var variableWidth = sliderElement.data('variable-width') === true || sliderElement.data('variable-width') === 'true';
 
-            if (previcon_type) {
-                var prevArrowButton = '<button type="button" class="slick-prev"><i class="' + prevArrowHtml + '"></i></button>';
-            } else {
-                var prevArrowButton = '<button type="button" class="slick-prev">' + prevArrowHtml + '</button>';
-            }
-            if (nexticon_type) {
-                var nextArrowButton = '<button type="button" class="slick-next"><i class="' + nextArrowHtml + '"></i></button>';
-            } else {
-                var nextArrowButton = '<button type="button" class="slick-next">sadsads' + nextArrowHtml + '</button>';
-            }
-            var CustomArrows = sliderElement.data('custom-arrows') === true || sliderElement.data('custom-arrows') === 'true';
-            var CustomDots = sliderElement.data('custom-dots') === true || sliderElement.data('custom-dots') === 'true';
-            var enableProgressBar = sliderElement.data('enable-progress-bar') === true || sliderElement.data('enable-progress-bar') === 'true';
-
-            sliderElement.slick({
-                slidesToShow: slidesToShow,
-                slidesToScroll: slidesToScroll,
-                autoplay: autoplay,
-                autoplaySpeed: autoplaySpeed,
-                speed: Speed,
-                infinite: infinite,
-                variableWidth: variableWidth,
-                prevArrow: prevArrowButton,
-                nextArrow: nextArrowButton,
-                arrows: CustomArrows,
-                dots: CustomDots,
-                responsive: [{
-                        breakpoint: 1025,
-                        settings: {
-                            slidesToShow: slidesToShowTablet,
-                            slidesToScroll: slidesToScrollTablet
-                        }
-                    },
-                    {
-                        breakpoint: 768,
-                        settings: {
-                            slidesToShow: slidesToShowTabletPortrait,
-                            slidesToScroll: slidesToScrollTabletPortrait
-                        }
-                    },
-                    {
-                        breakpoint: 481,
-                        settings: {
-                            slidesToShow: slidesToShowMobile,
-                            slidesToScroll: slidesToScrollMobile
-                        }
-                    }
-                ]
-            });
-            if (enableProgressBar == true) {
-                sliderElement.after(
-                    '<div class="slick-progress"><div class="slick-progress-bar"></div></div>'
-                );
-                var totalSlides = sliderElement.slick("getSlick").slideCount;
-                sliderElement.on("afterChange", function (event, slick, currentSlide) {
-                    var progress = ((currentSlide + 1) / totalSlides) * 100;
-                    sliderElement.next('.slick-progress').find('.slick-progress-bar').css("width", progress + "%");
-                });
-            }
-        });
-    }
 });
 
 function cwp_notification_ui(notification_type, notification_content) {
@@ -209,3 +127,254 @@ jQuery(document).on('click', '.cwp-saved-post', function (e) {
         }
     });
 });
+
+/*-------- Mega Menu and Nav Menu --------*/
+// CubeWP Menus JS >>
+jQuery(document).ready(function ($) {
+    jQuery(document).on(
+        "click",
+        ".elementor-cubewp-menu-toggle__icon--open",
+        function () {
+            jQuery(this).next("svg").addClass("active");
+            jQuery(this).removeClass("active");
+            jQuery(this)
+                .closest(".elementor-cubewp-menu-toggle")
+                .next(".elementor-cubewp-nav-menu--dropdown")
+                .addClass("active");
+        }
+    );
+    jQuery(document).on(
+        "click",
+        ".elementor-cubewp-menu-toggle__icon--close",
+        function () {
+            jQuery(this).prev("svg").addClass("active");
+            jQuery(this).removeClass("active");
+            jQuery(this)
+                .closest(".elementor-cubewp-menu-toggle")
+                .next(".elementor-cubewp-nav-menu--dropdown")
+                .removeClass("active");
+        }
+    );
+    jQuery(document).on("click", ".cubwp-menu-desktop.mobile", function () {
+        jQuery(this)
+            .closest(".elementor-widget-container")
+            .find(".cubewp-offcanvas-menus")
+            .addClass("active");
+    });
+    jQuery(document).on("click", ".cubewp-menu-closed", function () {
+        jQuery(this)
+            .closest(".elementor-widget-container")
+            .find(".cubewp-offcanvas-menus")
+            .removeClass("active");
+    });
+
+    $(".cubewp-mega-menu-item.hover").on("click", function (event) {
+        if ($(window).width() <= 1024) {
+            if (!$(event.target).closest(".cubewp-mega-menu-item-dropdown").length) {
+                $(this).toggleClass("active");
+                $(this).closest('.cubewp-mega-menu').toggleClass("active");
+            }
+        }
+    });
+    $(".close-mega-menu-mobile").on("click", function (event) {
+        if ($(window).width() <= 1024) {
+            $('.cubewp-mega-menu-item , .cubewp-mega-menu').removeClass("active");
+        }
+    });
+
+    jQuery(document).ready(function ($) {
+        // Open the next slide when clicking the trigger
+        $(document).on("click", ".container-next-triger", function () {
+            $(this)
+                .closest(".elementor-element")
+                .next(".container-next-screen")
+                .addClass("active");
+        });
+        // Close the slide when clicking the back button
+        $(document).on("click", ".container-back-slide", function () {
+            if ($(this).closest(".container-next-screen").length > 0) {
+                $(this).closest(".container-next-screen").removeClass("active");
+            } else {
+                $(this).closest(".cubewp-mega-menu").removeClass("active");
+                $(this).closest(".cubewp-mega-menu-item").removeClass("active");
+            }
+        });
+    });
+
+    // CubeWP Mega menus JS >>
+    jQuery(document).on(
+        "click",
+        ".cubewp-mega-menu .cubewp-mega-menu-item.click",
+        function () {
+            var getID = jQuery(this).data("showid");
+            jQuery(this)
+                .closest(".cubewp-mega-menu")
+                .find(".cubewp-mega-menu-item-dropdown")
+                .removeClass("active");
+            jQuery(this)
+                .closest(".cubewp-mega-menu")
+                .find(".cubewp-mega-menu-item-dropdown")
+                .removeClass("init");
+            jQuery(this)
+                .closest(".cubewp-mega-menu")
+                .find(".cubewp-mega-menu-item.click")
+                .removeClass("active");
+            jQuery("#" + getID).addClass("active");
+            jQuery(document.body).trigger("cubewp_mega_menu_item_loaded");
+            jQuery(this).addClass("active");
+            setTimeout(function () {
+                jQuery("#" + getID).addClass("init");
+            }, 500);
+        }
+    );
+
+    jQuery(document).on(
+        "click",
+        ".cubewp-mega-menu-mobile-button",
+        function () {
+            jQuery(this).next(".cubewp-mega-menu.cubwp-menu-desktop").slideToggle();
+            jQuery(this).toggleClass("active");
+        }
+    );
+
+    function adjustMegaMenuDropdown($this) {
+        var dropdown = $this.find(".cubewp-mega-menu-item-dropdown");
+        if (dropdown.length) {
+            var bodyWidth = jQuery("body").width(); // Get the full width of the body
+            var dropdownOffsetLeft = dropdown.offset().left; // Current left position of the dropdown
+            var bodyOffsetLeft = jQuery("body").offset().left; // Body's left position (should be 0)
+            var difference = dropdownOffsetLeft - bodyOffsetLeft;
+
+            // Adjust the dropdown's width and position to span the entire body width
+            dropdown.css({
+                "left": "-" + difference + "px",
+                "right": "auto",
+                "width": bodyWidth + "px"
+            });
+        }
+    }
+
+    jQuery(document).on("mouseenter", ".cubewp-mega-menu-item", function () {
+        var $this = jQuery(this)
+        adjustMegaMenuDropdown($this);
+    });
+
+    jQuery(document).on("mouseleave", ".cubewp-mega-menu-item", function () {
+        jQuery(this).find(".cubewp-mega-menu-item-dropdown").css({
+            "left": "unset",
+        });
+    });
+
+    setTimeout(function () {
+        if (jQuery(".elementor-cubewp-nav-menu__container").length > 0) {
+            var get_iconsInd = jQuery(".elementor-cubewp-nav-menu__container").data(
+                "icons"
+            );
+            if (typeof get_iconsInd === "string") {
+                get_iconsInd = get_iconsInd.trim().replace(/1$/, "");
+            }
+            jQuery(".elementor-cubewp-nav-menu__container")
+                .find(".menu-item-has-children>a")
+                .append(get_iconsInd);
+        }
+    }, 200);
+});
+
+/*------- CubeWP Post Slider ---------*/
+(function ($) {
+    function initPostSlider($scope) {
+        var sliders = $scope.find('.cubewp-post-slider');
+        if (!sliders.length) return;
+        sliders.each(function () {
+            var sliderElement = jQuery(this);
+            var prevArrowHtml = sliderElement.data('prev-arrow');
+            var enable_wrapper = sliderElement.data('enable-wrapper'); 
+            var nextArrowHtml = sliderElement.data('next-arrow');
+            var previcon_type = sliderElement.data('prev-icon-type');
+            var nexticon_type = sliderElement.data('next-icon-type');
+            var slidesToShow = sliderElement.data('slides-to-show');
+            var slidesToScroll = sliderElement.data('slides-to-scroll');
+            var slidesToShowTablet = sliderElement.data('slides-to-show-tablet');
+            var slidesToShowTabletPortrait = sliderElement.data('slides-show-tablet-portrait');
+            var slidesToShowMobile = sliderElement.data('slides-to-show-mobile');
+            var slidesToScrollTablet = sliderElement.data('slides-to-scroll-tablet');
+            var slidesToScrollTabletPortrait = sliderElement.data('slides-scroll-tablet-portrait');
+            var slidesToScrollMobile = sliderElement.data('slides-to-scroll-mobile');
+            var autoplay = sliderElement.data('autoplay') === true || sliderElement.data('autoplay') === 'true';
+            var autoplaySpeed = sliderElement.data('autoplay-speed');
+            var Speed = sliderElement.data('speed');
+            var infinite = sliderElement.data('infinite') === true || sliderElement.data('infinite') === 'true';
+            var fade_effect = sliderElement.data('fade') === true || sliderElement.data('fade') === 'true';
+            var variableWidth = sliderElement.data('variable-width') === true || sliderElement.data('variable-width') === 'true';
+            if (previcon_type) {
+                var prevArrowButton = '<button type="button" class="slick-prev"><i class="' + prevArrowHtml + '"></i></button>';
+            } else {
+                var prevArrowButton = '<button type="button" class="slick-prev">' + prevArrowHtml + '</button>';
+            }
+            if (nexticon_type) {
+                var nextArrowButton = '<button type="button" class="slick-next"><i class="' + nextArrowHtml + '"></i></button>';
+            } else {
+                var nextArrowButton = '<button type="button" class="slick-next">' + nextArrowHtml + '</button>';
+            }
+            var CustomArrows = sliderElement.data('custom-arrows') === true || sliderElement.data('custom-arrows') === 'true';
+            var CustomDots = sliderElement.data('custom-dots') === true || sliderElement.data('custom-dots') === 'true';
+            var enableProgressBar = sliderElement.data('enable-progress-bar') === true || sliderElement.data('enable-progress-bar') === 'true';
+            sliderElement.slick({
+                slidesToShow: slidesToShow,
+                slidesToScroll: slidesToScroll,
+                autoplay: autoplay,
+                autoplaySpeed: autoplaySpeed,
+                speed: Speed,
+                infinite: infinite,
+                fade: fade_effect,
+                variableWidth: variableWidth,
+                prevArrow: prevArrowButton,
+                nextArrow: nextArrowButton,
+                arrows: CustomArrows,
+                dots: CustomDots,
+                responsive: [{
+                    breakpoint: 1025,
+                    settings: {
+                        slidesToShow: slidesToShowTablet,
+                        slidesToScroll: slidesToScrollTablet
+                    }
+                },
+                {
+                    breakpoint: 768,
+                    settings: {
+                        slidesToShow: slidesToShowTabletPortrait,
+                        slidesToScroll: slidesToScrollTabletPortrait
+                    }
+                },
+                {
+                    breakpoint: 481,
+                    settings: {
+                        slidesToShow: slidesToShowMobile,
+                        slidesToScroll: slidesToScrollMobile
+                    }
+                }
+                ]
+            });
+            if (enableProgressBar == true) {
+                sliderElement.after(
+                    '<div class="slick-progress"><div class="slick-progress-bar"></div></div>'
+                );
+                var totalSlides = sliderElement.slick("getSlick").slideCount;
+                sliderElement.on("afterChange", function (event, slick, currentSlide) {
+                    var progress = ((currentSlide + 1) / totalSlides) * 100;
+                    sliderElement.next('.slick-progress').find('.slick-progress-bar').css("width", progress + "%");
+                });
+            }
+            if (enable_wrapper == true) {
+                sliderElement.append('<div class="slick-arrows-wrapper"></div>');
+                sliderElement.find(".slick-prev").appendTo(sliderElement.find(".slick-arrows-wrapper"));
+                sliderElement.find(".slick-dots").appendTo(sliderElement.find(".slick-arrows-wrapper"));
+                sliderElement.find(".slick-next").appendTo(sliderElement.find(".slick-arrows-wrapper"));
+            }
+        });
+    }
+    // Hook for Elementor frontend and editor
+    jQuery(window).on('elementor/frontend/init', function () {
+        elementorFrontend.hooks.addAction('frontend/element_ready/cubewp_posts.default', initPostSlider);
+    });
+})(jQuery);

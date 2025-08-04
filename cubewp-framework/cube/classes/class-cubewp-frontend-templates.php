@@ -39,10 +39,18 @@ class CubeWp_Frontend_Templates {
             }
 
             // CubeWP theme builder Archives
-            if (!is_post_type_archive('product')) {
-                add_filter('archive_template', array($this, 'cubewp_archive_template'), 49,3);
-                add_filter('search_template', array($this, 'cubewp_archive_template'), 49,3);
-                add_filter('taxonomy_template', array($this, 'cubewp_archive_template'), 49,3);
+            if (!is_post_type_archive('product')) { 
+                if(is_archive()){
+                    add_filter('archive_template', array($this, 'cubewp_archive_template'), 49,3);
+                } 
+                if(is_search()){
+                    add_filter('search_template', array($this, 'cubewp_archive_template'), 49,3);
+                } 
+                if(is_tax()){
+                    add_filter('taxonomy_template', array($this, 'cubewp_archive_template'), 49,3);
+                    add_filter('template_include', array($this, 'cubewp_archive_template'), 99,3);
+                }
+                
             }
 
             // CubeWP theme builder Product

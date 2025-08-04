@@ -4,6 +4,7 @@ defined('ABSPATH') || exit;
 use Elementor\Controls_Manager;
 use Elementor\Repeater;
 use Elementor\Widget_Base;
+use Elementor\Group_Control_Box_Shadow;
 
 /**
  * CubeWP Posts Widgets.
@@ -185,7 +186,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		$repeater->add_control('meta_key', array(
 			'type'      => Controls_Manager::SELECT2,
 			'label'     => esc_html__('Select Custom Field', 'cubewp-framework'),
-			'options'   => get_fields_by_type(array('number', 'text', 'checkbox')),
+			'options'   => get_fields_by_type(array('number', 'text', 'checkbox','dropdown')),
 			'label_block' => true,
 		));
 
@@ -296,7 +297,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			$options = array(
 				"all" => esc_html__("All"),
 				"taxonomy" => esc_html__("By Taxonomy"),
-				//"post_ids" => esc_html__( "By IDs" ),
+				"post_ids" => esc_html__("By IDs"),
 			);
 			if (class_exists('CubeWp_Booster_Load')) {
 				$options['boosted'] = esc_html__("Boosted Only");
@@ -339,23 +340,16 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 
 	private function add_posttype_controls($post_type)
 	{
-		//$posts = self::get_post_type_posts( $post_type );
-
-		if (! empty($posts)) {
-			$this->add_control($post_type . '_post__in', array(
-				'type'        => Controls_Manager::SELECT2,
-				'label'       => esc_html__('Please Select Posts for ' . self::get_post_type_name_by_slug($post_type), 'cubewp-framework'),
-				'description' => esc_html__('Leave empty if you want to display all posts.', 'cubewp-framework'),
-				'options'     => $posts,
-				'multiple'    => true,
-				'placeholder' => esc_html__('Please Select Posts', 'cubewp-framework'),
-				'condition'   => array(
-					'posts_by' => "post_ids",
-					'posttype' => $post_type
-				),
-				'label_block' => true,
-			));
-		}
+		$this->add_control($post_type . '_post__in', array(
+			'type'        => Controls_Manager::TEXT,
+			'label'       => false, // Remove label
+			'description' => esc_html__('Enter post IDs separated by commas (e.g., 12, 45, 78). Leave empty to display all posts.', 'cubewp-framework'),
+			'condition'   => array(
+				'posts_by' => "post_ids",
+				'posttype' => $post_type
+			),
+			'label_block' => true,
+		));
 	}
 
 	private static function get_post_type_posts($post_types)
@@ -381,7 +375,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		$termArray = [];
 		if (!empty($object)) {
 			foreach ($object as $key => $terms) {
-				$termArray['[' . $terms['taxonomy'] . ']' . $key] = $terms['name'];
+				$termArray['[' . $terms['taxonomy'] . ']' . $terms['slug']] = $terms['name'];
 			}
 		}
 
@@ -485,7 +479,9 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		$autoplay = $settings['autoplay'] === 'yes' ? true : false;
 		$autoplay_speed = $settings['autoplay_speed'];
 		$speed = $settings['speed'];
+		$enable_wrap_dots_arrows = $settings['enable_wrap_dots_arrows'] === 'yes' ? true : false;
 		$infinite = $settings['infinite'] === 'yes' ? true : false;
+		$fade_effect = $settings['fade_effect'] === 'yes' ? true : false;
 		$variable_width = $settings['variable_width'] === 'yes' ? true : false;
 		$custom_arrows = $settings['custom_arrows'] === 'yes' ? true : false;
 		$custom_dots = $settings['custom_dots'] === 'yes' ? true : false;
@@ -520,9 +516,11 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			'autoplay_speed' => $autoplay_speed,
 			'speed' => $speed,
 			'infinite' => $infinite,
+			'fade_effect' => $fade_effect,
 			'variable_width' => $variable_width,
 			'custom_arrows' => $custom_arrows,
 			'custom_dots' => $custom_dots,
+			'enable_wrap_dots_arrows' => $enable_wrap_dots_arrows,
 			'enable_progress_bar' => $enable_progress_bar,
 		);
 
@@ -530,10 +528,17 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			foreach ($settings['posttype'] as $post_type) {
 
 				if ($posts_by == 'post_ids') {
+					$post_in = isset($settings[$post_type . '_post__in']) ? $settings[$post_type . '_post__in'] : '';
 
-					$post_in = isset($settings[$post_type . '_post__in']) ? $settings[$post_type . '_post__in'] : array();
 					if (!empty($post_in)) {
-						$args['post__in'] = array_merge($args['post__in'], $post_in);
+						if (is_array($post_in)) {
+							$post_in = implode(',', $post_in);
+						}
+
+						$post_ids = array_filter(array_map('trim', explode(',', $post_in))); // Trim spaces
+						$post_ids = array_map('intval', $post_ids);
+
+						$args['post__in'] = isset($args['post__in']) ? array_merge($args['post__in'], $post_ids) : $post_ids;
 					}
 				} elseif ($posts_by == 'taxonomy') {
 
@@ -682,7 +687,19 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 				'description' => esc_html__('Set the speed for the slider transition in milliseconds.', 'cubewp-framework'),
 				'condition'   => [
 					'cwp_enable_slider' => 'yes',
-					'autoplay!' => 'yes',
+				],
+			]
+		);
+
+		$this->add_control(
+			'fade_effect',
+			[
+				'type' => Controls_Manager::SWITCHER,
+				'label' => esc_html__('Fade Effect', 'value-pack'),
+				'default' => '',
+				'description' => esc_html__('Enable fade effect for slides transition.', 'value-pack'),
+				'condition' => [
+					'cwp_enable_slider' => 'yes',
 				],
 			]
 		);
@@ -1184,6 +1201,16 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 				],
 			]
 		);
+
+		$this->add_group_control(
+            Group_Control_Box_Shadow::get_type(),
+            [
+                'name' => 'slider_arrow_box_shadow',
+                'label' => __('Arrow Box Shadow', 'value-pack'),
+                'selector' => '{{WRAPPER}} .cubewp-post-slider .slick-arrow',
+                'separator' => 'before',
+            ]
+        );
 
 		$this->add_control(
 			'icon_position_divider_heading',
@@ -1955,6 +1982,308 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 				],
 			]
 		);
+
+		// slider wrape dots 
+		$this->add_control(
+			'slider_dots_wrap_settings_heading',
+			[
+				'label' => esc_html__('Wrap Dots With Arrows', 'value-pack'),
+				'type' => Controls_Manager::HEADING,
+				'separator' => 'before',
+				'condition'   => [
+					'cwp_enable_slider' => 'yes',
+				],
+			]
+		);
+
+		$this->add_control(
+			'enable_wrap_dots_arrows',
+			[
+				'label'        => esc_html__('Enable Wrap Dots With Arrows', 'value-pack'),
+				'type'         => Controls_Manager::SWITCHER,
+				'label_on'     => esc_html__('Yes', 'value-pack'),
+				'label_off'    => esc_html__('No', 'value-pack'),
+				'return_value' => 'yes',
+				'default'      => '',
+				'condition'   => [
+					'cwp_enable_slider' => 'yes',
+				],
+			]
+		);
+
+		$this->add_control(
+			'icon_direction_position_vertical',
+			[
+				'label' => esc_html__('Vertical Direction', 'cubewp-framework'),
+				'type' => Controls_Manager::CHOOSE,
+				'options' => [
+					'top' => [
+						'title' => esc_html__('Top', 'cubewp-framework'),
+						'icon' => 'eicon-v-align-top',
+					],
+					'bottom' => [
+						'title' => esc_html__('Bottom', 'cubewp-framework'),
+						'icon' => 'eicon-v-align-bottom',
+					],
+				],
+				'default' => 'bottom',
+				'condition' => [
+					'enable_wrap_dots_arrows' => 'yes',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'vp_scrollbar_Top_position',
+			[
+				'label' => esc_html__('Top Position', 'value-pack'),
+				'type' => Controls_Manager::SLIDER,
+				'size_units' => ['px', '%', 'em'],
+				'default' => [
+					'unit' => 'px',
+					'size' => 0,
+				],
+				'range' => [
+					'px' => [
+						'min' => -500,
+						'max' => 500,
+						'step' => 1,
+					],
+					'%' => [
+						'min' => -100,
+						'max' => 100,
+						'step' => 1,
+					],
+					'em' => [
+						'min' => -10,
+						'max' => 10,
+						'step' => 0.1,
+					],
+				],
+				'selectors' => [
+					'{{WRAPPER}} .slick-arrows-wrapper' => 'top: {{SIZE}}{{UNIT}};',
+				],
+				'condition' => [
+					'enable_wrap_dots_arrows' => 'yes',
+					'icon_direction_position_vertical' => 'top',
+				],
+			]
+		);
+		$this->add_responsive_control(
+			'vp_scrollbar_bottom_position',
+			[
+				'label' => esc_html__('Bottom Position', 'value-pack'),
+				'type' => Controls_Manager::SLIDER,
+				'size_units' => ['px', '%', 'em'],
+				'default' => [
+					'unit' => 'px',
+					'size' => 0,
+				],
+				'range' => [
+					'px' => [
+						'min' => -500,
+						'max' => 500,
+						'step' => 1,
+					],
+					'%' => [
+						'min' => -100,
+						'max' => 100,
+						'step' => 1,
+					],
+					'em' => [
+						'min' => -10,
+						'max' => 10,
+						'step' => 0.1,
+					],
+				],
+				'selectors' => [
+					'{{WRAPPER}} .slick-arrows-wrapper' =>  'bottom: {{SIZE}}{{UNIT}};',
+				],
+				'condition' => [
+					'enable_wrap_dots_arrows' => 'yes',
+					'icon_direction_position_vertical' => 'bottom',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'icon_direction_position',
+			[
+				'label' => esc_html__('horizontal Direction', 'cubewp-framework'),
+				'type' => Controls_Manager::CHOOSE,
+				'options' => [
+					'left' => [
+						'title' => esc_html__('Left', 'cubewp-framework'),
+						'icon' => 'eicon-h-align-left',
+					],
+					'right' => [
+						'title' => esc_html__('Right', 'cubewp-framework'),
+						'icon' => 'eicon-h-align-right',
+					],
+				],
+				'default' => 'right',
+				'condition' => [
+					'enable_wrap_dots_arrows' => 'yes',
+				],
+
+			]
+		);
+
+		$this->add_responsive_control(
+			'vp_scrollbar_right_position',
+			[
+				'label' => esc_html__('Right Position', 'value-pack'),
+				'type' => Controls_Manager::SLIDER,
+				'size_units' => ['px', '%', 'em'],
+				'default' => [
+					'unit' => 'px',
+					'size' => 0,
+				],
+				'range' => [
+					'px' => [
+						'min' => -500,
+						'max' => 500,
+						'step' => 1,
+					],
+					'%' => [
+						'min' => -100,
+						'max' => 100,
+						'step' => 1,
+					],
+					'em' => [
+						'min' => -10,
+						'max' => 10,
+						'step' => 0.1,
+					],
+				],
+				'selectors' => [
+					'{{WRAPPER}} .slick-arrows-wrapper' =>  'right: {{SIZE}}{{UNIT}};',
+				],
+				'condition' => [
+					'enable_wrap_dots_arrows' => 'yes',
+					'icon_direction_position' => 'right',
+				],
+			]
+		);
+		$this->add_responsive_control(
+			'vp_scrollbar_left_position',
+			[
+				'label' => esc_html__('Left Position', 'value-pack'),
+				'type' => Controls_Manager::SLIDER,
+				'size_units' => ['px', '%', 'em'],
+				'default' => [
+					'unit' => 'px',
+					'size' => 0,
+				],
+				'range' => [
+					'px' => [
+						'min' => -500,
+						'max' => 500,
+						'step' => 1,
+					],
+					'%' => [
+						'min' => -100,
+						'max' => 100,
+						'step' => 1,
+					],
+					'em' => [
+						'min' => -10,
+						'max' => 10,
+						'step' => 0.1,
+					],
+				],
+				'selectors' => [
+					'{{WRAPPER}} .slick-arrows-wrapper' =>  'left: {{SIZE}}{{UNIT}};',
+				],
+				'condition' => [
+					'enable_wrap_dots_arrows' => 'yes',
+					'icon_direction_position' => 'left',
+				],
+			]
+		);
+		$this->add_responsive_control(
+			'gap_between_items',
+			[
+				'label' => esc_html__('Gap Between Items', 'value-pack'),
+				'type' => Controls_Manager::SLIDER,
+				'size_units' => ['px', '%', 'em'],
+				'default' => [
+					'unit' => 'px',
+					'size' => 10,
+				],
+				'range' => [
+					'px' => [
+						'min' => 0,
+						'max' => 100,
+						'step' => 1,
+					],
+					'%' => [
+						'min' => 0,
+						'max' => 10,
+						'step' => 0.1,
+					],
+					'em' => [
+						'min' => 0,
+						'max' => 5,
+						'step' => 0.1,
+					],
+				],
+				'selectors' => [
+					'{{WRAPPER}} .slick-arrows-wrapper' =>  'gap: {{SIZE}}{{UNIT}};',
+				],
+				'condition' => [
+					'enable_wrap_dots_arrows' => 'yes',
+					'cwp_enable_slider' => 'yes',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'wrap_justify_content',
+			[
+				'label' => esc_html__('Justify Content', 'value-pack'),
+				'type' => Controls_Manager::SELECT,
+				'options' => [
+					'flex-start' => esc_html__('Flex Start', 'value-pack'),
+					'center' => esc_html__('Center', 'value-pack'),
+					'flex-end' => esc_html__('Flex End', 'value-pack'),
+					'space-between' => esc_html__('Space Between', 'value-pack'),
+					'space-around' => esc_html__('Space Around', 'value-pack'),
+					'space-evenly' => esc_html__('Space Evenly', 'value-pack'),
+				],
+				'default' => 'center',
+				'condition' => [
+					'enable_wrap_dots_arrows' => 'yes',
+					'cwp_enable_slider' => 'yes',
+				],
+				'selectors' => [
+					'{{WRAPPER}} .slick-arrows-wrapper' => 'justify-content: {{VALUE}};',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'wrap_dots_arrows_padding',
+			[
+				'label' => esc_html__('Padding', 'value-pack'),
+				'type' => Controls_Manager::DIMENSIONS,
+				'size_units' => ['px', '%', 'em'],
+				'default' => [
+					'top' => 0,
+					'right' => 0,
+					'bottom' => 0,
+					'left' => 0,
+					'unit' => 'px',
+				],
+				'selectors' => [
+					'{{WRAPPER}} .cwp-row > .slick-arrows-wrapper' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}} !important;',
+				],
+				'condition' => [
+					'enable_wrap_dots_arrows' => 'yes',
+				],
+			]
+		);
+
 
 		$this->end_controls_section();
 	}

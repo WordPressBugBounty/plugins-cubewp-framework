@@ -1,3 +1,4 @@
+
 <?php
 defined( 'ABSPATH' ) || exit;
 
@@ -24,7 +25,7 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
     }
 
     public function get_title() {
-        return __( 'Search & Filter Form', 'elementor' );
+        return __( 'Filter Form','cubewp-framework');
     }
 
     public function get_icon() {
@@ -39,26 +40,14 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
         $this->start_controls_section(
             'section_form',
             [
-                'label' => __( 'Form Settings', 'elementor' ),
-            ]
-        );
-    
-        $this->add_control(
-            'form_type',
-            [
-                'label' => __( 'Select Form Type', 'elementor' ),
-                'type' => Controls_Manager::SELECT,
-                'options' => [
-                    'search_fields' => __( 'Search Form', 'elementor' ),
-                    'search_filters' => __( 'Filters Form', 'elementor' ),
-                ],
+                'label' => __( 'Form Settings','cubewp-framework'),
             ]
         );
     
         $this->add_control(
             'post_type',
             [
-                'label' => __( 'Select Post Type', 'elementor' ),
+                'label' => __( 'Select Post Type','cubewp-framework'),
                 'type' => Controls_Manager::SELECT,
                 'options' => $this->get_post_types(),
             ]
@@ -69,7 +58,7 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
         $this->start_controls_section(
             'section_style_form',
             [
-                'label' => __( 'Form Style', 'elementor' ),
+                'label' => __( 'Form Style','cubewp-framework'),
                 'tab' => Controls_Manager::TAB_CONTENT,
             ]
         );
@@ -77,7 +66,7 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
         $this->add_control(
             'form_background_color',
             [
-                'label' => __( 'Background Color', 'elementor' ),
+                'label' => __( 'Background Color','cubewp-framework'),
                 'type' => Controls_Manager::COLOR,
                 'selectors' => [
                     '{{WRAPPER}} .cwp-search-filters-fields' => 'background-color: {{VALUE}} !important;',
@@ -96,7 +85,7 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
         $this->add_responsive_control(
             'form_padding',
             [
-                'label' => __( 'Padding', 'elementor' ),
+                'label' => __( 'Padding','cubewp-framework'),
                 'type' => Controls_Manager::DIMENSIONS,
                 'size_units' => [ 'px', '%', 'em' ],
                 'selectors' => [
@@ -108,7 +97,7 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
         $this->add_responsive_control(
             'form_margin',
             [
-                'label' => __( 'Margin', 'elementor' ),
+                'label' => __( 'Margin','cubewp-framework'),
                 'type' => Controls_Manager::DIMENSIONS,
                 'size_units' => [ 'px', '%', 'em' ],
                 'selectors' => [
@@ -122,7 +111,7 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
         $this->start_controls_section(
             'section_style_fields',
             [
-                'label' => __( 'Form Fields Style', 'elementor' ),
+                'label' => __( 'Form Fields Style','cubewp-framework'),
                 'tab' => Controls_Manager::TAB_CONTENT,
             ]
         );
@@ -130,7 +119,7 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
         $this->add_control(
             'field_placeholder_text_color',
             [
-                'label' => __( 'Placeholder Color', 'elementor' ),
+                'label' => __( 'Placeholder Color','cubewp-framework'),
                 'type' => Controls_Manager::COLOR,
                 'selectors' => [
                     '{{WRAPPER}} .cwp-field-container input, {{WRAPPER}} .cwp-field-container select, {{WRAPPER}} .cwp-field-container textarea' => 'color: {{VALUE}};',
@@ -141,7 +130,7 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
         $this->add_control(
             'field_checkbox_text_color',
             [
-                'label' => __( 'Checkbox Label Color', 'elementor' ),
+                'label' => __( 'Checkbox Label Color','cubewp-framework'),
                 'type' => Controls_Manager::COLOR,
                 'selectors' => [
                     '{{WRAPPER}} .cwp-field-container ul li label' => 'color: {{VALUE}};',
@@ -152,7 +141,7 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
         $this->add_control(
             'field_switch_text_color',
             [
-                'label' => __( 'Switch Button Color', 'elementor' ),
+                'label' => __( 'Switch Button Color','cubewp-framework'),
                 'type' => Controls_Manager::COLOR,
                 'selectors' => [
                     '{{WRAPPER}} .cwp-field-switch-container span' => 'color: {{VALUE}} !important;',
@@ -163,7 +152,7 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
         $this->add_control(
             'field_background_color',
             [
-                'label' => __( 'Background Color', 'elementor' ),
+                'label' => __( 'Background Color','cubewp-framework'),
                 'type' => Controls_Manager::COLOR,
                 'selectors' => [
                     '{{WRAPPER}} .cwp-field-container input, {{WRAPPER}} .cwp-field-container select, {{WRAPPER}} .cwp-field-container textarea' => 'background-color: {{VALUE}};',
@@ -174,7 +163,7 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
         $this->add_control(
             'field_width',
             [
-                'label' => __( 'Field Width', 'elementor' ),
+                'label' => __( 'Field Width','cubewp-framework'),
                 'type' => Controls_Manager::SLIDER,
                 'size_units' => [ 'px', '%' ],
                 'range' => [
@@ -192,7 +181,7 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
         $this->add_group_control(
             Group_Control_Border::get_type(),
             [
-                'label' => __( 'Field Border', 'elementor' ),
+                'label' => __( 'Field Border','cubewp-framework'),
                 'name' => 'field_border',
                 'selector' => '{{WRAPPER}} .cwp-field-container input, {{WRAPPER}} .cwp-field-container select, {{WRAPPER}} .cwp-field-container textarea',
             ]
@@ -201,7 +190,7 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
         $this->add_group_control(
             Group_Control_Border::get_type(),
             [
-                'label' => __( 'Field Conatiner Border', 'elementor' ),
+                'label' => __( 'Field Conatiner Border','cubewp-framework'),
                 'name' => 'field_container_border',
                 'selector' => '{{WRAPPER}} .cwp-field-container',
             ]
@@ -218,7 +207,7 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
         $this->add_responsive_control(
             'field_padding',
             [
-                'label' => __( 'Field Padding', 'elementor' ),
+                'label' => __( 'Field Padding','cubewp-framework'),
                 'type' => Controls_Manager::DIMENSIONS,
                 'size_units' => [ 'px', '%', 'em' ],
                 'selectors' => [
@@ -230,7 +219,7 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
         $this->add_responsive_control(
             'field_container_padding',
             [
-                'label' => __( 'Field Container Padding', 'elementor' ),
+                'label' => __( 'Field Container Padding','cubewp-framework'),
                 'type' => Controls_Manager::DIMENSIONS,
                 'size_units' => [ 'px', '%', 'em' ],
                 'selectors' => [
@@ -242,7 +231,7 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
         $this->add_responsive_control(
             'field_margin',
             [
-                'label' => __( 'Field Margin', 'elementor' ),
+                'label' => __( 'Field Margin','cubewp-framework'),
                 'type' => Controls_Manager::DIMENSIONS,
                 'size_units' => [ 'px', '%', 'em' ],
                 'selectors' => [
@@ -254,7 +243,7 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
         $this->add_responsive_control(
             'field_container_margin',
             [
-                'label' => __( 'Field Container Margin', 'elementor' ),
+                'label' => __( 'Field Container Margin','cubewp-framework'),
                 'type' => Controls_Manager::DIMENSIONS,
                 'size_units' => [ 'px', '%', 'em' ],
                 'selectors' => [
@@ -274,14 +263,14 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
         $this->add_control(
             'field_display',
             [
-                'label' => __( 'Display', 'elementor' ),
+                'label' => __( 'Display','cubewp-framework'),
                 'type' => Controls_Manager::SELECT,
                 'options' => [
-                    'block' => __( 'Block', 'elementor' ),
-                    'inline-block' => __( 'Inline Block', 'elementor' ),
-                    'inline' => __( 'Inline', 'elementor' ),
-                    'flex' => __( 'Flex', 'elementor' ),
-                    'grid' => __( 'Grid', 'elementor' ),
+                    'block' => __( 'Block','cubewp-framework'),
+                    'inline-block' => __( 'Inline Block','cubewp-framework'),
+                    'inline' => __( 'Inline','cubewp-framework'),
+                    'flex' => __( 'Flex','cubewp-framework'),
+                    'grid' => __( 'Grid','cubewp-framework'),
                 ],
                 'selectors' => [
                     '{{WRAPPER}} .cwp-field-container' => 'display: {{VALUE}};',
@@ -294,7 +283,7 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
         $this->start_controls_section(
             'section_style_labels',
             [
-                'label' => __( 'Labels Style', 'elementor' ),
+                'label' => __( 'Labels Style','cubewp-framework'),
                 'tab' => Controls_Manager::TAB_CONTENT,
             ]
         );
@@ -305,12 +294,12 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
                 'type'      => Controls_Manager::SELECT,
                 'label'     => esc_html__( 'Show Label', 'cubewp-framework' ),
                 'options' => [
-                    'block' => __( 'Yes', 'elementor' ),
-                    'None' => __( 'No', 'elementor' ),
+                    'block' => __( 'Yes','cubewp-framework'),
+                    'None' => __( 'No','cubewp-framework'),
                 ],
                 'default'   => 'block',
                 'selectors' => [
-                    '{{WRAPPER}} .cwp-field-container > label, {{WRAPPER}} .cwp-checkbox-container > label, {{WRAPPER}} .cwp-switch-container > label' => 'display: {{VALUE}};',
+                    '{{WRAPPER}} .cwp-search-field> label, .cwp-switch-container >label, {{WRAPPER}} .cwp-checkbox-container > label, {{WRAPPER}} .cwp-switch-container>label' => 'display: {{VALUE}};',
                 ],
             ]
         );   
@@ -318,10 +307,10 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
         $this->add_control(
             'label_text_color',
             [
-                'label' => __( 'Text Color', 'elementor' ),
+                'label' => __( 'Text Color','cubewp-framework'),
                 'type' => Controls_Manager::COLOR,
                 'selectors' => [
-                    '{{WRAPPER}} .cwp-field-container > label, {{WRAPPER}} .cwp-checkbox-container > label, {{WRAPPER}} .cwp-switch-container > label' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .cwp-search-field> label, {{WRAPPER}} .cwp-checkbox-container > label, {{WRAPPER}} .cwp-switch-container > label' => 'color: {{VALUE}} !important;',
                 ],
             ]
         );             
@@ -337,7 +326,7 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
         $this->add_responsive_control(
             'label_margin',
             [
-                'label' => __( 'Margin', 'elementor' ),
+                'label' => __( 'Margin','cubewp-framework'),
                 'type' => Controls_Manager::DIMENSIONS,
                 'size_units' => [ 'px', '%', 'em' ],
                 'selectors' => [
@@ -372,14 +361,13 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
 
         $output = '';
         $post_type = isset($settings['post_type']) ? $settings['post_type']: '';
-        $form_type = isset($settings['form_type']) ? $settings['form_type']: '';
-        if ( !empty(  $post_type ) && !empty( $form_type ) ) {
+        if ( !empty(  $post_type )) {
             $output .= '<div class="cwp-search-filters-wrap">';
             $output .= '<form name="cwp-search-filters" class="cwp-search-filters method="post">';  
             $output .= '<div class="cwp-search-filters-fields">';
 
             $output .= CubeWp_Frontend_Search_Filter::filter_hidden_fields($post_type);
-            $cwp_search_filters = CWP()->get_form($form_type);
+            $cwp_search_filters = CWP()->get_form('search_filters');
             CubeWp_Frontend_Search_Filter::$conditional_filters = isset($cwp_search_filters[$post_type]['form']['conditional_filters']) ? $cwp_search_filters[$post_type]['form']['conditional_filters'] : '0';
             if(!empty($cwp_search_filters[$post_type]['fields']) && count($cwp_search_filters[$post_type]['fields'])>0 ){
                 if(isset($cwp_search_filters[$post_type]['fields']) && !empty($cwp_search_filters[$post_type]['fields'])){
@@ -394,7 +382,7 @@ class CubeWp_Elementor_CubeWP_Form_Widget extends Widget_Base {
             $output .= '</div></form></div>';
             
         } else {
-            $output .= _e( 'Post type not set gfrf', 'elementor' );
+            $output .= _e( 'Post type not set gfrf','cubewp-framework');
         }
 
         echo apply_filters( 'cubewp/elementor/archive/posts', $output );

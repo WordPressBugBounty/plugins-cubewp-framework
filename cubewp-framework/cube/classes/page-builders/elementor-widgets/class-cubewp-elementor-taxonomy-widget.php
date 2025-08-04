@@ -83,7 +83,7 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base {
 			),
 			'default' => '0'
 		) );
-		$this->add_control( 'output_style', array(
+		$this->add_control( 'output_style', apply_filters( 'cubewp_taxonomy_output_style_control_args', array(
 			'type'    => Controls_Manager::SELECT,
 			'label'   => esc_html__( 'Select Output Style', 'cubewp-framework' ),
 			'options' => array(
@@ -91,7 +91,7 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base {
 				'list_view'  => esc_html__( 'List View', 'cubewp-framework' ),
 			),
 			'default' => 'boxed_view'
-		) );
+		) ) );
 		$this->add_control( 'icon_media_name', array(
 			'type'        => Controls_Manager::TEXT,
 			'label'       => esc_html__( 'Icon Or Image', 'cubewp-framework' ),
@@ -158,6 +158,7 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base {
 				'output_style' => 'boxed_view',
 			),
 		) );
+		do_action( 'cubewp_taxonomy_widget_additional_controls', $this );
 		$this->end_controls_section();
 	}
 	

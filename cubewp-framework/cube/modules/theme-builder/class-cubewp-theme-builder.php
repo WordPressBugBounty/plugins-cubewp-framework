@@ -361,8 +361,13 @@ class CubeWp_Theme_Builder
             if (is_author()) {
                 $template_post_id = self::get_template_post_id_by_location('archive_author', $type);
             } elseif (is_search()) {
-
-                $template_post_id = self::get_template_post_id_by_location('archive_search_' . get_post_type(), $type);
+                $get_postType = get_post_type();
+                if (!isset($get_postType) && empty($get_postType)) {
+                    if (isset($_GET['post_type'])) {
+                        $get_postType = sanitize_text_field($_GET['post_type']);
+                    }
+                }
+                $template_post_id = self::get_template_post_id_by_location('archive_search_' .  $get_postType, $type);
                 // If no specific template found, look for 'single_all'
                 if (!$template_post_id) {
                     $template_post_id = self::get_template_post_id_by_location('archive_search', $type);
@@ -495,14 +500,18 @@ class CubeWp_Theme_Builder
 
         $template_id = $static_template_id > 0 ? $static_template_id : self::get_current_template_post_id($template);
 
-        if (!empty($template_id) && !is_array($template_id)) {
-            $elementor_frontend_builder = new Elementor\Frontend();
-            $elementor_frontend_builder->init();
+        if (! empty($template_id) && ! is_array($template_id)) {
+            if (class_exists('\Elementor\Frontend')) {
+                $elementor_frontend_builder = new \Elementor\Frontend();
+                $elementor_frontend_builder->init();
 
-            if ($return == true) {
-                return $elementor_frontend_builder->get_builder_content_for_display($template_id, true);
-            } else {
-                echo $elementor_frontend_builder->get_builder_content_for_display($template_id, true);
+                $content = $elementor_frontend_builder->get_builder_content_for_display($template_id, true);
+
+                if ($return === true) {
+                    return $content;
+                } else {
+                    echo $content;
+                }
             }
         }
     }

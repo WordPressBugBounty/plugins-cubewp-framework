@@ -87,7 +87,7 @@ class CubeWp_Export {
         <?php
     }
 
-    private function cwp_export_options()
+    public function cwp_export_options()
     {
         ?>
         <div class="cubewp-export-options">
@@ -192,7 +192,7 @@ class CubeWp_Export {
         <?php
     }
 
-    private function cwp_export_button(){
+    public function cwp_export_button(){
         ?>
         <p>
             <button type="button" class="button-primary cwp_export"
@@ -307,7 +307,6 @@ class CubeWp_Export {
                             break;
                         case 'post-type-forms':
 							$export_content['post_type_forms'] = CWP()->get_form('post_type');
-                            $export_content['loop_builder_forms'] = CWP()->get_form( 'loop_builder' );
 							break;
 						case 'search-forms':
 							$export_content['search_forms'] = CWP()->get_form('search_fields');
@@ -329,6 +328,9 @@ class CubeWp_Export {
                             break;
                         case 'cwp_settings':
                             $export_content['cwp_settings'] = CWP()->cubewp_options('cwpOptions');
+                            break;
+                        case 'cwp_post_cards':
+                            $export_content['loop_builder_forms'] = CWP()->get_form( 'loop_builder' );
                             break;
 					}
 				}

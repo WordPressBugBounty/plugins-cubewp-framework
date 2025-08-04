@@ -819,21 +819,21 @@ class CubeWp_Form_Builder {
         $field_args = [];
         $field_args['form_relation'] = array(
             'class'   => 'section-field',
-            'label'   => esc_html__( "", "cubewp-framework" ),
+            'label'   => '',
             'name'    => 'form_relation',
             'id'      => 'form_relation',
             'type'    => 'hidden',
         );
         $field_args['form_type'] = array(
             'class'   => 'section-field',
-            'label'   => esc_html__( "", "cubewp-framework" ),
+            'label'   => '',
             'name'    => 'form_type',
             'id'      => 'form_type',
             'type'    => 'hidden',
         );
         $field_args['section_id'] = array(
             'class'   => 'section-field form-control',
-            'label'   => esc_html__( "", "cubewp-framework" ),
+            'label'   => '',
             'name'    => 'section_id',
             'id'      => 'section_id',
             'type'    => 'hidden',

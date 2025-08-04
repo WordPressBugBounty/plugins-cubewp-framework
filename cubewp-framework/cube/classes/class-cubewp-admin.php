@@ -32,7 +32,7 @@ class CubeWp_Admin {
         include_once CWP_PLUGIN_PATH . 'cube/functions/admin-functions.php';
 
         // Block Render
-        include_once CWP_PLUGIN_PATH . 'cube/functions/blocks-render.php';
+        //include_once CWP_PLUGIN_PATH . 'cube/functions/blocks-render.php';
 
         add_action( 'widgets_init', array( $this, 'CubeWp_register_widgets' ) );
         

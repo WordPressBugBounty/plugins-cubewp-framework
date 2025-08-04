@@ -5,7 +5,7 @@ Tags: custom fields, custom post types, custom taxonomies, acf, metabox
 Requires at least: 5.0
 Requires PHP: 7.4
 Tested up to: 6.8
-Stable tag: 1.1.24
+Stable tag: 1.1.25
 License: GPLv2 or later
 
 CubeWP is an end-to-end dynamic content framework for WordPress to help you shrink time and cut cost of development up to 90%.
@@ -376,7 +376,26 @@ To getting started with the plugin, please go to [Documentation](https://support
 
 == Changelog ==
 
-= 1.1.24 2025-04-06
+= 1.1.25 2025-08-04
+
+- UPDATED: Wrapped theme builder footer template with <footer> tag for semantic consistency.
+- ADDED: New Elementor widgets for Nav Menu and Mega Menu.
+- FIXED: Taxonomy page issue when using CubeWP Archive Posts Widget with CubeWP Theme Builder.
+- UPDATED: Refined template loading conditions for CubeWP Theme Builder archives to improve compatibility with archive, search, and taxonomy pages.
+- REMOVED: CubeWP Frontend Pro dependency from Card Style in Archive Post Widget.
+- FIXED: Export functionality for CubeWP Post Cards.
+- Added: Letter spacing control in the typography settings field.
+- FIXED: Checkbox filters now correctly highlight selected child taxonomy terms in search results.
+- Added: Support for filtering by custom fields of type "dropdown" in the "Filter By Meta / Custom Fields" section of the posts widget.
+- IMPROVED: Enhanced security and field handling for user meta updates
+- ADDED: Styling controls for Filter Form, Result Data Display, and Sorting Fields Display widgets.
+- ADDED: New Elementor widgets for CubeWP Search Form with enhanced customization and styling options.
+- UPDATED: Changed taxonomy term selection in CubeWP Posts Widget (Elementor) from term ID to term slug to ensure consistency across imports and prevent issues with changing term IDs.
+- UPDATED: Improved CUBEWP_POST_CARDS_URL definition to dynamically match the current request protocol (HTTP/HTTPS) for better compatibility and to prevent mixed content issues.
+- FIXED: Archive template from theme builder now correctly loads on empty search results instead of default archive page.
+- Fixed: Few Warnings and Notices
+
+= 1.1.24 2025-06-04
 
 - Implemented additional security techniques to harden REST API endpoints.
 

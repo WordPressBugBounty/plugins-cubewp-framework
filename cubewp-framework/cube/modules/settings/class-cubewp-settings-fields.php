@@ -647,6 +647,19 @@ class CubeWp_Settings_Fields {
                         $output .= cwp_render_text_input( $field_args );
                         $output .= apply_filters("cubewp/settings/desc/field", '', $args);
                     $output .= '</div>';
+
+                    $output .= '<div class="input_wrapper letter-spacing">';
+                        $output .= '<label for="'. $args['id']. '-letter-spacing">'.esc_html__("Letter Spacing (px)", "cubewp-framework") .'</label>';
+                        $field_args = array(
+                            'id'                =>  $args['id'].'-letter-spacing',
+                            'name'              =>  $args['id'].'[letter-spacing]',
+                            'placeholder'       =>  $args['placeholder'],
+                            'class'             =>  $args['class'],
+                            'value'             =>  isset($args['value']['letter-spacing']) ? $args['value']['letter-spacing'] : '',
+                        );
+                        $output .= cwp_render_text_input( $field_args );
+                        $output .= apply_filters("cubewp/settings/desc/field", '', $args);
+                    $output .= '</div>';
                     
                     $output .= '<div class="input_wrapper font-color">';
                         $output .= '<label for="'. $args['id']. '-line-height">'.esc_html__("Font Color", "cubewp-framework") .'</label>';

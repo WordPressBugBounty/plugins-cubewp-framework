@@ -18,7 +18,7 @@ use Elementor\Widget_Base;
     }
 
     public function get_title() {
-        return __( 'Archive Map', 'elementor' );
+        return __( 'Archive Map', 'cubewp-framework' );
     }
 
     public function get_icon() {
@@ -33,14 +33,14 @@ use Elementor\Widget_Base;
         $this->start_controls_section(
             'section_map',
             [
-                'label' => __( 'Map Settings', 'elementor' ),
+                'label' => __( 'Map Settings', 'cubewp-framework' ),
             ]
         );
 
         $this->add_responsive_control(
             'map_height',
             [
-                'label' => __( 'Map Height', 'elementor' ),
+                'label' => __( 'Map Height', 'cubewp-framework' ),
                 'type' => \Elementor\Controls_Manager::SLIDER,
                 'size_units' => [ 'px', '%' ],
                 'range' => [
@@ -59,6 +59,7 @@ use Elementor\Widget_Base;
                 ],
                 'selectors' => [
                     '{{WRAPPER}} .cwp-archive-content-map' => 'height: {{SIZE}}{{UNIT}};',
+                    '{{WRAPPER}} .cwp-archive-content-map #archive-map' => 'height: {{SIZE}}{{UNIT}};',
                 ],
             ]
         );
