@@ -138,17 +138,12 @@ class CubeWp_User_Meta
         $fieldOptions = CWP()->get_custom_fields('user');
         $allowed_meta_keys = array_keys($fieldOptions);
 
-        // Add prefix to allowed keys
-        $prefixed_allowed_keys = array_map(function ($key) {
-            return 'cwp-' . $key;
-        }, $allowed_meta_keys);
-
         // Sanitize input
         $fields = CubeWp_Sanitize_Fields_Array($_POST['cwp_meta'], 'user');
 
         foreach ($fields as $key => $value) {
             // Skip if key is not in our allowed list
-            if (!in_array($key, $prefixed_allowed_keys)) {
+            if (!in_array($key, $allowed_meta_keys)) {
                 continue;
             }
 

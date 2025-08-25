@@ -5,7 +5,7 @@ Tags: custom fields, custom post types, custom taxonomies, acf, metabox
 Requires at least: 5.0
 Requires PHP: 7.4
 Tested up to: 6.8
-Stable tag: 1.1.25
+Stable tag: 1.1.26
 License: GPLv2 or later
 
 CubeWP is an end-to-end dynamic content framework for WordPress to help you shrink time and cut cost of development up to 90%.
@@ -376,7 +376,13 @@ To getting started with the plugin, please go to [Documentation](https://support
 
 == Changelog ==
 
-= 1.1.25 2025-08-04
+= 1.1.26 2025-08-26
+
+- FIXED: User Meta update issue for CubeWP user fields in the admin.
+- FIXED: "Make this Post Card Primary" checkbox in Post Card Builder resetting when making changes.
+- FIXED: Burger menu display issue for Nav Menu on responsive screens.
+
+= 1.1.25 2025-08-26
 
 - UPDATED: Wrapped theme builder footer template with <footer> tag for semantic consistency.
 - ADDED: New Elementor widgets for Nav Menu and Mega Menu.

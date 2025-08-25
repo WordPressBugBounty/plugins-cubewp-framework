@@ -772,6 +772,7 @@ ul.cwp-single-category-widget-inner li p {
 #cubewp_searchTabContent .tab-pane.show.active {
     display: block;
 }
+
 .cubewp-search-element .cwp-field-container .select2-selection__choice {
     margin: 0 !important;
     margin-right: 5px !important;
@@ -1419,5 +1420,9 @@ ul.cwp-single-category-widget-inner li p {
 @media (max-width: 980px) {
     .cubewp-mega-menu.cubwp-menu-desktop {
         display: none;
+    }
+
+    .cubwp-menu-desktop.mobile {
+        display: block !important;
     }
 }
