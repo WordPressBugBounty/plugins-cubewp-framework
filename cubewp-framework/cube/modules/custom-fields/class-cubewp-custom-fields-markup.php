@@ -1037,7 +1037,7 @@ class CubeWp_Custom_Fields_Markup
             'value' => $FieldData['class'],
         );
 
-        $field_settings = apply_filters('cubewp/custom_fields/single/subfield/add', $field_settings, $FieldData);
+        $field_settings = apply_filters('cubewp/custom_fields/single/subfield/add', $field_settings, $FieldData, $parent_field);
         $field_name = !empty($FieldData['label']) ? $FieldData['label'] : esc_html__('Field Label', 'cubewp-framework');
         $closed_class = (isset($FieldData['label']) && $FieldData['label'] != '') ? 'closed' : '';
         $hide_class = (isset($FieldData['label']) && $FieldData['label'] != '') ? 'hidden' : '';

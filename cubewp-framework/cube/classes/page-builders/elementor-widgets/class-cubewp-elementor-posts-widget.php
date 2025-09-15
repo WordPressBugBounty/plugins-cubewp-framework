@@ -142,6 +142,67 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			'default' => 'grid'
 		));
 
+		$this->add_responsive_control(
+			'posts_per_row',
+			[
+				'label' => esc_html__('Posts Per Row', 'cubewp-framework'),
+				'type' => \Elementor\Controls_Manager::SELECT,
+				'default' => 'auto',
+				'condition' => [
+					'layout' => 'grid',
+				],
+				'device_args' => [
+					\Elementor\Controls_Stack::RESPONSIVE_DESKTOP => [
+						'default' => 'auto',
+						'options' => [
+							'auto' => esc_html__('Auto', 'cubewp-framework'),
+							'1' => esc_html__('1 Column', 'cubewp-framework'),
+							'2' => esc_html__('2 Columns', 'cubewp-framework'),
+							'3' => esc_html__('3 Columns', 'cubewp-framework'),
+							'4' => esc_html__('4 Columns', 'cubewp-framework'),
+							'5' => esc_html__('5 Columns', 'cubewp-framework'),
+							'6' => esc_html__('6 Columns', 'cubewp-framework'),
+						],
+					],
+					\Elementor\Controls_Stack::RESPONSIVE_TABLET => [
+						'default' => 'auto',
+						'options' => [
+							'auto' => esc_html__('Auto', 'cubewp-framework'),
+							'1' => esc_html__('1 Column', 'cubewp-framework'),
+							'2' => esc_html__('2 Columns', 'cubewp-framework'),
+							'3' => esc_html__('3 Columns', 'cubewp-framework'),
+							'4' => esc_html__('4 Columns', 'cubewp-framework'),
+							'5' => esc_html__('5 Columns', 'cubewp-framework'),
+							'6' => esc_html__('6 Columns', 'cubewp-framework'),
+						],
+					],
+					\Elementor\Controls_Stack::RESPONSIVE_MOBILE => [
+						'default' => 'auto',
+						'options' => [
+							'auto' => esc_html__('Auto', 'cubewp-framework'),
+							'1' => esc_html__('1 Column', 'cubewp-framework'),
+							'2' => esc_html__('2 Columns', 'cubewp-framework'),
+							'3' => esc_html__('3 Columns', 'cubewp-framework'),
+							'4' => esc_html__('4 Columns', 'cubewp-framework'),
+							'5' => esc_html__('5 Columns', 'cubewp-framework'),
+							'6' => esc_html__('6 Columns', 'cubewp-framework'),
+						],
+					],
+				],
+				'frontend_available' => true,
+			]
+		);
+
+		$this->add_responsive_control('processing_grids_per_row', array(
+			'type' => Controls_Manager::NUMBER,
+			'label' => esc_html__('Processing Grids Per Row', 'cubewp-framework'),
+			'default' => '4',
+			'condition' => array(
+				'posts_per_row' => 'auto',
+			),
+		));
+
+
 		$this->add_control('enable_scroll_on_small_devices', array(
 			'type'      => Controls_Manager::SWITCHER,
 			'label'     => esc_html__('Enable Scroll on Small Devices', 'cubewp-framework'),
@@ -186,7 +247,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		$repeater->add_control('meta_key', array(
 			'type'      => Controls_Manager::SELECT2,
 			'label'     => esc_html__('Select Custom Field', 'cubewp-framework'),
-			'options'   => get_fields_by_type(array('number', 'text', 'checkbox','dropdown')),
+			'options'   => get_fields_by_type(array('number', 'text', 'checkbox', 'dropdown')),
 			'label_block' => true,
 		));
 
@@ -238,6 +299,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		));
 		$this->end_controls_section();
 		$this->add_slider_controls();
+		$this->add_promotional_card_controls();
 	}
 
 	private static function get_post_types()
@@ -435,98 +497,64 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		$widget_id = $this->get_id();
 		if ($settings['enable_scroll_on_small_devices'] === 'yes') {
 			echo '<style>
-                @media (max-width: 767px) {
-                    .elementor-element-' . $widget_id . ' .cwp-row {
-                        overflow: scroll;
-                        flex-wrap: nowrap;
-                    }
+            @media (max-width: 767px) {
+                .elementor-element-' . $widget_id . ' .cwp-row {
+                    overflow: scroll;
+                    flex-wrap: nowrap;
                 }
-            </style>';
+            }
+        </style>';
 		}
-
-		$prev_icon = '';
-		$prev_icon_type = false;
-		if (!empty($settings['prev_icon']['value'])) {
-			if ('svg' === $settings['prev_icon']['library']) {
-				$prev_icon_url = esc_url($settings['prev_icon']['value']['url']);
-				$prev_icon_content = file_get_contents($prev_icon_url);
-				$prev_icon = $prev_icon_content;
-			} else {
-				$prev_icon = esc_attr($settings['prev_icon']['value']);
-				$prev_icon_type = true;
-			}
-		}
-		$next_icon = '';
-		$next_icon_type = false;
-		if (!empty($settings['next_icon']['value'])) {
-			if ('svg' === $settings['next_icon']['library']) {
-				$next_icon_url = esc_url($settings['next_icon']['value']['url']);
-				$next_icon_content = file_get_contents($next_icon_url);
-				$next_icon = $next_icon_content;
-			} else {
-				$next_icon =  esc_attr($settings['next_icon']['value']);
-				$next_icon_type = true;
-			}
-		}
-		$slides_to_show = $settings['slides_to_show'];
-		$slides_to_scroll = $settings['slides_to_scroll'];
-		$slides_to_show_tablet = $settings['slides_to_show_tablet'];
-		$slides_to_show_tablet_portrait = $settings['slides_to_show_tablet_portrait'];
-		$slides_to_show_mobile = $settings['slides_to_show_mobile'];
-		$slides_to_scroll_tablet = $settings['slides_to_scroll_tablet'];
-		$slides_to_scroll_tablet_portrait = $settings['slides_to_scroll_tablet_portrait'];
-		$slides_to_scroll_mobile = $settings['slides_to_scroll_mobile'];
-		$autoplay = $settings['autoplay'] === 'yes' ? true : false;
-		$autoplay_speed = $settings['autoplay_speed'];
-		$speed = $settings['speed'];
-		$enable_wrap_dots_arrows = $settings['enable_wrap_dots_arrows'] === 'yes' ? true : false;
-		$infinite = $settings['infinite'] === 'yes' ? true : false;
-		$fade_effect = $settings['fade_effect'] === 'yes' ? true : false;
-		$variable_width = $settings['variable_width'] === 'yes' ? true : false;
-		$custom_arrows = $settings['custom_arrows'] === 'yes' ? true : false;
-		$custom_dots = $settings['custom_dots'] === 'yes' ? true : false;
-		$enable_progress_bar = $settings['enable_progress_bar'] === 'yes' ? true : false;
 
 		$args = array(
 			'post_type'       => $settings['posttype'],
-			'taxonomy'       => array(),
-			'orderby'        => $settings['orderby'],
-			'order'          => $settings['order'],
+			'taxonomy'        => array(),
+			'orderby'         => $settings['orderby'],
+			'order'           => $settings['order'],
 			'number_of_posts' => $settings['number_of_posts'],
-			'load_more' 	  => $settings['load_more'],
-			'posts_per_page' => $settings['posts_per_page'],
-			'layout'         => $settings['layout'],
-			'post__in'       => array(),
-			'boosted_only'   => 'no',
-			'paged'   => '1',
+			'load_more'       => $settings['load_more'],
+			'posts_per_page'  => $settings['posts_per_page'],
+			'processing_grids_per_row' => $settings['processing_grids_per_row'],
+			'layout'          => $settings['layout'],
+			'posts_per_row'   => isset($settings['posts_per_row']) ? $settings['posts_per_row'] : 'auto',
+			'posts_per_row_tablet'   => isset($settings['posts_per_row_tablet']) ? $settings['posts_per_row_tablet'] : 'auto',
+			'posts_per_row_mobile'   => isset($settings['posts_per_row_mobile']) ? $settings['posts_per_row_mobile'] : 'auto',
+			'post__in'        => array(),
+			'boosted_only'    => 'no',
+			'paged'           => '1',
 			'cwp_enable_slider' => $settings['cwp_enable_slider'] === 'yes' ? 'cubewp-post-slider' : '',
-			'prev_icon' => $prev_icon,
-			'next_icon' => $next_icon,
-			'next_icon_type' => $next_icon_type,
-			'prev_icon_type' => $prev_icon_type,
-			'slides_to_show' => $slides_to_show,
-			'slides_to_scroll' => $slides_to_scroll,
-			'slides_to_show_tablet' => $slides_to_show_tablet,
-			'slides_to_show_tablet_portrait' => $slides_to_show_tablet_portrait,
-			'slides_to_show_mobile' => $slides_to_show_mobile,
-			'slides_to_scroll_tablet' => $slides_to_scroll_tablet,
-			'slides_to_scroll_tablet_portrait' => $slides_to_scroll_tablet_portrait,
-			'slides_to_scroll_mobile' => $slides_to_scroll_mobile,
-			'autoplay' => $autoplay,
-			'autoplay_speed' => $autoplay_speed,
-			'speed' => $speed,
-			'infinite' => $infinite,
-			'fade_effect' => $fade_effect,
-			'variable_width' => $variable_width,
-			'custom_arrows' => $custom_arrows,
-			'custom_dots' => $custom_dots,
-			'enable_wrap_dots_arrows' => $enable_wrap_dots_arrows,
-			'enable_progress_bar' => $enable_progress_bar,
+			'promotional_card' => $settings['cubewp_promotional_card'] === 'yes' ? true : false,
+			'promotional_cards' => $settings['cubewp_promotional_cards_list'],
 		);
+
+		// Add slider parameters only if the slider is enabled
+		if ($settings['cwp_enable_slider'] === 'yes') {
+			$args = array_merge($args, array(
+				'prev_icon' => $settings['prev_icon']['value'] ?? '',
+				'next_icon' => $settings['next_icon']['value'] ?? '',
+				'slides_to_show' => $settings['slides_to_show'],
+				'slides_to_scroll' => $settings['slides_to_scroll'],
+				'slides_to_show_tablet' => $settings['slides_to_show_tablet'],
+				'slides_to_show_tablet_portrait' => $settings['slides_to_show_tablet_portrait'],
+				'slides_to_show_mobile' => $settings['slides_to_show_mobile'],
+				'slides_to_scroll_tablet' => $settings['slides_to_scroll_tablet'],
+				'slides_to_scroll_tablet_portrait' => $settings['slides_to_scroll_tablet_portrait'],
+				'slides_to_scroll_mobile' => $settings['slides_to_scroll_mobile'],
+				'autoplay' => $settings['autoplay'] === 'yes' ? true : false,
+				'autoplay_speed' => $settings['autoplay_speed'],
+				'speed' => $settings['speed'],
+				'infinite' => $settings['infinite'] === 'yes' ? true : false,
+				'fade_effect' => $settings['fade_effect'] === 'yes' ? true : false,
+				'variable_width' => $settings['variable_width'] === 'yes' ? true : false,
+				'custom_arrows' => $settings['custom_arrows'] === 'yes' ? true : false,
+				'custom_dots' => $settings['custom_dots'] === 'yes' ? true : false,
+				'enable_wrap_dots_arrows' => $settings['enable_wrap_dots_arrows'] === 'yes' ? true : false,
+				'enable_progress_bar' => $settings['enable_progress_bar'] === 'yes' ? true : false,
+			));
+		}
 
 		if (is_array($settings['posttype']) && ($posts_by !== 'boosted' || $posts_by !== 'all')) {
 			foreach ($settings['posttype'] as $post_type) {
-
 				if ($posts_by == 'post_ids') {
 					$post_in = isset($settings[$post_type . '_post__in']) ? $settings[$post_type . '_post__in'] : '';
 
@@ -541,7 +569,6 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 						$args['post__in'] = isset($args['post__in']) ? array_merge($args['post__in'], $post_ids) : $post_ids;
 					}
 				} elseif ($posts_by == 'taxonomy') {
-
 					$terms = isset($settings['taxonomy-' . $post_type]) ? $settings['taxonomy-' . $post_type] : array();
 					if (!empty($terms)) {
 						foreach ($terms as $term) {
@@ -571,7 +598,6 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			$meta_query['relation'] = isset($settings['meta_relation']) ? $settings['meta_relation'] : 'OR';
 			$args['meta_query'] = self::_meta_query($meta_query);
 		}
-
 
 		echo apply_filters('cubewp_shortcode_posts_output', '', $args);
 	}
@@ -1203,14 +1229,14 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		);
 
 		$this->add_group_control(
-            Group_Control_Box_Shadow::get_type(),
-            [
-                'name' => 'slider_arrow_box_shadow',
-                'label' => __('Arrow Box Shadow', 'value-pack'),
-                'selector' => '{{WRAPPER}} .cubewp-post-slider .slick-arrow',
-                'separator' => 'before',
-            ]
-        );
+			Group_Control_Box_Shadow::get_type(),
+			[
+				'name' => 'slider_arrow_box_shadow',
+				'label' => __('Arrow Box Shadow', 'value-pack'),
+				'selector' => '{{WRAPPER}} .cubewp-post-slider .slick-arrow',
+				'separator' => 'before',
+			]
+		);
 
 		$this->add_control(
 			'icon_position_divider_heading',
@@ -2284,6 +2310,72 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			]
 		);
 
+
+		$this->end_controls_section();
+	}
+
+	private function add_promotional_card_controls()
+	{
+		$this->start_controls_section('cubewp_widget_additional_setting_section', array(
+			'label' => esc_html__('Promotional Card Settings', 'cubewp-framework'),
+			'tab'   => Controls_Manager::TAB_CONTENT,
+		));
+
+		$this->add_control('cubewp_promotional_card', array(
+			'type'    => Controls_Manager::SWITCHER,
+			'label'   => esc_html__('Show Promotional Cards', 'cubewp-framework'),
+			'default' => 'no',
+		));
+
+		// Create Repeater
+		$repeater_CARDS = new Repeater();
+
+		$repeater_CARDS->add_control('cubewp_promotional_card_option', array(
+			'type'        => Controls_Manager::SELECT,
+			'label'       => esc_html__('Promotional Cards', 'cubewp-framework'),
+			'options'     => cubewp_get_get_promotional_cards_list(),
+		));
+
+		$repeater_CARDS->add_control('cubewp_promotional_card_position', array(
+			'type'        => Controls_Manager::NUMBER,
+			'label'       => esc_html__('Position', 'cubewp-framework'),
+			'default'     => 3,
+			'placeholder' => esc_html__("3", "cubewp-framework"),
+			'min'         => 1,
+		));
+
+		$repeater_CARDS->add_responsive_control('cubewp_promotional_card_width', array(
+			'label'      => esc_html__('Width', 'cubewp-framework'),
+			'type'       => Controls_Manager::SLIDER,
+			'size_units' => ['px', '%'],
+			'default'    => [
+				'unit' => '%',
+				'size' => 100,
+			],
+			'range'      => [
+				'px' => [
+					'min' => 50,
+					'max' => 1000,
+				],
+				'%' => [
+					'min' => 10,
+					'max' => 100,
+				],
+			],
+			'description' => esc_html__('Set the width of the card.', 'cubewp-framework'),
+		));
+
+		// Add Repeater Control
+		$this->add_control('cubewp_promotional_cards_list', array(
+			'type'        => Controls_Manager::REPEATER,
+			'label'       => esc_html__('Promotional Cards List', 'cubewp-framework'),
+			'fields'      => $repeater_CARDS->get_controls(),
+			'default'     => [],
+			'title_field' => '{{{ cubewp_promotional_card_option }}}',
+			'condition'   => [
+				'cubewp_promotional_card' => 'yes',
+			],
+		));
 
 		$this->end_controls_section();
 	}

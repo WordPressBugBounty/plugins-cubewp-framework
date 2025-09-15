@@ -133,6 +133,7 @@ class CubeWp_Theme_Builder_Rules {
      */
     public static function render_block_options() {
         $template_options = '';
+        $template_options .= '<option value="cubewp_post_loop_promotional_card">' . esc_html('CubeWP Post Loop Promotional Card' , 'cubewp-framework') . '</option>';
         $blocks = is_array(apply_filters('cubewp/theme_builder/blocks', array())) ? apply_filters('cubewp/theme_builder/blocks', array()): array();
         foreach ($blocks as $key => $label) {
             $template_options .= '<option value="' . esc_attr($key) . '">' . esc_html($label) . '</option>';

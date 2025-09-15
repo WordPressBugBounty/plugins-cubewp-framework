@@ -20,24 +20,30 @@
     margin: 0;
 }
 
-select#cwp-sorting-filter, select#cwp-order-filter {
+select#cwp-sorting-filter,
+select#cwp-order-filter {
     cursor: pointer;
     font-size: 14px;
     padding: 5px;
     width: auto;
     color: #777777;
     min-width: 155px;
-	height:30px;
+    height: 30px;
 }
+
 select#cwp-order-filter {
-    margin-right:20px
+    margin-right: 20px
 }
 
 select#cwp-order-filter:disabled {
-    background-color: #f0f0f0; /* Light grey background */
-    color: #999999; /* Grey text color */
-    border: 1px solid #cccccc; /* Light grey border */
-    cursor: not-allowed; /* Not-allowed cursor */
+    background-color: #f0f0f0;
+    /* Light grey background */
+    color: #999999;
+    /* Grey text color */
+    border: 1px solid #cccccc;
+    /* Light grey border */
+    cursor: not-allowed;
+    /* Not-allowed cursor */
 }
 
 .cwp-archive-toggle-Listing-style {
@@ -54,7 +60,7 @@ select#cwp-order-filter:disabled {
 .cwp-archive-toggle-Listing-style .listing-switcher {
     cursor: pointer;
     padding: 4px 10px;
-	height:30px;
+    height: 30px;
 }
 
 .cwp-active-style {
@@ -247,6 +253,7 @@ span.cwp-main.cwp-saved-post svg:first-child {
 .cwp-single-share-btn.cwp-single-widget span.cwp-main {
     cursor: pointer;
 }
+
 .cwp-post-boosted {
     padding: 1px 10px;
     position: absolute;
@@ -266,6 +273,7 @@ span.cwp-main.cwp-saved-post svg:first-child {
     margin-bottom: 20px;
     border-radius: 5px;
 }
+
 .cwp-processing-post-grid .cwp-processing-post-thumbnail {
     height: 205px;
     width: 100%;
@@ -274,6 +282,7 @@ span.cwp-main.cwp-saved-post svg:first-child {
     animation: 1.5s shine linear infinite;
     border-radius: 5px 5px 0 0;
 }
+
 .cwp-processing-post-grid .cwp-processing-post-content {
     height: 225px;
     background: #fff;
@@ -282,6 +291,7 @@ span.cwp-main.cwp-saved-post svg:first-child {
     border-top: 0;
     border-radius: 0 0 5px 5px;
 }
+
 .cwp-processing-post-grid .cwp-processing-post-content p {
     height: 30px;
     margin: 0 0 26px 0;
@@ -291,14 +301,85 @@ span.cwp-main.cwp-saved-post svg:first-child {
     width: 100%;
     border-radius: 2px;
 }
+
 .cwp-processing-post-grid .cwp-processing-post-content p:nth-child(2) {
     width: 75%;
 }
+
 .cwp-processing-post-grid .cwp-processing-post-content p:nth-child(3) {
     width: 35%;
 }
+
 @keyframes shine {
     to {
         background-position-x: -200%;
+    }
+}
+
+.cubewp-posts-shortcode:not(.slick-initialized) .cubewp-posts-row-1 {
+    width: 100% !important;
+}
+
+.cubewp-posts-shortcode:not(.slick-initialized) .cubewp-posts-row-2 {
+    width: 50% !important;
+}
+
+.cubewp-posts-shortcode:not(.slick-initialized) .cubewp-posts-row-3 {
+    width: 33.33% !important;
+}
+
+.cubewp-posts-shortcode:not(.slick-initialized) .cubewp-posts-row-4 {
+    width: 25% !important;
+}
+
+.cubewp-posts-shortcode:not(.slick-initialized) .cubewp-posts-row-5 {
+    width: 20% !important;
+}
+
+.cubewp-posts-shortcode:not(.slick-initialized) .cubewp-posts-row-6 {
+    width: 16.66% !important;
+}
+
+/* ========== Tablet (max-width: 1024px) ========== */
+@media (max-width: 1024px) {
+    .cubewp-posts-shortcode:not(.slick-initialized) .cubewp-posts-row-tablet-1 {
+        width: 100% !important;
+    }
+    .cubewp-posts-shortcode:not(.slick-initialized) .cubewp-posts-row-tablet-2 {
+        width: 50% !important;
+    }
+    .cubewp-posts-shortcode:not(.slick-initialized) .cubewp-posts-row-tablet-3 {
+        width: 33.33% !important;
+    }
+    .cubewp-posts-shortcode:not(.slick-initialized) .cubewp-posts-row-tablet-4 {
+        width: 25% !important;
+    }
+    .cubewp-posts-shortcode:not(.slick-initialized) .cubewp-posts-row-tablet-5 {
+        width: 20% !important;
+    }
+    .cubewp-posts-shortcode:not(.slick-initialized) .cubewp-posts-row-tablet-6 {
+        width: 16.66% !important;
+    }
+}
+
+/* ========== Mobile (max-width: 767px) ========== */
+@media (max-width: 767px) {
+    .cubewp-posts-shortcode:not(.slick-initialized) .cubewp-posts-row-mobile-1 {
+        width: 100% !important;
+    }
+    .cubewp-posts-shortcode:not(.slick-initialized) .cubewp-posts-row-mobile-2 {
+        width: 50% !important;
+    }
+    .cubewp-posts-shortcode:not(.slick-initialized) .cubewp-posts-row-mobile-3 {
+        width: 33.33% !important;
+    }
+    .cubewp-posts-shortcode:not(.slick-initialized) .cubewp-posts-row-mobile-4 {
+        width: 25% !important;
+    }
+    .cubewp-posts-shortcode:not(.slick-initialized) .cubewp-posts-row-mobile-5 {
+        width: 20% !important;
+    }
+    .cubewp-posts-shortcode:not(.slick-initialized) .cubewp-posts-row-mobile-6 {
+        width: 16.66% !important;
     }
 }

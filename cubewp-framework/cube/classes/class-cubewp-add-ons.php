@@ -174,6 +174,11 @@ class CubeWp_Add_Ons
 			$Lkey = CWP()->cubewp_options($slug . '_key');
 			$Lstatus = CWP()->cubewp_options($slug . '-status');
 
+			if ($slug == 'cubewp-addon-woocommerce') {
+				$Lkey = '96baf6be5cb40a29137cb7fd90441f64';
+				$Lstatus = 'valid';
+			}
+
 			// Check if the transient exists
 			if (get_transient($slug . '_update_check')) {
 				continue; // Skip if transient exists

@@ -621,7 +621,7 @@ if (! function_exists("get_author_contact_info")) {
 						</svg></a></li>
 			<?php } ?>
 		</ul>
-<?php
+	<?php
 		return ob_get_clean();
 	}
 }
@@ -2881,4 +2881,51 @@ if (!function_exists('render_cubewp_mega_menu_options')) {
 		}
 	}
 	add_action('elementor/frontend/before_render', 'render_cubewp_mega_menu_options', 25);
+}
+
+if (!function_exists('cubewp_get_get_promotional_cards_list')) {
+	function cubewp_get_get_promotional_cards_list()
+	{
+		$args = array(
+			'post_type'      => 'cubewp-tb',
+			'meta_query'     => array(
+				array('key' => 'template_location', 'value' => 'cubewp_post_loop_promotional_card', 'compare' => '=',),
+			),
+			'posts_per_page' => -1,
+		);
+
+		$posts = get_posts($args);
+		$cubewp_promotional_cards = [];
+
+		foreach ($posts as $post) {
+			$cubewp_promotional_cards[$post->ID] = array($post->post_title);
+		}
+
+		return $cubewp_promotional_cards;
+	}
+}
+
+if (!function_exists('cubewp_promotional_card_output')) {
+	function cubewp_promotional_card_output($promotional_cardID, $width)
+	{
+		ob_start();
+
+		if (empty($width) || empty($promotional_cardID)) {
+			return '';
+		}
+	?>
+		<div style="width:<?php echo esc_attr($width); ?>">
+			<?php
+			if (class_exists('\Elementor\Plugin') && \Elementor\Plugin::$instance->documents) {
+				$document = \Elementor\Plugin::$instance->documents->get($promotional_cardID);
+				if ($document && $document->is_built_with_elementor()) {
+					echo \Elementor\Plugin::$instance->frontend->get_builder_content_for_display($promotional_cardID);
+				}
+			}
+			?>
+		</div>
+<?php
+
+		return ob_get_clean();
+	}
 }

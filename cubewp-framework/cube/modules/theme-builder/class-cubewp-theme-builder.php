@@ -271,6 +271,10 @@ class CubeWp_Theme_Builder
         if ($existing_posts->have_posts()) {
             foreach ($existing_posts->posts as $existing_post_id) {
                 if ($existing_post_id != $post_id && $template_type != 'mega-menu') {
+                    continue;
+                } elseif ($existing_post_id != $post_id && $template_type != 'cubewp_post_promotional_card') {
+                    continue;
+                } else {
                     wp_update_post(array(
                         'ID' => $existing_post_id,
                         'post_status' => 'inactive'
