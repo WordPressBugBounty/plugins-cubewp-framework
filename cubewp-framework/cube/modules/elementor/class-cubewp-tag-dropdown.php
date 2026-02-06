@@ -51,7 +51,7 @@ class CubeWp_Tag_Dropdown extends \Elementor\Core\DynamicTags\Tag {
         if(is_array($value)){
             $value = implode(", ",$value);
         }
-		echo cubewp_core_data($value);
+		echo esc_html(cubewp_core_data($value));
 	}
     
 

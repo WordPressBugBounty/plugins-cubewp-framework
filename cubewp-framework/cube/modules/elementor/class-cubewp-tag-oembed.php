@@ -49,7 +49,7 @@ class CubeWp_Tag_Oembed extends \Elementor\Core\DynamicTags\Tag {
 			return;
 		}
         $value = get_field_value( $field );
-		echo cubewp_core_data($value);
+		echo wp_kses_post(cubewp_core_data($value));
 	}
     
 

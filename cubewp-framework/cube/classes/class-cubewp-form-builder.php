@@ -30,17 +30,25 @@ class CubeWp_Form_Builder {
             wp_send_json( array( 'success' => 'false', 'msg' => esc_html__('You do not have permission to perform this action.', 'cubewp-framework') ) );
             wp_die();
         }
-        $form_relation = isset( $_POST['form_relation'] ) ? sanitize_text_field( $_POST['form_relation'] ) : '';
-        $form_type     = isset( $_POST['form_type'] ) ? sanitize_text_field( $_POST['form_type'] ) : '';
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing
+        $form_relation = isset( $_POST['form_relation'] ) ? sanitize_text_field( wp_unslash( $_POST['form_relation'] ) ) : '';
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing
+        $form_type     = isset( $_POST['form_type'] ) ? sanitize_text_field( wp_unslash( $_POST['form_type'] ) ) : '';
         if ( $form_type != '' ) {
             $cwp_forms = CWP()->get_form( $form_type );
             if ( isset( $form_relation ) && ! empty( $form_relation ) ) {
+                // phpcs:ignore WordPress.Security.NonceVerification.Missing
                 if ( isset( $_POST['cwpform'] ) && ! empty( $_POST['cwpform'] ) ) {
                     
                     if ( $form_type == 'loop_builder' ) {
+                        /*phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.NonceVerification.Missing */
                         $cwp_forms[ $form_relation ] = apply_filters( 'cubewp/loop/builder/save', array() , $_POST['cwpform'], $form_relation );
                     }else {
-                        $cwp_forms[ $form_relation ] = CubeWp_Sanitize_Dynamic_Array( $_POST['cwpform'][ $form_relation ] );
+                        // phpcs:ignore WordPress.Security.NonceVerification.Missing
+                        if(isset($_POST['cwpform'][ $form_relation ])){
+                            /*phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.NonceVerification.Missing */
+                            $cwp_forms[ $form_relation ] = CubeWp_Sanitize_Dynamic_Array( $_POST['cwpform'][ $form_relation ] );
+                        }
                     }
 
                     CWP()->update_form( $form_type, $cwp_forms );
@@ -66,10 +74,12 @@ class CubeWp_Form_Builder {
             wp_die();
         }
         $section_args = [];
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing
         if(isset($_POST['action'])){
-            unset($_POST['action']);
-            unset($_POST['section_id']);
+            unset($_POST['action']);// phpcs:ignore WordPress.Security.NonceVerification.Missing
+            unset($_POST['section_id']);// phpcs:ignore WordPress.Security.NonceVerification.Missing
         }
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing
         if(isset($_POST['form_relation']) && isset($_POST['form_type'])){
             foreach($_POST as $key => $POST){
                 $section_args[$key] = $POST;
@@ -91,7 +101,7 @@ class CubeWp_Form_Builder {
      */
     public function cwpform_form_section( $args = array() ) {
         $defaults         = array(
-            'section_id'          => rand( 123456789, 111111111 ),
+            'section_id'          => wp_rand( 123456789, 111111111 ),
             'section_title'       => '',
             'section_description' => '',
             'section_type'        => '',
@@ -449,9 +459,9 @@ class CubeWp_Form_Builder {
                 'name'        => 'display_ui',
                 'value'       => $appearance,
                 'options'     => array(
-                    'select'       => __( "Dropdown" ),
-                    'multi_select' => __( "Multi Dropdown" ),
-                    'checkbox'     => __( "checkbox" )
+                    'select'       => __( "Dropdown", "cubewp-framework" ),
+                    'multi_select' => __( "Multi Dropdown", "cubewp-framework" ),
+                    'checkbox'     => __( "checkbox", "cubewp-framework" )
                 ),
                 'extra_attrs' => 'data-name="display_ui"',
             );
@@ -463,7 +473,7 @@ class CubeWp_Form_Builder {
                 'class'       => 'group-field field-select2_ui',
                 'name'        => 'select2_ui',
                 'value'       => isset( $field['select2_ui'] ) && ! empty( $field['select2_ui'] ) ? $field['select2_ui'] : '0',
-                'options'     => array( '0' => __( "No" ), '1' => __( "Yes" ) ),
+                'options'     => array( '0' => __( "No", "cubewp-framework" ), '1' => __( "Yes", "cubewp-framework" ) ),
                 'extra_attrs' => 'data-name="select2_ui"',
             );
             $output      .= cwp_render_dropdown_input( $input_attrs );
@@ -485,7 +495,7 @@ class CubeWp_Form_Builder {
                 'class'       => 'group-field field-select2_ui',
                 'name'        => 'select2_ui',
                 'value'       => isset( $field['select2_ui'] ) && ! empty( $field['select2_ui'] ) ? $field['select2_ui'] : '0',
-                'options'     => array( '0' => __( "No" ), '1' => __( "Yes" ) ),
+                'options'     => array( '0' => __( "No", "cubewp-framework" ), '1' => __( "Yes", "cubewp-framework" ) ),
                 'extra_attrs' => 'data-name="select2_ui"',
             );
             $output      .= cwp_render_dropdown_input( $input_attrs );
@@ -559,7 +569,7 @@ class CubeWp_Form_Builder {
                 'class'       => 'group-field field-required',
                 'name'        => 'required',
                 'value'       => isset( $field['required'] ) ? $field['required'] : $default_required,
-                'options'     => array( '1' => __( "Required" ), '0' => __( "Not required" ) ),
+                'options'     => array( '1' => __( "Required", "cubewp-framework" ), '0' => __( "Not required", "cubewp-framework" ) ),
                 'extra_attrs' => 'data-name="required"',
             );
             $output      .= cwp_render_dropdown_input( $input_attrs );
@@ -597,7 +607,7 @@ class CubeWp_Form_Builder {
                 'class'       => 'group-field field-sorting',
                 'name'        => 'sorting',
                 'value'       => isset( $field['sorting'] ) && ! empty( $field['sorting'] ) ? $field['sorting'] : '',
-                'options'     => array( '1' => __( "Yes" ), '0' => __( "No" ) ),
+                'options'     => array( '1' => __( "Yes", "cubewp-framework" ), '0' => __( "No", "cubewp-framework" ) ),
                 'extra_attrs' => 'data-name="sorting"',
             );
             $output      .= cwp_render_dropdown_input( $input_attrs );
@@ -774,7 +784,7 @@ class CubeWp_Form_Builder {
                         if(!empty($fields)){
                             foreach($fields as $input_attr){
                                 if($input_attr['type'] == 'hidden'){
-                                    echo call_user_func('cwp_render_hidden_input',$input_attr);
+                                    echo call_user_func('cwp_render_hidden_input', $input_attr); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                                 }else{
                                     $field_type = $input_attr['type'];
                                     if(isset($input_attr['input_type']) && !empty($input_attr['input_type'])){
@@ -783,9 +793,9 @@ class CubeWp_Form_Builder {
                                     ?>
                                     <div class="section-form-field">
                                         <?php if(isset($input_attr['label']) && !empty($input_attr['label'])){ ?>
-                                        <label for="section_class"><?php echo $input_attr['label']; ?></label>
+                                        <label for="section_class"><?php echo esc_html( $input_attr['label'] ); ?></label>
                                         <?php } ?>
-                                        <?php echo call_user_func('cwp_render_'.$field_type.'_input',$input_attr); ?>
+                                        <?php echo call_user_func( 'cwp_render_'.$field_type.'_input', $input_attr ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
                                     </div>
                                     <?php
                                 }

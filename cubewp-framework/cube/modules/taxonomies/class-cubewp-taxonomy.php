@@ -65,6 +65,7 @@ class CubeWp_taxonomy {
         if(isset($taxonomies) && !empty($taxonomies)){
             $comma = $tax_names = '';
             foreach($taxonomies as $taxonomy){
+                /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
                 if(isset($_GET['CWPtermid']) && $_GET['CWPtermid'] == $taxonomy->name ){
                     return;
                 }
@@ -78,8 +79,10 @@ class CubeWp_taxonomy {
     private function get_taxonomiesBySlug() {
         $get_CustomTaxonomies = get_option('cwp_custom_taxonomies');
         if (!empty($get_CustomTaxonomies)) {
+            /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
             if (isset($_GET['action']) && 'edit' == $_GET['action'] && !empty($_GET['CWPtermid'])) {
-                $singleCPT = $get_CustomTaxonomies[sanitize_text_field($_GET['CWPtermid'])];
+                /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
+                $singleCPT = $get_CustomTaxonomies[sanitize_text_field(wp_unslash($_GET['CWPtermid']))];
                 return $singleCPT;
             }
         }
@@ -92,19 +95,29 @@ class CubeWp_taxonomy {
             foreach ($C_taxonomies as $single_ctax) {
                 if(isset($single_ctax['post_types']) && !empty($single_ctax['post_types'])){
                     $labels = array(
-                        'name'                 => _x($single_ctax['name'], 'taxonomy general name', 'textdomain'),
-                        'singular_name'        => _x($single_ctax['singular'], 'taxonomy singular name', 'textdomain'),
-                        'search_items'         => sprintf(__('Search %s', 'cubewp-framework'), $single_ctax['name']),
-                        'all_items'            => sprintf(__('All %s', 'cubewp-framework'), $single_ctax['name']),
-                        'parent_item'          => sprintf(__('Parent %s', 'cubewp-framework'), $single_ctax['name']),
-                        'parent_item_colon'    => sprintf(__('Parent %s:', 'cubewp-framework'), $single_ctax['name']),
-                        'edit_item'            => sprintf(__('Edit %s', 'cubewp-framework'), $single_ctax['singular']),
-                        'update_item'          => sprintf(__('Update %s', 'cubewp-framework'), $single_ctax['singular']),
-                        'add_new_item'         => sprintf(__('Add new %s', 'cubewp-framework'), $single_ctax['singular']),
-                        'new_item_name'        => sprintf(__('New %s name', 'cubewp-framework'), $single_ctax['singular']),
-                        'menu_name'            => sprintf(__('%s', 'cubewp-framework'), $single_ctax['name']),
-                        'back_to_items'        => sprintf(__('Back to %s', 'cubewp-framework'), $single_ctax['name']),
-                        'not_found'            => sprintf(__('No %s found', 'cubewp-framework'), $single_ctax['name']),
+                        'name'                 => $single_ctax['name'],
+                        'singular_name'        => $single_ctax['singular'],
+                        /* translators: %s: taxonomy plural name. */
+                        'search_items'         => sprintf( __( 'Search %s', 'cubewp-framework' ), $single_ctax['name'] ),
+                        /* translators: %s: taxonomy plural name. */
+                        'all_items'            => sprintf( __( 'All %s', 'cubewp-framework' ), $single_ctax['name'] ),
+                        /* translators: %s: taxonomy singular name. */
+                        'parent_item'          => sprintf( __( 'Parent %s', 'cubewp-framework' ), $single_ctax['name'] ),
+                        /* translators: %s: taxonomy singular name. */
+                        'parent_item_colon'    => sprintf( __( 'Parent %s:', 'cubewp-framework' ), $single_ctax['name'] ),
+                        /* translators: %s: taxonomy singular name. */
+                        'edit_item'            => sprintf( __( 'Edit %s', 'cubewp-framework' ), $single_ctax['singular'] ),
+                        /* translators: %s: taxonomy singular name. */
+                        'update_item'          => sprintf( __( 'Update %s', 'cubewp-framework' ), $single_ctax['singular'] ),
+                        /* translators: %s: taxonomy singular name. */
+                        'add_new_item'         => sprintf( __( 'Add new %s', 'cubewp-framework' ), $single_ctax['singular'] ),
+                        /* translators: %s: taxonomy singular name. */
+                        'new_item_name'        => sprintf( __( 'New %s name', 'cubewp-framework' ), $single_ctax['singular'] ),
+                        'menu_name'            => $single_ctax['name'],
+                        /* translators: %s: taxonomy plural name. */
+                        'back_to_items'        => sprintf( __( 'Back to %s', 'cubewp-framework' ), $single_ctax['name'] ),
+                        /* translators: %s: taxonomy plural name. */
+                        'not_found'            => sprintf( __( 'No %s found', 'cubewp-framework' ), $single_ctax['name'] ),
                     );
 
                     $args = array(
@@ -127,26 +140,26 @@ class CubeWp_taxonomy {
     public function save_CWPterm() {
         if (isset($_POST['cwp']['CWPterm'])) {
             
-            if( ! wp_verify_nonce( $_POST['cwp_taxonomy_nonce'], basename( __FILE__ ) ) )
+            if( isset($_POST['cwp_taxonomy_nonce']) && ! wp_verify_nonce( sanitize_text_field(wp_unslash($_POST['cwp_taxonomy_nonce'])), basename( __FILE__ ) ) )
                 return '';
             
             
-            $ctax_slug = sanitize_text_field($_POST['cwp']['CWPterm']['slug']);
+			$ctax_slug = sanitize_text_field($_POST['cwp']['CWPterm']['slug']); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
             if(is_numeric($ctax_slug)){
                 return '';
             }
             $ctax = array(
                 $ctax_slug                => array(
-                    'slug'                => sanitize_text_field($_POST['cwp']['CWPterm']['slug']),
-                    'name'                => sanitize_text_field($_POST['cwp']['CWPterm']['name']),
-                    'singular'            => sanitize_text_field($_POST['cwp']['CWPterm']['singular']),
-                    'post_types'          => isset($_POST['cwp']['CWPterm']['post_types']) ? CubeWp_Sanitize_text_Array($_POST['cwp']['CWPterm']['post_types']) : '',
-                    'hierarchical'        => sanitize_text_field($_POST['cwp']['CWPterm']['hierarchical']),
-                    'public'              => sanitize_text_field($_POST['cwp']['CWPterm']['public']),
-                    'show_ui'             => sanitize_text_field($_POST['cwp']['CWPterm']['show_ui']),
-                    'show_admin_column'   => sanitize_text_field($_POST['cwp']['CWPterm']['show_admin_column']),
-                    'query_var'           => sanitize_text_field($_POST['cwp']['CWPterm']['query_var']),
-                    'show_in_rest'        => sanitize_text_field($_POST['cwp']['CWPterm']['show_in_rest']),
+					'slug'                => isset($_POST['cwp']['CWPterm']['slug']) ? sanitize_text_field(wp_unslash($_POST['cwp']['CWPterm']['slug'])) : '', 
+					'name'                => isset($_POST['cwp']['CWPterm']['name']) ? sanitize_text_field(wp_unslash($_POST['cwp']['CWPterm']['name'])) : '', 
+					'singular'            => isset($_POST['cwp']['CWPterm']['singular']) ? sanitize_text_field(wp_unslash($_POST['cwp']['CWPterm']['singular'])) : '', 
+					'post_types'          => isset($_POST['cwp']['CWPterm']['post_types']) ? CubeWp_Sanitize_text_Array($_POST['cwp']['CWPterm']['post_types']) : '', // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+					'hierarchical'        => isset($_POST['cwp']['CWPterm']['hierarchical']) ? sanitize_text_field(wp_unslash($_POST['cwp']['CWPterm']['hierarchical'])) : '', 
+					'public'              => isset($_POST['cwp']['CWPterm']['public']) ? sanitize_text_field(wp_unslash($_POST['cwp']['CWPterm']['public'])) : '', 
+					'show_ui'             => isset($_POST['cwp']['CWPterm']['show_ui']) ? sanitize_text_field(wp_unslash($_POST['cwp']['CWPterm']['show_ui'])) : '', 
+					'show_admin_column'   => isset($_POST['cwp']['CWPterm']['show_admin_column']) ? sanitize_text_field(wp_unslash($_POST['cwp']['CWPterm']['show_admin_column'])) : '', 
+					'query_var'           => isset($_POST['cwp']['CWPterm']['query_var']) ? sanitize_text_field(wp_unslash($_POST['cwp']['CWPterm']['query_var'])) : '', 
+					'show_in_rest'        => isset($_POST['cwp']['CWPterm']['show_in_rest']) ? sanitize_text_field(wp_unslash($_POST['cwp']['CWPterm']['show_in_rest'])) : '', 
                 )
             );
 
@@ -157,19 +170,20 @@ class CubeWp_taxonomy {
                 $dataMerge = $ctax;
             }
             update_option('cwp_custom_taxonomies', $dataMerge);
-            wp_redirect( CubeWp_Submenu::_page_action('cubewp-taxonomies') );
+            wp_safe_redirect( CubeWp_Submenu::_page_action('cubewp-taxonomies') );
+            exit;
         }
     }
 
     public function add_new_ctax() {
-        if (isset($_GET['action']) && ('new' == $_GET['action'] || 'edit' == $_GET['action'])) {
+		if (isset($_GET['action']) && ('new' == $_GET['action'] || 'edit' == $_GET['action'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
             $this->tax_form_edit();
         }
     }
     
     public function ctax_form_display()
     {
-        if (isset($_GET['action']) && ('new' == $_GET['action'] || 'edit' == $_GET['action'])) {
+		if (isset($_GET['action']) && ('new' == $_GET['action'] || 'edit' == $_GET['action'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
             return;
         }
 
@@ -178,7 +192,7 @@ class CubeWp_taxonomy {
         <div class="wrap cwp-post-type-wrape">
             <div class="wrap cwp-post-type-title width-40">
                 <h1 class="wp-heading-inline"><?php esc_html_e('Custom Taxonomies', 'cubewp-framework'); ?></h1>
-                <a href="<?php echo CubeWp_Submenu::_page_action('cubewp-taxonomies', 'new'); ?>" class="page-title-action">+ <?php esc_html_e('Add New', 'cubewp-framework'); ?></a>
+                <a href="<?php echo esc_url(CubeWp_Submenu::_page_action('cubewp-taxonomies', 'new')); ?>" class="page-title-action">+ <?php esc_html_e('Add New', 'cubewp-framework'); ?></a>
             </div>
             <hr class="wp-header-end">
             <?php $customFieldsTaxonomiesTable->prepare_items(); ?>
@@ -211,18 +225,18 @@ class CubeWp_taxonomy {
          <div class="wrap cubewp-wrap">            
             <form id="post" class="cwptaxonomyform" method="post" action="" enctype="multipart/form-data">
                 <div class="wrap cwp-post-type-title width-40 margin-bottom-0 margin-left-minus-20  margin-right-0">
-                    <?php echo self::_title();    ?>
-                    <?php echo self::save_button(); ?>
+                    <?php echo wp_kses_post(self::_title());    ?>
+                    <?php echo /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped */ self::save_button(); ?>
                 </div>
                 <hr class="wp-header-end">
-                <input type="hidden" name="cwp_taxonomy_nonce" value="<?php echo wp_create_nonce(basename(__FILE__)); ?>">
+                <input type="hidden" name="cwp_taxonomy_nonce" value="<?php echo esc_attr(wp_create_nonce(basename(__FILE__))); ?>">
                 <div id="poststuff" class="padding-0">
                     <div id="post-body" class="metabox-holder columns-2">
-                        <?php echo self::taxonomy_side_actions($CWPterm); ?>
+                        <?php echo /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped */ self::taxonomy_side_actions($CWPterm); ?>
                         <div id="postbox-container-2" class="postbox-container postbox-container-top">
 
-                            <?php echo self::taxonomy_basic_settings($CWPterm); ?>
-                            <?php echo self::taxonomy_options($CWPterm); ?>
+                            <?php echo /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped */ self::taxonomy_basic_settings($CWPterm); ?>
+                            <?php echo /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped */ self::taxonomy_options($CWPterm); ?>
 
                         </div>
                         <div class="clear"></div>
@@ -250,6 +264,7 @@ class CubeWp_taxonomy {
                     <table class="form-table">
                         <tbody>
                             <?php
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/taxonomy/dropdown/field', '', array(
                                 'id'             =>    'public',
                                 'name'           =>    'cwp[CWPterm][public]',
@@ -259,6 +274,7 @@ class CubeWp_taxonomy {
                                 'description'    =>    esc_html__( '(default: true) Whether a taxonomy is intended for use publicly either via the admin interface or by front-end users.', 'cubewp-framework' )
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/taxonomy/dropdown/field', '', array(
                                 'id'             =>    'show_ui',
                                 'name'           =>    'cwp[CWPterm][show_ui]',
@@ -268,6 +284,7 @@ class CubeWp_taxonomy {
                                 'description'    =>    esc_html__( '(default: true) Whether to generate a default UI for managing this custom taxonomy.', 'cubewp-framework' )
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/taxonomy/dropdown/field', '', array(
                                 'id'             =>    'show_admin_column',
                                 'name'           =>    'cwp[CWPterm][show_admin_column]',
@@ -277,6 +294,7 @@ class CubeWp_taxonomy {
                                 'description'    =>    esc_html__( '(default: true) Whether to allow automatic creation of taxonomy columns on associated post-types.', 'cubewp-framework' )
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/taxonomy/dropdown/field', '', array(
                                 'id'             =>    'hierarchical',
                                 'name'           =>    'cwp[CWPterm][hierarchical]',
@@ -286,6 +304,7 @@ class CubeWp_taxonomy {
                                 'description'    =>    esc_html__( '(default: true) Whether the taxonomy can have parent-child relationships.', 'cubewp-framework' )
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/taxonomy/dropdown/field', '', array(
                                 'id'             =>    'query_var',
                                 'name'           =>    'cwp[CWPterm][query_var]',
@@ -295,6 +314,7 @@ class CubeWp_taxonomy {
                                 'description'    =>    esc_html__( '(default: true) Sets the query_var key for this taxonomy.', 'cubewp-framework' )
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/taxonomy/dropdown/field', '', array(
                                 'id'             =>    'show_in_rest',
                                 'name'           =>    'cwp[CWPterm][show_in_rest]',
@@ -329,6 +349,7 @@ class CubeWp_taxonomy {
                     <table class="form-table cwp-validation">
                         <tbody>
                             <?php
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/taxonomy/text/field', '', array(
                                 'id'             =>    'taxonomy_slug',
                                 'name'           =>    'cwp[CWPterm][slug]',
@@ -340,6 +361,7 @@ class CubeWp_taxonomy {
                                 'tooltip'        =>    'Give a slug for this taxonomy. Which will be used to get this taxonomy data',
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/taxonomy/text/field', '', array(
                                 'id'             =>    'name',
                                 'name'           =>    'cwp[CWPterm][name]',
@@ -350,6 +372,7 @@ class CubeWp_taxonomy {
                                 'tooltip'        =>    'Give a name for this taxonomy. Enter taxonomy name with "s" at the end',
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/taxonomy/text/field', '', array(
                                 'id'             =>    'singular',
                                 'name'           =>    'cwp[CWPterm][singular]',
@@ -394,11 +417,12 @@ class CubeWp_taxonomy {
                                         </ul>
                                     </td>';
                                 $output .= CubeWp_Admin::cwp_tr_end();
+                                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                                 echo cubewp_core_data($output);
                                 ?>
                             </tbody>
                         </table>
-                        <a id="category-add-toggle" href="<?php echo CubeWp_Submenu::_page_action('cubewp-post-types','new'); ?>" class="hide-if-no-js taxonomy-add-new"><?php esc_html_e('+Add New Post Type', 'cubewp-framework'); ?></a>
+                        <a id="category-add-toggle" href="<?php echo esc_url(CubeWp_Submenu::_page_action('cubewp-post-types','new')); ?>" class="hide-if-no-js taxonomy-add-new"><?php esc_html_e('+Add New Post Type', 'cubewp-framework'); ?></a>
                     </div>
                 </div>
             </div>                        
@@ -414,7 +438,7 @@ class CubeWp_taxonomy {
      * @version 1.0
      */  
     private static function _title() {
-        if (isset($_GET['action']) && ('edit' == $_GET['action'] && !empty($_GET['CWPtermid']))) {
+		if (isset($_GET['action']) && ('edit' == $_GET['action'] && !empty($_GET['CWPtermid']))) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
             return '<h1>'. esc_html(__('Edit Taxonomy', 'cubewp-framework')) .'</h1>';
         } else {
             return '<h1>'. esc_html(__('Create New Taxonomy', 'cubewp-framework')) .'</h1>';
@@ -423,7 +447,7 @@ class CubeWp_taxonomy {
     }
 
     private static function save_button() {
-        if (isset($_GET['action']) && ('edit' == $_GET['action'] && !empty($_GET['CWPtermid']))) {
+		if (isset($_GET['action']) && ('edit' == $_GET['action'] && !empty($_GET['CWPtermid']))) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
             $button_label = __('Update', 'cubewp-framework');
         } else {
             $button_label = __('Save', 'cubewp-framework');

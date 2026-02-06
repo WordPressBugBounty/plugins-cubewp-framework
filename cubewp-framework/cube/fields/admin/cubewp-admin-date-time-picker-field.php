@@ -34,8 +34,8 @@ class CubeWp_Admin_Date_Time_Picker_Field extends CubeWp_Admin {
         wp_enqueue_style('cubewp-datepicker');
         $args   =  apply_filters( 'cubewp/admin/field/parametrs', $args );
         
-        if($args['value'] != '' && is_numeric($args['value'])){
-            $args['value'] = date(get_option('date_format') .' '. get_option('time_format'), $args['value']);
+if ( ! empty( $args['value'] ) && is_numeric( $args['value'] ) ) {
+            $args['value'] = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), (int) $args['value'] );
         }
         
         $output = $this->cwp_field_wrap_start($args);

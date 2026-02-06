@@ -142,8 +142,8 @@ class CubeWp_VC_Posts_Widget {
 			"heading"     => esc_html__( "Show Posts", "cubewp-framework" ),
 			'save_always' => true,
 			'value'       => array(
-				esc_html__( "By Taxonomy" ) => "taxonomy",
-				esc_html__( "By IDs" )      => "post_ids"
+				esc_html__( "By Taxonomy", "cubewp-framework" ) => "taxonomy",
+				esc_html__( "By IDs", "cubewp-framework" )      => "post_ids"
 			),
 			'dependency'  => array(
 				'element' => 'posttype',
@@ -254,6 +254,7 @@ class CubeWp_VC_Posts_Widget {
 			}
 		}
 
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo apply_filters( 'cubewp_shortcode_posts_output','', $args );
 	}
 }

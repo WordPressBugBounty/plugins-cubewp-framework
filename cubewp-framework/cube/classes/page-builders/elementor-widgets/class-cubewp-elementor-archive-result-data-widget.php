@@ -166,9 +166,9 @@ class CubeWp_Elementor_Archive_Result_Data_Widget extends Widget_Base {
         
         $output = '<div class="cwp-filtered-result-count">';
         $data =  esc_html__( '0 ', 'cubewp-framework' ) . $default_text;
-        $output .= '<div class="cwp-total-results">'. $data .'</div>';
+        $output .= '<div class="cwp-total-results">'. wp_kses_post($data) .'</div>';
         $output .= '</div>';
         
-        echo $output;
+        echo wp_kses_post( $output );
     }
 }

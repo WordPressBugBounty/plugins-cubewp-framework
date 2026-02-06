@@ -46,6 +46,7 @@ class CubeWp_Post_Types {
      * @version 1.0
      */
     private function add_new_cpt() {
+        /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
         if (isset($_GET['action']) && ('new' == $_GET['action'] || 'edit' == $_GET['action'])) {
             $this->cpt_form_edit();
         }
@@ -90,23 +91,29 @@ class CubeWp_Post_Types {
         foreach ($default_cpt as $single_cpt) {
            
             $labels = array(
-                'name'                   => _x($single_cpt['label'], 'Post Type General Name', 'cubewp-framework'),
-                'singular_name'          => _x($single_cpt['singular'], 'Post Type Singular Name', 'cubewp-framework'),
-                'menu_name'              => sprintf(__('%s', 'cubewp-framework'), $single_cpt['label']),
-                'all_items'              => sprintf(__('All %s', 'cubewp-framework'), $single_cpt['label']),
-                'view_item'              => sprintf(__('View %s', 'cubewp-framework'), $single_cpt['singular']),
-                'add_new_item'           => sprintf(__('Add New %s', 'cubewp-framework'), $single_cpt['singular']),
-                'add_new'                => __('Add New', 'cubewp-framework'),
-                'edit_item'              => sprintf(__('Edit %s', 'cubewp-framework'), $single_cpt['singular']),
-                'update_item'            => sprintf(__('Update %s', 'cubewp-framework'), $single_cpt['singular']),
-                'search_items'           => sprintf(__('Search %s', 'cubewp-framework'), $single_cpt['singular']),
-                'not_found'              => __('Not Found', 'cubewp-framework'),
-                'not_found_in_trash'     => __('Not found in Trash', 'cubewp-framework'),
+                'name'                   => $single_cpt['label'],
+                'singular_name'          => $single_cpt['singular'],
+                'menu_name'              => $single_cpt['label'],
+                /* translators: %s: post type plural label. */
+                'all_items'              => sprintf( __( 'All %s', 'cubewp-framework' ), $single_cpt['label'] ),
+                /* translators: %s: post type singular name. */
+                'view_item'              => sprintf( __( 'View %s', 'cubewp-framework' ), $single_cpt['singular'] ),
+                /* translators: %s: post type singular name. */
+                'add_new_item'           => sprintf( __( 'Add New %s', 'cubewp-framework' ), $single_cpt['singular'] ),
+                'add_new'                => __( 'Add New', 'cubewp-framework' ),
+                /* translators: %s: post type singular name. */
+                'edit_item'              => sprintf( __( 'Edit %s', 'cubewp-framework' ), $single_cpt['singular'] ),
+                /* translators: %s: post type singular name. */
+                'update_item'            => sprintf( __( 'Update %s', 'cubewp-framework' ), $single_cpt['singular'] ),
+                /* translators: %s: post type singular name. */
+                'search_items'           => sprintf( __( 'Search %s', 'cubewp-framework' ), $single_cpt['singular'] ),
+                'not_found'              => __( 'Not Found', 'cubewp-framework' ),
+                'not_found_in_trash'     => __( 'Not found in Trash', 'cubewp-framework' ),
             );
             
             $args = array(
-                'label'                  => sprintf(__('%s', 'cubewp-framework'), $single_cpt['label']),
-                'description'            => sprintf(__('%s', 'cubewp-framework'), $single_cpt['description']),
+                'label'                  => $single_cpt['label'],
+                'description'            => $single_cpt['description'],
                 'labels'                 => $labels,
                 'menu_icon'              => $single_cpt['icon'],
                 'supports'               => $single_cpt['supports'],
@@ -134,6 +141,7 @@ class CubeWp_Post_Types {
         register_post_status( 'inactive', array(
             'label'                     => _x( 'Inactive ', 'Inactive', 'cubewp-framework' ),
             'public'                    => true,
+            /* translators: %s: post type plural label. */
             'label_count'               => _n_noop( 'Inactive s <span class="count">(%s)</span>', 'Inactive s <span class="count">(%s)</span>', 'cubewp-framework' ),
             'post_type'                 => array( 'cwp_form_fields','cwp_user_fields','cwp_settings_fields' ), 
             'show_in_admin_all_list'    => true,
@@ -154,37 +162,37 @@ class CubeWp_Post_Types {
     private function save_postType() {
         
         if (isset($_POST['cwp']['postType'])) {
-            if( ! wp_verify_nonce( $_POST['cwp_post_type_nonce'], basename( __FILE__ ) ) )
+            if( !isset($_POST['cwp_post_type_nonce']) || ! wp_verify_nonce( sanitize_text_field(wp_unslash($_POST['cwp_post_type_nonce'])), basename( __FILE__ ) ) )
                 return '';
             
-            $CPT_slug = sanitize_text_field($_POST['cwp']['postType']['slug']);
+            $CPT_slug = isset($_POST['cwp']['postType']['slug']) ? sanitize_text_field(wp_unslash($_POST['cwp']['postType']['slug'])) : '';
             if(is_numeric($CPT_slug)){
                 return '';
             }
             $cpt = array(
                 $CPT_slug                     => array(
-                    'label'                   => sanitize_text_field($_POST['cwp']['postType']['label']),
-                    'singular'                => sanitize_text_field($_POST['cwp']['postType']['singular']),
-                    'icon'                    => sanitize_text_field($_POST['cwp']['postType']['icon']),
-                    'slug'                    => sanitize_text_field($_POST['cwp']['postType']['slug']),
-                    'description'             => sanitize_text_field($_POST['cwp']['postType']['description']),
-                    'supports'                => CubeWp_Sanitize_text_Array($_POST['cwp']['postType']['supports']),
-                    'hierarchical'            => sanitize_text_field($_POST['cwp']['postType']['hierarchical']),
-                    'public'                  => sanitize_text_field($_POST['cwp']['postType']['public']),
-                    'show_ui'                 => sanitize_text_field($_POST['cwp']['postType']['show_ui']),
-                    'menu_position'           => intval($_POST['cwp']['postType']['menu_position']),
-                    'show_in_menu'            => sanitize_text_field($_POST['cwp']['postType']['show_in_menu']),
-                    'show_in_nav_menus'       => sanitize_text_field($_POST['cwp']['postType']['show_in_nav_menus']),
-                    'show_in_admin_bar'       => sanitize_text_field($_POST['cwp']['postType']['show_in_admin_bar']),
-                    'can_export'              => sanitize_text_field($_POST['cwp']['postType']['can_export']),
-                    'has_archive'             => sanitize_text_field($_POST['cwp']['postType']['has_archive']),
-                    'exclude_from_search'     => sanitize_text_field($_POST['cwp']['postType']['exclude_from_search']),
-                    'publicly_queryable'      => sanitize_text_field($_POST['cwp']['postType']['publicly_queryable']),
-                    'query_var'               => sanitize_text_field($_POST['cwp']['postType']['query_var']),
-                    'rewrite'                 => sanitize_text_field($_POST['cwp']['postType']['rewrite']),
-                    'rewrite_slug'            => sanitize_text_field($_POST['cwp']['postType']['rewrite_slug']),
-                    'rewrite_withfront'       => sanitize_text_field($_POST['cwp']['postType']['rewrite_withfront']),
-                    'show_in_rest'            => sanitize_text_field($_POST['cwp']['postType']['show_in_rest']),
+                    'label'                   => isset($_POST['cwp']['postType']['label']) ? sanitize_text_field(wp_unslash($_POST['cwp']['postType']['label'])) : '',
+                    'singular'                => isset($_POST['cwp']['postType']['singular']) ? sanitize_text_field(wp_unslash($_POST['cwp']['postType']['singular'])) : '',
+                    'icon'                    => isset($_POST['cwp']['postType']['icon']) ? sanitize_text_field(wp_unslash($_POST['cwp']['postType']['icon'])) : '',
+                    'slug'                    => isset($_POST['cwp']['postType']['slug']) ? sanitize_text_field(wp_unslash($_POST['cwp']['postType']['slug'])) : '',
+                    'description'             => isset($_POST['cwp']['postType']['description']) ? sanitize_text_field(wp_unslash($_POST['cwp']['postType']['description'])) : '',
+                    'supports'                => isset($_POST['cwp']['postType']['supports']) ? CubeWp_Sanitize_text_Array($_POST['cwp']['postType']['supports']) : array(), //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+                    'hierarchical'            => isset($_POST['cwp']['postType']['hierarchical']) ? sanitize_text_field(wp_unslash($_POST['cwp']['postType']['hierarchical'])) : '',
+                    'public'                  => isset($_POST['cwp']['postType']['public']) ? sanitize_text_field(wp_unslash($_POST['cwp']['postType']['public'])) : '',
+                    'show_ui'                 => isset($_POST['cwp']['postType']['show_ui']) ? sanitize_text_field(wp_unslash($_POST['cwp']['postType']['show_ui'])) : '',
+                    'menu_position'           => intval(isset($_POST['cwp']['postType']['menu_position']) ? sanitize_text_field(wp_unslash($_POST['cwp']['postType']['menu_position'])) : ''),
+                    'show_in_menu'            => isset($_POST['cwp']['postType']['show_in_menu']) ? sanitize_text_field(wp_unslash($_POST['cwp']['postType']['show_in_menu'])) : '',
+                    'show_in_nav_menus'       => isset($_POST['cwp']['postType']['show_in_nav_menus']) ? sanitize_text_field(wp_unslash($_POST['cwp']['postType']['show_in_nav_menus'])) : '',
+                    'show_in_admin_bar'       => isset($_POST['cwp']['postType']['show_in_admin_bar']) ? sanitize_text_field(wp_unslash($_POST['cwp']['postType']['show_in_admin_bar'])) : '',
+                    'can_export'              => isset($_POST['cwp']['postType']['can_export']) ? sanitize_text_field(wp_unslash($_POST['cwp']['postType']['can_export'])) : '',
+                    'has_archive'             => isset($_POST['cwp']['postType']['has_archive']) ? sanitize_text_field(wp_unslash($_POST['cwp']['postType']['has_archive'])) : '',
+                    'exclude_from_search'     => isset($_POST['cwp']['postType']['exclude_from_search']) ? sanitize_text_field(wp_unslash($_POST['cwp']['postType']['exclude_from_search'])) : '',
+                    'publicly_queryable'      => isset($_POST['cwp']['postType']['publicly_queryable']) ? sanitize_text_field(wp_unslash($_POST['cwp']['postType']['publicly_queryable'])) : '',
+                    'query_var'               => isset($_POST['cwp']['postType']['query_var']) ? sanitize_text_field(wp_unslash($_POST['cwp']['postType']['query_var'])) : '',
+                    'rewrite'                 => isset($_POST['cwp']['postType']['rewrite']) ? sanitize_text_field(wp_unslash($_POST['cwp']['postType']['rewrite'])) : '',
+                    'rewrite_slug'            => isset($_POST['cwp']['postType']['rewrite_slug']) ? sanitize_text_field(wp_unslash($_POST['cwp']['postType']['rewrite_slug'])) : '',
+                    'rewrite_withfront'       => isset($_POST['cwp']['postType']['rewrite_withfront']) ? sanitize_text_field(wp_unslash($_POST['cwp']['postType']['rewrite_withfront'])) : '',
+                    'show_in_rest'            => isset($_POST['cwp']['postType']['show_in_rest']) ? sanitize_text_field(wp_unslash($_POST['cwp']['postType']['show_in_rest'])) : '',
                 )
             );
 
@@ -196,7 +204,8 @@ class CubeWp_Post_Types {
             }
             
             update_option('cwp_custom_types', $dataMerge);
-            wp_redirect( CubeWp_Submenu::_page_action('cubewp-post-types') );
+            wp_safe_redirect( CubeWp_Submenu::_page_action('cubewp-post-types') );
+            exit;
         }
     }
     
@@ -228,8 +237,10 @@ class CubeWp_Post_Types {
     public function get_postTypeBYsLug() {
         $get_CustomTypes = CWP_types();
         if (!empty($get_CustomTypes)) {
+            /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
             if (isset($_GET['action']) && 'edit' == $_GET['action'] && !empty($_GET['postTypeid'])) {
-                $singleCPT = $get_CustomTypes[sanitize_text_field($_GET['postTypeid'])];
+                /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
+                $singleCPT = $get_CustomTypes[sanitize_text_field(wp_unslash($_GET['postTypeid']))];
                 return $singleCPT;
             }
         }
@@ -244,6 +255,7 @@ class CubeWp_Post_Types {
      * @version 1.0
      */    
     private function cpt_form_display() {
+        /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
         if (isset($_GET['action']) && ('new' == $_GET['action'] || 'edit' == $_GET['action'])) {
             return;
         }        
@@ -253,7 +265,7 @@ class CubeWp_Post_Types {
         ?>
         <div class="wrap cwp-post-type-title">
 			<h1 class="wp-heading-inline"><?php esc_html_e('Custom Post Types', 'cubewp-framework'); ?></h1>
-			<a href="<?php echo CubeWp_Submenu::_page_action('cubewp-post-types','new'); ?>" class="page-title-action">+ <?php esc_html_e('Add New', 'cubewp-framework'); ?></a>
+			<a href="<?php echo esc_url(CubeWp_Submenu::_page_action('cubewp-post-types','new')); ?>" class="page-title-action">+ <?php esc_html_e('Add New', 'cubewp-framework'); ?></a>
 		</div>
 		<hr class="wp-header-end">
         <div class="wrap cwp-post-type-wrape">
@@ -309,17 +321,17 @@ class CubeWp_Post_Types {
         <div class="cpt-form wrap cubewp-wrap">
             <form id="post" class="cwpposttype" method="post" action="" enctype="multipart/form-data">				
                 <div class="wrap cwp-post-type-title">
-                    <?php echo self::_title();	?>	
-                    <?php echo self::save_button(); ?>		
+                    <?php echo wp_kses_post(self::_title());	?>	
+                    <?php echo /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped */ self::save_button(); ?>		
                 </div>
 				<hr class="wp-header-end">
-                <input type="hidden" name="cwp_post_type_nonce" value="<?php echo wp_create_nonce( basename( __FILE__ ) ); ?>">
+                <input type="hidden" name="cwp_post_type_nonce" value="<?php echo esc_attr(wp_create_nonce( basename( __FILE__ ) )); ?>">
                 <div id="poststuff"  class="padding-0">
                     <div id="post-body" class="metabox-holder columns-2">
-                    <?php echo self::post_type_side_actions($postType); ?>
+                    <?php echo wp_kses_post(self::post_type_side_actions($postType)); ?>
                         <div id="postbox-container-2" class="postbox-container postbox-container-top">
-                            <?php echo self::post_type_basic_settings($postType); ?>
-                            <?php echo self::post_type_options($postType); ?>
+                            <?php echo wp_kses_post(self::post_type_basic_settings($postType)); ?>
+                            <?php echo wp_kses_post(self::post_type_options($postType)); ?>
 
                         </div>
                         <div class="clear"></div>
@@ -347,6 +359,7 @@ class CubeWp_Post_Types {
                     <table class="form-table">
                         <tbody>
                             <?php
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/post_type/dropdown/field', '', array(
                                 'id'             =>    'hierarchical',
                                 'name'           =>    'cwp[postType][hierarchical]',
@@ -356,6 +369,7 @@ class CubeWp_Post_Types {
                                 'description'    =>    esc_html__( '(default: false) Whether or not the post type can have parent-child relationships.', 'cubewp-framework' ),
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/post_type/dropdown/field', '', array(
                                 'id'             =>    'public',
                                 'name'           =>    'cwp[postType][public]',
@@ -365,6 +379,7 @@ class CubeWp_Post_Types {
                                 'description'    =>    esc_html__( '(Custom Post Type UI default: true) Whether or not posts of this type should be shown in the admin UI and is publicly queryable.', 'cubewp-framework' )
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/post_type/dropdown/field', '', array(
                                 'id'             =>    'show_ui',
                                 'name'           =>    'cwp[postType][show_ui]',
@@ -374,6 +389,7 @@ class CubeWp_Post_Types {
                                 'description'    =>    esc_html__( '(default: true) Whether or not to generate a default UI for managing this post type.', 'cubewp-framework' )
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/post_type/dropdown/field', '', array(
                                 'id'             =>    'show_in_menu',
                                 'name'           =>    'cwp[postType][show_in_menu]',
@@ -383,6 +399,7 @@ class CubeWp_Post_Types {
                                 'description'    =>    esc_html__( '(default: true) Whether or not to show the post type in the admin menu and where to show that menu.', 'cubewp-framework' )
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/post_type/dropdown/field', '', array(
                                 'id'          => 'menu_position',
                                 'name'        => 'cwp[postType][menu_position]',
@@ -402,6 +419,7 @@ class CubeWp_Post_Types {
                                 'description' => esc_html__('The position in the menu order the post type should appear. show_in_menu must be true.', 'cubewp-framework')
                              ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/post_type/dropdown/field', '', array(
                                 'id'             =>    'show_in_nav_menus',
                                 'name'           =>    'cwp[postType][show_in_nav_menus]',
@@ -411,6 +429,7 @@ class CubeWp_Post_Types {
                                 'description'    =>    esc_html__( '(Custom Post Type UI default: true) Whether or not this post type is available for selection in navigation menus.', 'cubewp-framework' )
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/post_type/dropdown/field', '', array(
                                 'id'             =>    'show_in_admin_bar',
                                 'name'           =>    'cwp[postType][show_in_admin_bar]',
@@ -420,6 +439,7 @@ class CubeWp_Post_Types {
                                 'description'    =>    esc_html__( '(default: true)  Makes this post type available via the admin bar.', 'cubewp-framework' )
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/post_type/dropdown/field', '', array(
                                 'id'             =>    'can_export',
                                 'name'           =>    'cwp[postType][can_export]',
@@ -429,6 +449,7 @@ class CubeWp_Post_Types {
                                 'description'    =>    esc_html__( '(default: true)  Whether to allow this post type to be exported.', 'cubewp-framework' )
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/post_type/dropdown/field', '', array(
                                 'id'             =>    'has_archive',
                                 'name'           =>    'cwp[postType][has_archive]',
@@ -438,6 +459,7 @@ class CubeWp_Post_Types {
                                 'description'    =>    esc_html__( '(default: true) Whether or not the post type will have a post type archive URL.', 'cubewp-framework' )
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/post_type/dropdown/field', '', array(
                                 'id'             =>    'exclude_from_search',
                                 'name'           =>    'cwp[postType][exclude_from_search]',
@@ -447,6 +469,7 @@ class CubeWp_Post_Types {
                                 'description'    =>    esc_html__( '(default: false) Whether or not to exclude posts with this post type from front end search results.', 'cubewp-framework' )
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/post_type/dropdown/field', '', array(
                                 'id'             =>    'publicly_queryable',
                                 'name'           =>    'cwp[postType][publicly_queryable]',
@@ -456,6 +479,7 @@ class CubeWp_Post_Types {
                                 'description'    =>    esc_html__( '(default: true) Whether or not queries can be performed on the front end as part of parse_request()', 'cubewp-framework' )
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/post_type/dropdown/field', '', array(
                                 'id'             =>    'query_var',
                                 'name'           =>    'cwp[postType][query_var]',
@@ -465,6 +489,7 @@ class CubeWp_Post_Types {
                                 'description'    =>    esc_html__( '(default: true) Sets the query_var key for this post type.', 'cubewp-framework' )
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/post_type/dropdown/field', '', array(
                                 'id'             =>    'rewrite',
                                 'name'           =>    'cwp[postType][rewrite]',
@@ -474,6 +499,7 @@ class CubeWp_Post_Types {
                                 'description'    =>    esc_html__( '(default: false) Whether or not WordPress should use rewrites for this post type.', 'cubewp-framework' )
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/post_type/text/field', '', array(
                                 'id'             =>    'rewrite_slug',
                                 'name'           =>    'cwp[postType][rewrite_slug]',
@@ -483,7 +509,7 @@ class CubeWp_Post_Types {
                                 'description'    =>    esc_html__( 'Custom post type slug to use instead of the default.', 'cubewp-framework' )
                             ));
 
-
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/post_type/dropdown/field', '', array(
                                 'id'             =>    'rewrite_withfront',
                                 'name'           =>    'cwp[postType][rewrite_withfront]',
@@ -493,6 +519,7 @@ class CubeWp_Post_Types {
                                 'description'    =>    esc_html__( '(default: true) Should the permalink structure be prepended with the front base.', 'cubewp-framework' )
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/post_type/dropdown/field', '', array(
                                 'id'             =>    'show_in_rest',
                                 'name'           =>    'cwp[postType][show_in_rest]',
@@ -528,6 +555,7 @@ class CubeWp_Post_Types {
                         <tbody>
                             <?php
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/post_type/text/field', '', array(
                                 'id'             =>    'post_type_slug',
                                 'name'           =>    'cwp[postType][slug]',
@@ -540,6 +568,7 @@ class CubeWp_Post_Types {
                                 'extra_attrs'    =>    'maxlength=20 '. isset($postType['slug']) && !empty($postType['slug']) ? 'readonly' : '',
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/post_type/text/field', '', array(
                                 'id'             =>    'label',
                                 'name'           =>    'cwp[postType][label]',
@@ -550,6 +579,7 @@ class CubeWp_Post_Types {
                                 'required'       =>    true,
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/post_type/text/field', '', array(
                                 'id'             =>    'singular',
                                 'name'           =>    'cwp[postType][singular]',
@@ -560,6 +590,7 @@ class CubeWp_Post_Types {
                                 'required'       =>    true,
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/post_type/text/field', '', array(
                                 'id'             =>    'description',
                                 'name'           =>    'cwp[postType][description]',
@@ -570,6 +601,7 @@ class CubeWp_Post_Types {
                                 'required'       =>    false,
                             ));
 
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                             echo apply_filters('cubewp/admin/post_type/text/field', '', array(
                                 'id'             =>    'icon',
                                 'name'           =>    'cwp[postType][icon]',
@@ -579,6 +611,7 @@ class CubeWp_Post_Types {
                                 'required'       =>    true,
                                 'tooltip'        =>    'Select this post type icon for WordPress menu.',
                                 'description'    =>    sprintf(
+                                    /* translators: %s: dashicons list. */
                                     esc_html__( 'Few quick picks for icon. For more click on more icons. %s', 'cubewp-framework' ),self::dashicons_list()
                                 ),
                             ));
@@ -650,6 +683,7 @@ class CubeWp_Post_Types {
                         </td>
                     </tr>';
 
+                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                     echo cubewp_core_data($html);
                     ?>
                     </tbody>
@@ -669,6 +703,7 @@ class CubeWp_Post_Types {
      * @version 1.0
      */  
     private static function _title() {
+        /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
         if (isset($_GET['action']) && ('edit' == $_GET['action'] && !empty($_GET['postTypeid']))) {
             return '<h1>'. esc_html(__('Edit Post Type', 'cubewp-framework')) .'</h1>';
         } else {
@@ -684,6 +719,7 @@ class CubeWp_Post_Types {
      * @version 1.0
      */  
     private static function save_button() {
+        /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
         if (isset($_GET['action']) && ('edit' == $_GET['action'] && !empty($_GET['postTypeid']))) {
             return '<input type="hidden" name="action" value="update_post_type"><input type="submit" class="cwp-save-button button button-primary button-large" name="Save" value="'. esc_html(__('Update', 'cubewp-framework')) .'" />';
         } else {

@@ -154,7 +154,7 @@ class CubeWp_Relationships {
 				}
 			}
 			$output .= '</div>';
-
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			echo $output;
 		}
 	}
@@ -236,20 +236,21 @@ class CubeWp_Relationships {
 			}
 			$output .= '</div>';
 
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			echo $output;
 		}
 	}
 
 	public function cubewp_remove_relation() {
-		if ( ! wp_verify_nonce( sanitize_text_field( $_POST['nonce'] ), 'cubewp_remove_nonce' ) ) {
+		if (!isset($_POST['nonce']) || ! wp_verify_nonce( sanitize_text_field( wp_unslash($_POST['nonce']) ), 'cubewp_remove_nonce' ) ) {
 			wp_send_json( array(
 				'status' => 'error',
 				'msg'    => esc_html__( "Security verification failed. Try again later.", "cubewp-framework" )
 			) );
 		}
-		$relation_id   = sanitize_text_field( $_POST['relation_id'] );
-		$relation_of   = sanitize_text_field( $_POST['relation_of'] );
-		$relation_with = sanitize_text_field( $_POST['relation_with'] );
+		$relation_id   = isset($_POST['relation_id']) ? sanitize_text_field( wp_unslash($_POST['relation_id']) ) : '';
+		$relation_of   = isset($_POST['relation_of']) ? sanitize_text_field( wp_unslash($_POST['relation_of']) ) : '';
+		$relation_with = isset($_POST['relation_with']) ? sanitize_text_field( wp_unslash($_POST['relation_with']) ) : '';
 		if ( empty( $relation_id ) || empty( $relation_of ) || empty( $relation_with ) ) {
 			wp_send_json( array(
 				'status' => 'error',

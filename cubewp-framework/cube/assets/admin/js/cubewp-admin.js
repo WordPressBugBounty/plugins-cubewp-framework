@@ -340,6 +340,7 @@ jQuery(document).ready(function () {
             url: cwp_vars_params.ajax_url,
             data: {
                 action: 'cubewp_theme_builder_template',
+                nonce: cwp_vars_params.nonce,
                 template_action: action,
                 data: formData
             },

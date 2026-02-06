@@ -259,7 +259,7 @@ jQuery(document).ready(function ($) {
     }
 
     jQuery(document).on("mouseenter", ".cubewp-mega-menu-item", function () {
-        var $this = jQuery(this)
+        var $this = jQuery(this);
         adjustMegaMenuDropdown($this);
     });
 
@@ -285,7 +285,6 @@ jQuery(document).ready(function ($) {
 });
 
 /*------- CubeWP Post Slider ---------*/
- /*------- CubeWP Post Slider ---------*/
 function initPostSlider($scope, clicked) {
     var sliders = $scope.find('.cubewp-post-slider');
     if (!sliders.length) return;
@@ -356,26 +355,26 @@ function initPostSlider($scope, clicked) {
             arrows: CustomArrows,
             dots: CustomDots,
             responsive: [{
-                breakpoint: 1025,
-                settings: {
-                    slidesToShow: slidesToShowTablet,
-                    slidesToScroll: slidesToScrollTablet
+                    breakpoint: 1025,
+                    settings: {
+                        slidesToShow: slidesToShowTablet,
+                        slidesToScroll: slidesToScrollTablet
+                    }
+                },
+                {
+                    breakpoint: 768,
+                    settings: {
+                        slidesToShow: slidesToShowTabletPortrait,
+                        slidesToScroll: slidesToScrollTabletPortrait
+                    }
+                },
+                {
+                    breakpoint: 481,
+                    settings: {
+                        slidesToShow: slidesToShowMobile,
+                        slidesToScroll: slidesToScrollMobile
+                    }
                 }
-            },
-            {
-                breakpoint: 768,
-                settings: {
-                    slidesToShow: slidesToShowTabletPortrait,
-                    slidesToScroll: slidesToScrollTabletPortrait
-                }
-            },
-            {
-                breakpoint: 481,
-                settings: {
-                    slidesToShow: slidesToShowMobile,
-                    slidesToScroll: slidesToScrollMobile
-                }
-            }
             ]
         });
 
@@ -389,7 +388,7 @@ function initPostSlider($scope, clicked) {
                     var progress = ((currentSlide + 1) / totalSlides) * 100;
                     sliderElement.next('.slick-progress').find('.slick-progress-bar').css("width", progress + "%");
                 });
-            } 
+            }
         }
         if (enable_wrapper == true) {
             sliderElement.append('<div class="slick-arrows-wrapper"></div>');
@@ -400,7 +399,7 @@ function initPostSlider($scope, clicked) {
     });
     if (clicked == 'clicked') {
         jQuery(document).trigger("post_slider_initialized", [$scope]);
-    } 
+    }
 }
 (function ($) {
     // Expose initPostSlider to a global object if needed outside Elementor's scope
@@ -453,4 +452,408 @@ jQuery(document).on("click", ".vpack-nested-tabs  .e-n-tab-title", function () {
     }
     initPostSlider($sliderContainer, clicked);
     jQuery(this).addClass('init-clicked');
-})
+});
+
+/* CubeWP Term Slider */
+function initTermSlider($scope, clicked) {
+    var sliders = $scope.find('.cubewp-term-slider');
+    if (!sliders.length) return;
+    sliders.each(function () {
+        var sliderElement = jQuery(this);
+
+        if (sliderElement.hasClass('slick-initialized')) {
+            if (clicked == 'clicked') {
+                sliderElement.slick("unslick");
+                console.log('have slider');
+                sliderElement.addClass('sliderElement');
+            } else {
+                return;
+
+            }
+
+        }
+
+        var isPrevSvg = sliderElement.data('is-prev-svg');
+        var isNextSvg = sliderElement.data('is-next-svg');
+
+        var prevArrowHtml = isPrevSvg ? sliderElement.attr('data-prev-arrow-svg') : sliderElement.data('prev-arrow');
+
+        var nextArrowHtml = isNextSvg ? sliderElement.attr('data-next-arrow-svg') : sliderElement.data('next-arrow');
+
+        var enable_wrapper = sliderElement.data('enable-wrapper');
+        var slidesToShow = sliderElement.data('slides-to-show');
+        var slidesToScroll = sliderElement.data('slides-to-scroll');
+        var slidesToShowTablet = sliderElement.data('slides-to-show-tablet');
+        var slidesToShowTabletPortrait = sliderElement.data('slides-show-tablet-portrait');
+        var slidesToShowMobile = sliderElement.data('slides-to-show-mobile');
+        var slidesToScrollTablet = sliderElement.data('slides-to-scroll-tablet');
+        var slidesToScrollTabletPortrait = sliderElement.data('slides-scroll-tablet-portrait');
+        var slidesToScrollMobile = sliderElement.data('slides-to-scroll-mobile');
+        var autoplay = sliderElement.data('autoplay') === true || sliderElement.data('autoplay') === 'true';
+        var autoplaySpeed = sliderElement.data('autoplay-speed');
+        var Speed = sliderElement.data('speed');
+        var infinite = sliderElement.data('infinite') === true || sliderElement.data('infinite') === 'true';
+        var fade_effect = sliderElement.data('fade') === true || sliderElement.data('fade') === 'true';
+        var variableWidth = sliderElement.data('variable-width') === true || sliderElement.data('variable-width') === 'true';
+        var prevArrowButton, nextArrowButton;
+
+        if (isPrevSvg) {
+            prevArrowButton = '<button type="button" class="slick-prev">' + prevArrowHtml + '</button>';
+        } else {
+            prevArrowButton = '<button type="button" class="slick-prev"><i class="' + prevArrowHtml + '"></i></button>';
+        }
+
+        if (isNextSvg) {
+            nextArrowButton = '<button type="button" class="slick-next">' + nextArrowHtml + '</button>';
+        } else {
+            nextArrowButton = '<button type="button" class="slick-next"><i class="' + nextArrowHtml + '"></i></button>';
+        }
+        var CustomArrows = sliderElement.data('custom-arrows') === true || sliderElement.data('custom-arrows') === 'true';
+        var CustomDots = sliderElement.data('custom-dots') === true || sliderElement.data('custom-dots') === 'true';
+        var enableProgressBar = sliderElement.data('enable-progress-bar') === true || sliderElement.data('enable-progress-bar') === 'true';
+        sliderElement.slick({
+            slidesToShow: slidesToShow,
+            slidesToScroll: slidesToScroll,
+            autoplay: autoplay,
+            autoplaySpeed: autoplaySpeed,
+            speed: Speed,
+            infinite: infinite,
+            fade: fade_effect,
+            variableWidth: variableWidth,
+            prevArrow: prevArrowButton,
+            nextArrow: nextArrowButton,
+            arrows: CustomArrows,
+            dots: CustomDots,
+            responsive: [{
+                    breakpoint: 1025,
+                    settings: {
+                        slidesToShow: slidesToShowTablet,
+                        slidesToScroll: slidesToScrollTablet
+                    }
+                },
+                {
+                    breakpoint: 768,
+                    settings: {
+                        slidesToShow: slidesToShowTabletPortrait,
+                        slidesToScroll: slidesToScrollTabletPortrait
+                    }
+                },
+                {
+                    breakpoint: 481,
+                    settings: {
+                        slidesToShow: slidesToShowMobile,
+                        slidesToScroll: slidesToScrollMobile
+                    }
+                }
+            ]
+        });
+
+        if (enableProgressBar == true) {
+            if (!sliderElement.next('.slick-progress').length) {
+                sliderElement.after(
+                    '<div class="slick-progress"><div class="slick-progress-bar"></div></div>'
+                );
+                var totalSlides = sliderElement.slick("getSlick").slideCount;
+                sliderElement.on("afterChange", function (event, slick, currentSlide) {
+                    var progress = ((currentSlide + 1) / totalSlides) * 100;
+                    sliderElement.next('.slick-progress').find('.slick-progress-bar').css("width", progress + "%");
+                });
+            }
+        }
+        if (enable_wrapper == true) {
+            sliderElement.append('<div class="slick-arrows-wrapper"></div>');
+            sliderElement.find(".slick-prev").appendTo(sliderElement.find(".slick-arrows-wrapper"));
+            sliderElement.find(".slick-dots").appendTo(sliderElement.find(".slick-arrows-wrapper"));
+            sliderElement.find(".slick-next").appendTo(sliderElement.find(".slick-arrows-wrapper"));
+        }
+    });
+    if (clicked == 'clicked') {
+        jQuery(document).trigger("term_slider_initialized", [$scope]);
+    }
+}
+(function ($) {
+    // Expose initTermSlider to a global object if needed outside Elementor's scope
+    if (typeof window.CubeWp === 'undefined') {
+        window.CubeWp = {};
+    }
+    window.CubeWp.initTermSlider = initTermSlider;
+
+    // Hook for Elementor frontend and editor
+    jQuery(window).on('elementor/frontend/init', function () {
+        elementorFrontend.hooks.addAction('frontend/element_ready/cubewp_taxonomy.default', initTermSlider);
+    });
+
+    // Initialize on document ready for frontend (non-Elementor contexts)
+    jQuery(document).ready(function () {
+        initTermSlider(jQuery(document.body));
+    });
+
+    /* CubeWP Post Cards Hover Effects */
+    window.addEventListener('elementor/frontend/init', () => {
+
+        class CubewpHoverHandler extends elementorModules.frontend.handlers.Base {
+
+            onInit() {
+                this.applyHoverStyles();
+            }
+
+            onElementChange(settingName) {
+                const hoverSettings = [
+                    'cwp_hover_animation_direction',
+                    'cwp_hover_translate_distance',
+                    'cwp_hover_transition_duration'
+                ];
+                if (hoverSettings.includes(settingName)) {
+                    this.applyHoverStyles();
+                }
+            }
+
+            applyHoverStyles() {
+                const settings = this.getElementSettings();
+                const direction = settings.cwp_hover_animation_direction || 'none';
+                const visiblity = settings.cwp_hover_visibility || 'default';
+
+                const $el = this.$element;
+                const elementId = this.getID();
+                const $card = $el.closest('.cwp-elementor-post-card, .cwp-elementor-term-card');
+
+                if (!$card.length) return;
+
+                // Remove previous bindings for this specific element only
+                $card.off(`.cubewpHover_${elementId}`);
+
+                if (direction === 'none') {
+                    $el.css({
+                        'transform': '',
+                        'opacity': '',
+                        'transition': ''
+                    });
+                    if (visiblity === 'show') {
+                        $card.on(`mouseenter.cubewpHover_${elementId}`, () => {
+                            $el.css({
+                                'display': 'flex',
+                            });
+                        });
+                        // Hover Out
+                        $card.on(`mouseleave.cubewpHover_${elementId}`, () => {
+                            $el.css({
+                                'display': 'none',
+                            });
+                        });
+                    } else if (visiblity === 'hide') {
+                        $card.on(`mouseenter.cubewpHover_${elementId}`, () => {
+                            $el.css({
+                                'display': 'none',
+                            });
+                        });
+                        // Hover Out
+                        $card.on(`mouseleave.cubewpHover_${elementId}`, () => {
+                            $el.css({
+                                'display': 'flex',
+                            });
+                        });
+                    }
+                    return;
+                }
+
+                const distance = settings.cwp_hover_translate_distance ?.size || 30;
+                const duration = settings.cwp_hover_transition_duration ?.size || 0.3;
+
+                let transform = '';
+                let opacity = '1';
+
+                switch (direction) {
+                    case 'top':
+                        transform = `translateY(-${distance}px)`;
+                        break;
+                    case 'bottom':
+                        transform = `translateY(${distance}px)`;
+                        break;
+                    case 'left':
+                        transform = `translateX(-${distance}px)`;
+                        break;
+                    case 'right':
+                        transform = `translateX(${distance}px)`;
+                        break;
+                    case 'fade':
+                        opacity = '0';
+                        break;
+                    case 'fadeout':
+                        opacity = '1';
+                        break;
+                }
+
+                // Apply base styles
+                $el.css({
+                    'transition': `all ${duration}s ease`,
+                    'transform': transform,
+                    'opacity': opacity
+                });
+
+                // Hover In (applies only for this element)
+                $card.on(`mouseenter.cubewpHover_${elementId}`, () => {
+                    if (direction === 'fadeout') {
+                        // Fade OUT on hover
+                        $el.css({
+                            'opacity': '0',
+                            'transform': 'none',
+                        });
+                    } else {
+                        // All other animations fade/slide IN
+                        $el.css({
+                            'transform': 'none',
+                            'opacity': '1'
+                        });
+                    }
+                });
+
+                // Hover Out
+                $card.on(`mouseleave.cubewpHover_${elementId}`, () => {
+                    if (direction === 'fadeout') {
+                        // Restore visibility when mouse leaves
+                        $el.css({
+                            'opacity': '1',
+                            'transform': transform,
+                        });
+                    } else {
+                        // Return to default (hidden or translated)
+                        $el.css({
+                            'transform': transform,
+                            'opacity': opacity
+                        });
+                    }
+                });
+            }
+        }
+
+        // Apply to container, button, and icon widgets
+        ['container', 'button.default', 'icon.default'].forEach(widget => {
+            elementorFrontend.hooks.addAction(`frontend/element_ready/${widget}`, ($scope) => {
+                elementorFrontend.elementsHandler.addHandler(CubewpHoverHandler, {
+                    $element: $scope
+                });
+            });
+        });
+    });
+
+    window.addEventListener('elementor/frontend/init', () => {
+        elementorFrontend.hooks.addAction('frontend/element_ready/container', function ($scope) {
+            if (elementorFrontend.isEditMode()) {
+                class ContainerHandler extends elementorModules.frontend.handlers.Base {
+                    onInit() {
+                        super.onInit();
+                        const settings = this.getElementSettings();
+                        const cwp_click_target_remove_css_controls = settings.cwp_click_target_remove_css_controls;
+                        const cwp_click_target_remove_css_transform = settings.cwp_click_target_remove_css_transform;
+                        const cwp_click_target_remove_css_transform_x = settings.cwp_click_target_remove_css_transform_x;
+                        const cwp_click_target_remove_css_transition = settings.cwp_click_target_remove_css_transition;
+                        if (cwp_click_target_remove_css_controls === 'hide') {
+                            $scope.css('display', 'none');
+                        } else if (cwp_click_target_remove_css_controls === 'show') {
+                            $scope.css('display', 'block');
+                        } else if (cwp_click_target_remove_css_controls === 'transform') {
+                            $scope.css('transform', 'translateX(' + cwp_click_target_remove_css_transform + 'px)');
+                            $scope.css('transform-x', 'translateY(' + cwp_click_target_remove_css_transform_x + 'px)');
+                            $scope.css('transition', 'transform ' + cwp_click_target_remove_css_transition + 'ms');
+                        }
+
+                    }
+                    onElementChange(settingName) {
+                        super.onElementChange ?.apply(this, arguments);
+                        const sliderSettings = [
+                            'cwp_click_target_remove_css_controls',
+                            'cwp_click_target_remove_css_transform', 'cwp_click_target_remove_css_transform_x', 'cwp_click_target_remove_css_transform_x'
+                        ];
+
+                        if (sliderSettings.includes(settingName)) {
+                            this.onInit();
+                        }
+                    }
+                }
+                elementorFrontend.elementsHandler.addHandler(ContainerHandler, {
+                    $element: $scope
+                });
+            }
+        });
+    });
+
+    jQuery(document).ready(function ($) {
+        jQuery(document).on('click', '.cwp-elementor-post-card, .cwp-elementor-term-card', function (event) {
+            $(this).find('.cwp-click-element[data-cwp-click-enabled="true"]').each(function () {
+                const clickable = $(this);
+                const targetMode = clickable.data('cwp-target-mode');
+                const applyCss = clickable.data('cwp-apply-css');
+                if (targetMode === 'parent' && applyCss) {
+                    clickable.attr('style', function (i, oldStyle) {
+                        return (oldStyle ? oldStyle + '; ' : '') + applyCss;
+                    });
+                }
+            });
+        });
+
+        jQuery(document).on('click', '.cwp-click-element[data-cwp-click-enabled="true"]', function (event) {
+            const clickable = $(this);
+            const targetMode = clickable.data('cwp-target-mode');
+            const applyCss = clickable.data('cwp-apply-css');
+            if (targetMode === 'current' && applyCss) {
+                clickable.attr('style', function (i, oldStyle) {
+                    return (oldStyle ? oldStyle + '; ' : '') + applyCss;
+                });
+            }
+        });
+
+        jQuery(document).on('click', '.cwp-click-element[data-cwp-click-enabled="true"]', function (event) {
+            const clickable = $(this);
+            const targetMode = clickable.data('cwp-target-class');
+
+
+            var $this_data = $('.cwp-click-element[data-cwp-apply-class="' + targetMode + '"]');
+            var $this_data_remove = $('.cwp-click-element[data-cwp-remove-class="' + targetMode + '"]');
+            if ($this_data.length > 0) {
+                const targetModes = $this_data.data('cwp-target-mode');
+                const dataID = $this_data.data('id');
+                const applyClass = $this_data.data('cwp-apply-class');
+                const applyCss = $this_data.data('cwp-apply-css');
+                if (targetModes === 'custom' && applyClass) {
+                    const card = $(this).closest('.cwp-elementor-post-card, .cwp-elementor-term-card');
+                    const element = card.find('.cwp-click-element[data-id="' + dataID + '"]');
+                    element.removeAttr('style');
+                    element.attr('style', applyCss);
+
+                }
+            }
+            if ($this_data_remove.length > 0) {
+                const targetModes = $this_data_remove.data('cwp-target-mode');
+                const dataID = $this_data_remove.data('id');
+                const removeClass = $this_data_remove.data('cwp-remove-class');
+                const removeCss = $this_data_remove.data('cwp-remove-css');
+                console.log('.cwp-click-element[data-id="' + dataID + '"]');
+                if (targetModes === 'custom' && removeClass && $this_data_remove.length > 0) {
+                    const card = $(this).closest('.cwp-elementor-post-card, .cwp-elementor-term-card');
+                    const element = card.find('.cwp-click-element[data-id="' + dataID + '"]');
+                    element.removeAttr('style');
+                    element.attr('style', removeCss);
+                }
+            }
+        })
+    });
+
+    //Grid/List Switcher
+    jQuery(document).on('click', '.cubewp-view-btn', function (e) {
+        e.preventDefault();
+
+        var $btn = jQuery(this);
+        var view = $btn.data('view');
+        var $wrapper = $btn.closest('.cubewp-view-switcher');
+
+        // Active button
+        $wrapper.find('.cubewp-view-btn').removeClass('active');
+        $btn.addClass('active');
+
+        // Apply view class to archive container
+        var $archive = jQuery('.cwp-search-result-output .cwp-grids-container');
+        $archive.removeClass('grid-view list-view')
+            .addClass(view + '-view ');
+    });
+
+})(jQuery);

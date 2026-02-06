@@ -47,7 +47,7 @@ class CubeWp_Admin_Repeater_Field extends CubeWp_Admin {
 					foreach ($args['sub_fields'] as $sub_field) {
 						$sub_field['custom_name'] = 'cwp_meta[' . $args['name'] . '][' . $sub_field['name'] . '][]';
 						$sub_field['value']       = isset($args['value'][$i][$sub_field['name']]) ? $args['value'][$i][$sub_field['name']] : '';
-						$sub_field['id']          = 'cwp_' . rand(123456789, 1111111111);
+						$sub_field['id']          = 'cwp_' . wp_rand(123456789, 1111111111);
 						$sub_field['wrap']        = true;
 						if ($sub_field['type'] == 'google_address') {
 							$sub_field['custom_name_lat'] = 'cwp_meta[' . $args['name'] . '][' . $sub_field['name'] . '_lat' . '][]';
@@ -93,11 +93,11 @@ class CubeWp_Admin_Repeater_Field extends CubeWp_Admin {
 	 * @since  1.0.0
 	 */
 	public function cwp_add_repeating_field() {
-		if ( !isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'cubewp-admin-nonce') ) {
+		if ( !isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'cubewp-admin-nonce') ) {
             wp_send_json( array( 'success' => 'false', 'msg' => esc_html__('Invalid nonce. You are not authorized to perform this action.', 'cubewp-framework') ) );
             wp_die();
         }
-		$field_id      = isset($_POST['id']) ? sanitize_text_field($_POST['id']) : '';
+		$field_id      = isset($_POST['id']) ? sanitize_text_field(wp_unslash($_POST['id'])) : '';
 		$field_options = get_field_options($field_id);
 		$field_of      = 'post';
 		if (empty($field_options) && count($field_options) == 0) {
@@ -124,7 +124,7 @@ class CubeWp_Admin_Repeater_Field extends CubeWp_Admin {
 				$sub_field_options['custom_name'] = 'cwp_meta[' . $field_options['name'] . '][' . $sub_field_options['name'] . '][]';
 				$sub_field_options['value']       = isset($sub_field_options['default_value']) ? $sub_field_options['default_value'] : '';
 
-				$sub_field_options['id']   = 'cwp_' . rand(123456789, 1111111111);
+				$sub_field_options['id']   = 'cwp_' . wp_rand(123456789, 1111111111);
 				$sub_field_options['wrap'] = true;
 				if ($sub_field_options['type'] == 'google_address') {
 					$sub_field_options['custom_name_lat'] = 'cwp_meta[' . $field_options['name'] . '][' . $sub_field_options['name'] . '_lat' . '][]';

@@ -30,7 +30,8 @@ class CubeWp_Saved{
      */
     public static function cubewp_saved_post_cookies(){
         // Load current favourite posts from cookie
-        $savePosts = (isset($_COOKIE['CWP_Saved'])) ? explode(',', (string) sanitize_text_field( $_COOKIE['CWP_Saved'] )) : array();
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only use of query vars to render notice; no state change performed.
+        $savePosts = (isset($_COOKIE['CWP_Saved'])) ? explode(',', (string) sanitize_text_field( wp_unslash($_COOKIE['CWP_Saved']) )) : array();
         $savePosts = array_map('absint', $savePosts); // Clean cookie input, it's user input!
         return $savePosts;
     }
@@ -42,11 +43,11 @@ class CubeWp_Saved{
      * @since  1.0.0
      */
     public static function cubewp_save_post(){
-        if ( !isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'cubewp-alert-nonce') ) {
+        if ( !isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'cubewp-alert-nonce') ) {
             wp_send_json( array( 'success' => 'false', 'msg' => esc_html__('Invalid nonce. You are not authorized to perform this action.', 'cubewp-framework') ) );
             wp_die();
         }
-        $post_id = isset($_POST['post-id']) ? sanitize_text_field($_POST['post-id']) : 0;
+        $post_id = isset($_POST['post-id']) ? sanitize_text_field(wp_unslash($_POST['post-id'])) : 0;
         if( isset($post_id) && $post_id > 0 ){
             $savePosts = self::cubewp_saved_post_cookies();
             
@@ -69,6 +70,7 @@ class CubeWp_Saved{
             wp_send_json(
                 array(
                     'type'        =>  'success',
+                    /* translators: %s: post type singular name. */
                     'msg'         =>  sprintf(__('Success! Your %s has been saved.', 'cubewp-framework'), get_post_type_object( get_post_type($post_id) )->labels->singular_name),
                     'text'        =>  sprintf(__('Saved', 'cubewp-framework'),get_post_type($post_id)),
                 )
@@ -83,11 +85,11 @@ class CubeWp_Saved{
      * @since  1.0.0
      */
     public static function cubewp_remove_saved_posts(){
-        if ( !isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'cubewp-alert-nonce') ) {
+        if ( !isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'cubewp-alert-nonce') ) {
             wp_send_json( array( 'success' => 'false', 'msg' => esc_html__('Invalid nonce. You are not authorized to perform this action.', 'cubewp-framework') ) );
             wp_die();
         }
-        $post_id = isset($_POST['post-id']) ? sanitize_text_field($_POST['post-id']) : 0;
+        $post_id = isset($_POST['post-id']) ? sanitize_text_field(wp_unslash($_POST['post-id'])) : 0;
         if( isset($post_id) && $post_id > 0 ){
             $savePosts = self::cubewp_saved_post_cookies();
 
@@ -119,6 +121,7 @@ class CubeWp_Saved{
             wp_send_json(
                 array(
                     'type'        =>  'success',
+                    /* translators: %s: post type singular name. */
                     'msg'         =>  sprintf(__('Success! Your %s has been removed from saved posts.', 'cubewp-framework'), get_post_type_object( get_post_type($post_id) )->labels->singular_name),
                     'text'        =>  sprintf(__('Save', 'cubewp-framework'), get_post_type($post_id)),
                 )
@@ -237,6 +240,7 @@ class CubeWp_Saved{
                                 <?php
                                 while($the_query->have_posts()): $the_query->the_post();
                                     $post_id=get_the_ID();
+                                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                                     echo CubeWp_frontend_grid_HTML($post_id, $col_class = 'cwp-col-12 cwp-col-md-6');
                                 endwhile;
                                 ?>
@@ -246,7 +250,7 @@ class CubeWp_Saved{
                         $grid_view_html = ob_get_contents();
                     ob_end_clean();
                 }
-                wp_reset_query();
+                wp_reset_postdata();
             }
             return $grid_view_html;
         }

@@ -48,7 +48,7 @@ class CubeWp_Tag_Password extends \Elementor\Core\DynamicTags\Tag {
 			return;
 		}
         $value = get_field_value( $field );
-		echo cubewp_core_data($value);
+		echo esc_html(cubewp_core_data($value));
 	}
     
 

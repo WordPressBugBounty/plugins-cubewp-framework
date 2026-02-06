@@ -62,7 +62,7 @@ class CubeWp_Loop_Builder
 				add_filter("cubewp/loop/builder/{$post_type}/default_style/markup", [$this, 'cubewp_default_post_card'], 10);
 			}
 		}
-		?>
+?>
 		<div class="cubewp-content">
 			<?php
 			self::cubewp_loop_builder_title_bar();
@@ -74,10 +74,11 @@ class CubeWp_Loop_Builder
 				?>
 			</section>
 		</div>
-		<?php
+	<?php
 	}
 
-	public static function get_loop_builder_data() {
+	public static function get_loop_builder_data()
+	{
 		if (is_null(self::$cubewp_loop_builder_data)) {
 			$form_data = CWP()->get_form('loop_builder');
 			self::$cubewp_loop_builder_data = is_array($form_data) ? $form_data : [];
@@ -126,11 +127,11 @@ class CubeWp_Loop_Builder
 	{
 	?>
 		<section id="cubewp-title-bar">
-			<h1><?php esc_html_e('Post Card Customizer', 'cubewp-frontend'); ?></h1>
+			<h1><?php esc_html_e('Post Card Customizer', 'cubewp-framework'); ?></h1>
 			<div class="shoftcode-area">
 				<div class="cwpform-shortcode"></div>
 				<button class="button-primary cwpform-get-shortcode">
-					<?php esc_html_e('Save Changes', 'cubewp-frontend'); ?>
+					<?php esc_html_e('Save Changes', 'cubewp-framework'); ?>
 				</button>
 			</div>
 		</section>
@@ -178,14 +179,14 @@ class CubeWp_Loop_Builder
 	private static function cubewp_loop_builder_switcher_options()
 	{
 		$post_types = self::$cubewp_style_options;
-		
+
 		if (! empty($post_types) && is_array($post_types)) {
 			$unset_switch_types = apply_filters('cubewp/exclude/content/switcher/loop_builder', array());
 			$unset_switch_types = !empty($unset_switch_types) ? $unset_switch_types : array();
 			$loop_style_switcher = '';
 		?>
 			<div class="cubewp-builder-sidebar-option">
-				<label for="cubewp-builder-cpt"><?php esc_html_e('Select Post Type', 'cubewp-frontend'); ?></label>
+				<label for="cubewp-builder-cpt"><?php esc_html_e('Select Post Type', 'cubewp-framework'); ?></label>
 				<select name="cubewp-builder-cpt" id="cubewp-builder-cpt"
 					class="cubewp-tab-switcher cubewp-tab-switcher-trigger-on-load cubewp-tab-switcher-have-child">
 					<?php
@@ -218,10 +219,10 @@ class CubeWp_Loop_Builder
 												$selected = "selected=selected";
 											}
 											$id = $post_type . '-' . $loop_style;
-											
+
 										?>
 											<option
-												data-switcher-target="cubewp-switcher-tab-<?php echo esc_attr($id); ?>" <?php echo $selected; ?>
+												data-switcher-target="cubewp-switcher-tab-<?php echo esc_attr($id); ?>" <?php echo esc_attr($selected); ?>
 												value="<?php echo esc_attr($loop_style); ?>"><?php echo esc_html($_label); ?>
 											</option>
 										<?php
@@ -238,10 +239,11 @@ class CubeWp_Loop_Builder
 				</select>
 			</div>
 		<?php
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			echo cubewp_core_data($loop_style_switcher);
 		} else {
 		?>
-			<h4><?php esc_html_e('No Post Type Found', 'cubewp-frontend'); ?></h4>
+			<h4><?php esc_html_e('No Post Type Found', 'cubewp-framework'); ?></h4>
 		<?php
 		}
 	}
@@ -250,22 +252,22 @@ class CubeWp_Loop_Builder
 	{
 		$wp_default_fields                = cubewp_post_type_default_fields($post_type);
 		$wp_default_fields['the_excerpt'] = array(
-			'label' => __("Excerpt", "cubewp-frontend"),
+			'label' => __("Excerpt", "cubewp-framework"),
 			'name'  => 'the_excerpt',
 			'type'  => 'wysiwyg_editor',
 		);
 		$wp_default_fields['post_link']   = array(
-			'label' => __("Post Link", "cubewp-frontend"),
+			'label' => __("Post Link", "cubewp-framework"),
 			'name'  => 'post_link',
 			'type'  => 'url',
 		);
 		$wp_default_fields['the_date']    = array(
-			'label' => __("Post Date", "cubewp-frontend"),
+			'label' => __("Post Date", "cubewp-framework"),
 			'name'  => 'the_date',
 			'type'  => 'date',
 		);
 		$wp_default_fields['post_class']    = array(
-			'label' => __("Post Class", "cubewp-frontend"),
+			'label' => __("Post Class", "cubewp-framework"),
 			'name'  => 'post_class',
 			'type'  => 'class',
 			'attributes'  => '{cwp-col-12__cwp-col-md-4}',
@@ -275,7 +277,7 @@ class CubeWp_Loop_Builder
 		?>
 			<div class="cubewp-builder-section cubewp-expand-container active-expanded">
 				<div class="cubewp-builder-section-header">
-					<h3><?php esc_html_e('WordPress Default Fields', 'cubewp-frontend'); ?></h3>
+					<h3><?php esc_html_e('WordPress Default Fields', 'cubewp-framework'); ?></h3>
 					<div class="cubewp-builder-section-actions">
 						<span
 							class="dashicons dashicons-arrow-down-alt2 cubewp-builder-section-action-expand cubewp-expand-trigger expanded"></span>
@@ -298,7 +300,7 @@ class CubeWp_Loop_Builder
 		?>
 			<div class="cubewp-builder-section cubewp-expand-container">
 				<div class="cubewp-builder-section-header">
-					<h3><?php esc_html_e('Taxonomies', 'cubewp-frontend'); ?></h3>
+					<h3><?php esc_html_e('Taxonomies', 'cubewp-framework'); ?></h3>
 					<div class="cubewp-builder-section-actions">
 						<span
 							class="dashicons dashicons-arrow-down-alt2 cubewp-builder-section-action-expand cubewp-expand-trigger"></span>
@@ -320,7 +322,7 @@ class CubeWp_Loop_Builder
 		?>
 		<div class="cubewp-builder-section cubewp-expand-container">
 			<div class="cubewp-builder-section-header">
-				<h3><?php esc_html_e('Author', 'cubewp-frontend'); ?></h3>
+				<h3><?php esc_html_e('Author', 'cubewp-framework'); ?></h3>
 				<div class="cubewp-builder-section-actions">
 					<span
 						class="dashicons dashicons-arrow-down-alt2 cubewp-builder-section-action-expand cubewp-expand-trigger"></span>
@@ -328,15 +330,15 @@ class CubeWp_Loop_Builder
 			</div>
 			<div class="cubewp-loop-builder-fields cubewp-expand-target">
 				<?php
-				self::cubewp_get_loop_shortcode_field('author_name', esc_html__('Author Name', 'cubewp-frontend'));
-				self::cubewp_get_loop_shortcode_field('author_link', esc_html__('Author Link', 'cubewp-frontend'));
-				self::cubewp_get_loop_shortcode_field('author_avatar', esc_html__('Author Avatar', 'cubewp-frontend'));
+				self::cubewp_get_loop_shortcode_field('author_name', esc_html__('Author Name', 'cubewp-framework'));
+				self::cubewp_get_loop_shortcode_field('author_link', esc_html__('Author Link', 'cubewp-framework'));
+				self::cubewp_get_loop_shortcode_field('author_avatar', esc_html__('Author Avatar', 'cubewp-framework'));
 				?>
 			</div>
 		</div>
 		<div class="cubewp-builder-section cubewp-expand-container">
 			<div class="cubewp-builder-section-header">
-				<h3><?php esc_html_e('CubeWP UI & Custom Tags', 'cubewp-frontend'); ?></h3>
+				<h3><?php esc_html_e('CubeWP UI & Custom Tags', 'cubewp-framework'); ?></h3>
 				<div class="cubewp-builder-section-actions">
 					<span
 						class="dashicons dashicons-arrow-down-alt2 cubewp-builder-section-action-expand cubewp-expand-trigger"></span>
@@ -345,7 +347,7 @@ class CubeWp_Loop_Builder
 			<div class="cubewp-loop-builder-fields cubewp-expand-target">
 				<?php
 				$cubewp_tags = array(
-					'post_save' => esc_html__('Add | Remove Save', 'cubewp-frontend')
+					'post_save' => esc_html__('Add | Remove Save', 'cubewp-framework')
 				);
 				$custom_tags = apply_filters("cubewp/post/cards/{$post_type}/custom/tags", []);
 				$all_tags = array_merge($cubewp_tags, $custom_tags);
@@ -419,7 +421,7 @@ class CubeWp_Loop_Builder
 		?>
 				<div class="cubewp-builder-section cubewp-expand-container">
 					<div class="cubewp-builder-section-header">
-						<h3><?php echo get_the_title($group_id); ?></h3>
+						<h3><?php echo esc_html(get_the_title($group_id)); ?></h3>
 						<?php
 						if (! empty($terms)) {
 							$separator = '';
@@ -436,7 +438,7 @@ class CubeWp_Loop_Builder
 								<span class="dashicons dashicons-editor-help"></span>
 								<div class="cwp-ctp-toolTips drop-left">
 									<div class="cwp-ctp-toolTip">
-										<h4><?php esc_html_e('Associated Taxonomies', 'cubewp-frontend'); ?></h4>
+										<h4><?php esc_html_e('Associated Taxonomies', 'cubewp-framework'); ?></h4>
 										<p class="cwp-ctp-tipContent"><?php echo esc_html($_terms); ?></p>
 									</div>
 								</div>
@@ -575,7 +577,7 @@ class CubeWp_Loop_Builder
 		<div class="cubewp-builder-container-topbar">
 			<button class="button form-settings-form">
 				<span class="dashicons dashicons-admin-generic"></span>
-				<?php esc_html_e('Loop Settings', 'cubewp-frontend'); ?>
+				<?php esc_html_e('Loop Settings', 'cubewp-framework'); ?>
 			</button>
 		</div>
 
@@ -584,11 +586,11 @@ class CubeWp_Loop_Builder
 			<div class="form-settings">
 				<div class="cwpform-settings">
 					<div class="cwpform-setting-label">
-						<h2><?php esc_html_e('Loop Settings', 'cubewp-frontend'); ?></h2>
+						<h2><?php esc_html_e('Loop Settings', 'cubewp-framework'); ?></h2>
 					</div>
 					<div class="cwpform-setting-fields">
 						<div class="cwpform-setting-field" style="display: none;">
-							<label><?php esc_html_e('Loop Container Classes', 'cubewp-frontend'); ?></label>
+							<label><?php esc_html_e('Loop Container Classes', 'cubewp-framework'); ?></label>
 							<?php
 							$input_attrs = array(
 								'class'       => 'form-field',
@@ -596,11 +598,12 @@ class CubeWp_Loop_Builder
 								'value'       => $loop_container_class,
 								'extra_attrs' => 'data-name="loop-container-class"',
 							);
+							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 							echo cwp_render_text_input($input_attrs);
 							?>
 						</div>
 						<div class="cwpform-setting-field">
-							<label><?php esc_html_e('Select post for preview', 'cubewp-frontend'); ?></label>
+							<label><?php esc_html_e('Select post for preview', 'cubewp-framework'); ?></label>
 							<?php
 							$args = array(
 								'post_type'      => $post_type,
@@ -626,9 +629,10 @@ class CubeWp_Loop_Builder
 								'options'     => $posts,
 								'extra_attrs' => 'data-name="preview-postid"',
 							);
+							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 							echo cwp_render_dropdown_input($input_attrs);
 							?>
-							<h4><?php esc_html_e('Make this Post-Card primary for this Post-Type', 'cubewp-frontend'); ?></h4> &nbsp;
+							<h4><?php esc_html_e('Make this Post-Card primary for this Post-Type', 'cubewp-framework'); ?></h4> &nbsp;
 							<?php
 							$input_attrs = array(
 								'name'        => 'loop-is-primary',
@@ -636,6 +640,7 @@ class CubeWp_Loop_Builder
 								'value'       => $loop_is_primary,
 								'extra_attrs' => 'data-name="loop-is-primary"',
 							);
+							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 							echo cwp_render_switch_input($input_attrs);
 							?>
 						</div>
@@ -647,10 +652,11 @@ class CubeWp_Loop_Builder
 				<div class="cubewp-builder-section cubewp-expand-container">
 					<div class="cubewp-loop-preview"></div>
 					<style>
-						<?php echo cubewp_core_data(stripslashes($loop_layout_css)); ?>
+						<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						echo cubewp_core_data(stripslashes($loop_layout_css)); ?>
 					</style>
 					<div class="cubewp-builder-section-header">
-						<h3><?php esc_html_e('Edit Post Card Layout', 'cubewp-frontend'); ?></h3>
+						<h3><?php esc_html_e('Edit Post Card Layout', 'cubewp-framework'); ?></h3>
 						<div class="cubewp-builder-section-actions">
 							<span class="dashicons dashicons-arrow-down-alt2 cubewp-builder-section-action-expand cubewp-expand-trigger expanded"></span>
 						</div>
@@ -672,6 +678,7 @@ class CubeWp_Loop_Builder
 									'extra_attrs'       =>  'data-name="loop-layout-html" data-editor="cubewp-loop-builder-' . $post_type . '-' . $style . '-html-editor" data-mode="html" data-theme="monokai"',
 									'rows'              =>  50,
 								);
+								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 								echo cwp_render_textarea_input($field_args);
 								?>
 							</div>
@@ -681,7 +688,7 @@ class CubeWp_Loop_Builder
 
 				<div class="cubewp-builder-section cubewp-expand-container">
 					<div class="cubewp-builder-section-header">
-						<h3><?php esc_html_e('Layout CSS', 'cubewp-frontend'); ?></h3>
+						<h3><?php esc_html_e('Layout CSS', 'cubewp-framework'); ?></h3>
 						<div class="cubewp-builder-section-actions">
 							<span class="dashicons dashicons-arrow-down-alt2 cubewp-builder-section-action-expand cubewp-expand-trigger expanded"></span>
 						</div>
@@ -703,6 +710,7 @@ class CubeWp_Loop_Builder
 									'extra_attrs'       =>  'data-name="loop-layout-css" data-editor="cubewp-loop-builder-' . $post_type . '-' . $style . '-css-editor" data-mode="css" data-theme="monokai"',
 									'rows'              =>  50,
 								);
+								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 								echo cwp_render_textarea_input($field_argss);
 								?>
 							</div>
@@ -734,21 +742,22 @@ class CubeWp_Loop_Builder
 			),
 		);
 		foreach ($hidden_fields as $field) {
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			echo cwp_render_hidden_input($field);
 		}
 	}
 
 	public static function cubewp_process_post_card_preview()
 	{
-		if (! wp_verify_nonce($_POST['security_nonce'], "cubewp-admin-nonce")) {
+		if (!isset($_POST['security_nonce']) || ! wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['security_nonce'])), "cubewp-admin-nonce")) {
 			wp_send_json_error(array(
 				'msg' => esc_html__('Sorry! Security Verification Failed.', 'cubewp-framework'),
 			), 404);
 		}
 		if (isset($_POST['html']) && !empty($_POST['html'])) {
 
-			$postID = isset($_POST['post_id']) && !empty($_POST['post_id']) ? $_POST['post_id'] : 1;
-			$loop_layout_html =   $_POST['html'];
+			$postID = isset($_POST['post_id']) && !empty($_POST['post_id']) ? intval(wp_unslash($_POST['post_id'])) : 1;
+			$loop_layout_html = $_POST['html'];// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$string = stripslashes($loop_layout_html);
 			$string = cubewp_process_post_card($string, $postID);
 		} else {
@@ -786,7 +795,7 @@ class CubeWp_Loop_Builder
 			}
 
 			$combinedArray = array_merge($existingArray, $file_content);
-
+			/* phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_export */
 			$combinedArrayCode = '<?php' . PHP_EOL . 'return ' . var_export($combinedArray, true) . ';' . PHP_EOL . '?>';
 
 			if (file_put_contents($filePath, $combinedArrayCode) === false) {
@@ -800,205 +809,202 @@ class CubeWp_Loop_Builder
 	public static function cubewp_default_post_card($content)
 	{
 		return array(
-			'html' => <<<HTML
-						<div  [loop_post_class{cwp-col-12__cwp-col-md-4}] >
-							<div class="cwp-post">
-								<div class="cwp-post-thumbnail">
-									<a href=" [loop_post_link] ">
-										<img src=" [loop_featured_image] " alt="">
-									</a>
-								
-									<div class="cwp-archive-save">
-										<div class="cwp-single-save-btns cwp-single-widget">
-										[loop_post_save] 
-										</div>
-									</div>
-								</div>
-								<div class="cwp-post-content-container">
-									<div class="cwp-post-content">
-										<h4><a href=" [loop_post_link] "> [loop_the_title] </a>
-										</h4>
-										[loop_the_content] 
-									</div>
-									<ul class="cwp-post-terms">
-										<li>
-											<a href=" [loop_property_type_tax_link] "> [loop_property_type] </a>
-										</li>
-									</ul>        
-								</div>
-							</div>
-						</div>
-						HTML,
-			'css' => <<<HTML
-					/*----Grid View-----*/
-					.cwp-post {
-						background: #ffffff;
-						border: 1px solid #e0e0e0;
-						border-radius: 5px;
-						filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.102218));
-						margin: 10px 0px;
-						overflow: hidden;
-						transition: 300ms;
-					}
+			'html' => '
+<div  [loop_post_class{cwp-col-12__cwp-col-md-4}] >
+	<div class="cwp-post">
+		<div class="cwp-post-thumbnail">
+			<a href=" [loop_post_link] ">
+				<img src=" [loop_featured_image] " alt="">
+			</a>
+		
+			<div class="cwp-archive-save">
+				<div class="cwp-single-save-btns cwp-single-widget">
+				[loop_post_save] 
+				</div>
+			</div>
+		</div>
+		<div class="cwp-post-content-container">
+			<div class="cwp-post-content">
+				<h4><a href=" [loop_post_link] "> [loop_the_title] </a>
+				</h4>
+				[loop_the_content] 
+			</div>
+			<ul class="cwp-post-terms">
+				<li>
+					<a href=" [loop_property_type_tax_link] "> [loop_property_type] </a>
+				</li>
+			</ul>        
+		</div>
+	</div>
+</div>',
+			'css' => '/*----Grid View-----*/
+.cwp-post {
+	background: #ffffff;
+	border: 1px solid #e0e0e0;
+	border-radius: 5px;
+	filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.102218));
+	margin: 10px 0px;
+	overflow: hidden;
+	transition: 300ms;
+}
 
-					.cwp-post:hover {
-						filter: none;
-					}
+.cwp-post:hover {
+	filter: none;
+}
 
-					.cwp-post-thumbnail {
-						height: 220px;
-						width: 100%;
-						position: relative;
-					}
+.cwp-post-thumbnail {
+	height: 220px;
+	width: 100%;
+	position: relative;
+}
 
-					.cwp-post .cwp-post-thumbnail img {
-						height: 100%;
-						object-fit: cover;
-						transition: 300ms;
-						width: 100%;
-					}
+.cwp-post .cwp-post-thumbnail img {
+	height: 100%;
+	object-fit: cover;
+	transition: 300ms;
+	width: 100%;
+}
 
-					/*-------List View------*/
-					.list-view .cwp-col-12 {
-						width: 100% !important;
-					}
+/*-------List View------*/
+.list-view .cwp-col-12 {
+	width: 100% !important;
+}
 
-					.list-view .cwp-post {
-						align-items: flex-start;
-						display: flex;
-						flex-wrap: wrap;
-						justify-content: flex-start;
-						position: relative;
-					}
+.list-view .cwp-post {
+	align-items: flex-start;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-start;
+	position: relative;
+}
 
-					.list-view .cwp-post-thumbnail {
-						width: 30%;
-						min-height: 160px;
-						height: 185px;
-					}
+.list-view .cwp-post-thumbnail {
+	width: 30%;
+	min-height: 160px;
+	height: 185px;
+}
 
-					.list-view .cwp-post-content-container {
-						width: 70%;
-					}
+.list-view .cwp-post-content-container {
+	width: 70%;
+}
 
-					.list-view .cwp-post-content {
-						padding: 30px 20px;
-					}
+.list-view .cwp-post-content {
+	padding: 30px 20px;
+}
 
-					.list-view .cwp-post-content h4 {
-						overflow: hidden;
-						text-overflow: ellipsis;
-						white-space: nowrap;
-						width: 100%;
-					}
+.list-view .cwp-post-content h4 {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	width: 100%;
+}
 
-					.list-view ul.cwp-post-terms {
-						padding: 20px 20px 0 20px;
-					}
+.list-view ul.cwp-post-terms {
+	padding: 20px 20px 0 20px;
+}
 
-					.cwp-promoted-post {
-						border: 1px solid #ddbb2a;
-						border-radius: 4px;
-						color: #ddbb2a;
-						cursor: default;
-						display: inline-block;
-						font-size: 10px;
-						line-height: 1;
-						padding: 2px 5px;
-						position: relative;
-						top: -2px;
-					}
+.cwp-promoted-post {
+	border: 1px solid #ddbb2a;
+	border-radius: 4px;
+	color: #ddbb2a;
+	cursor: default;
+	display: inline-block;
+	font-size: 10px;
+	line-height: 1;
+	padding: 2px 5px;
+	position: relative;
+	top: -2px;
+}
 
-					.cwp-post-content {
-						padding: 15px;
-					}
+.cwp-post-content {
+	padding: 15px;
+}
 
-					.cwp-post-content h4 {
-						font-size: 20px;
-						font-weight: bold;
-						line-height: 1.3;
-						margin: 0 0 5px 0;
-						text-overflow: ellipsis;
-						overflow: hidden;
-						white-space: nowrap;
-					}
+.cwp-post-content h4 {
+	font-size: 20px;
+	font-weight: bold;
+	line-height: 1.3;
+	margin: 0 0 5px 0;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
 
-					.cwp-post-content p {
-						font-size: 14px;
-						line-height: 1.3;
-						margin: 0 0 0 0;
-					}
+.cwp-post-content p {
+	font-size: 14px;
+	line-height: 1.3;
+	margin: 0 0 0 0;
+}
 
-					.cwp-post-terms {
-						align-items: center;
-						border-top: 1px solid #e0e0e0;
-						display: flex;
-						flex-wrap: wrap;
-						justify-content: flex-start;
-						line-height: 1.5;
-						list-style: none;
-						margin: 0;
-						padding: 15px 15px 10px;
-					}
+.cwp-post-terms {
+	align-items: center;
+	border-top: 1px solid #e0e0e0;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-start;
+	line-height: 1.5;
+	list-style: none;
+	margin: 0;
+	padding: 15px 15px 10px;
+}
 
-					.cwp-post-terms li {
-						margin: 0 5px 5px 0;
-					}
+.cwp-post-terms li {
+	margin: 0 5px 5px 0;
+}
 
-					.cwp-post-terms li a {
-						display: block;
-						font-size: 12px;
-						background: #f6f6f6;
-						max-width: 100px;
-						overflow: hidden;
-						text-overflow: ellipsis;
-						white-space: nowrap;
-						padding: 8px 8px;
-						font-weight: 500;
-						text-transform: capitalize;
-						border-radius: 210px;
-						line-height: 10px;
-						color: #343A40;
-					}
+.cwp-post-terms li a {
+	display: block;
+	font-size: 12px;
+	background: #f6f6f6;
+	max-width: 100px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	padding: 8px 8px;
+	font-weight: 500;
+	text-transform: capitalize;
+	border-radius: 210px;
+	line-height: 10px;
+	color: #343A40;
+}
 
-					/*---Save button-------*/
-					.cwp-archive-save {
-						position: absolute;
-						background: rgba(0, 0, 0, 0) linear-gradient(0deg, rgba(0, 0, 0, .9) 8%, rgba(0, 0, 0, 0) 94%) repeat scroll 0 0;
-						bottom: 0;
-						padding: 15px 14px 5px 14px;
-						width: 100%;
-					}
+/*---Save button-------*/
+.cwp-archive-save {
+	position: absolute;
+	background: rgba(0, 0, 0, 0) linear-gradient(0deg, rgba(0, 0, 0, .9) 8%, rgba(0, 0, 0, 0) 94%) repeat scroll 0 0;
+	bottom: 0;
+	padding: 15px 14px 5px 14px;
+	width: 100%;
+}
 
-					.cwp-archive-save .cwp-single-save-btns.cwp-single-widget {
-						float: right;
-						color: #fff;
-					}
+.cwp-archive-save .cwp-single-save-btns.cwp-single-widget {
+	float: right;
+	color: #fff;
+}
 
-					span.cwp-main.cwp-save-post svg:nth-child(2) {
-						display: none;
-					}
+span.cwp-main.cwp-save-post svg:nth-child(2) {
+	display: none;
+}
 
-					span.cwp-main.cwp-saved-post svg:first-child {
-						display: none;
-					}
+span.cwp-main.cwp-saved-post svg:first-child {
+	display: none;
+}
 
-					.cwp-single-save-btns.cwp-single-widget span.cwp-main,
-					.cwp-single-share-btn.cwp-single-widget span.cwp-main {
-						cursor: pointer;
-					}
-					.cwp-post-boosted {
-						padding: 1px 10px;
-						position: absolute;
-						top: 15px;
-						left: 15px;
-						background: #FFBB00;
-						border-radius: 12px;
-						color: #000000;
-						font-weight: 500;
-						font-size: 13px;
-					}
-					HTML,
+.cwp-single-save-btns.cwp-single-widget span.cwp-main,
+.cwp-single-share-btn.cwp-single-widget span.cwp-main {
+	cursor: pointer;
+}
+.cwp-post-boosted {
+	padding: 1px 10px;
+	position: absolute;
+	top: 15px;
+	left: 15px;
+	background: #FFBB00;
+	border-radius: 12px;
+	color: #000000;
+	font-weight: 500;
+	font-size: 13px;
+}',
 		);
 	}
 }

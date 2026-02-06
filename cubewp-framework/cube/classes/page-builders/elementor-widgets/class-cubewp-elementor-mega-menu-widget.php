@@ -68,10 +68,52 @@ class CubeWp_Elementor_Mega_Menu_Widget extends Widget_Base
 		}
 		return $menu_options;
 	}
+	/**
+     * Method cwp_elementor_builder_options_slug
+     *
+     * Returns options array keyed by slug instead of post ID
+     * specifically for Elementor controls that should store slugs.
+     *
+     * @param string $template_type
+     * @return array
+     */
+    private function cwp_elementor_builder_options_slug($template_type = '')
+    {
+        $args = array(
+            'post_type' => 'cubewp-tb',
+            'post_status' => 'publish',
+			'order' => 'ASC',
+            'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+                array(
+                    'key' => 'template_type',
+                    'value' => $template_type,
+                    'compare' => '='
+                ),
+                array(
+                    'key' => 'template_location',
+                    'value' => 'all',
+                    'compare' => '='
+                )
+            ),
+            'fields' => 'ids'
+        );
+
+        $existing_posts = new WP_Query($args);
+        $options = [];
+        if ($existing_posts->have_posts()) {
+            foreach ($existing_posts->posts as $existing_post_id) {
+                $slug = get_post_field('post_name', $existing_post_id);
+                if (! empty($slug)) {
+                    $options[$slug] = get_the_title($existing_post_id);
+                }
+            }
+        }
+        return $options;
+    }
 
 	protected function register_controls()
 	{
-		$cubewp_megaID = CubeWp_Theme_Builder::cwp_elementor_builder_options('mega-menu');
+		$cubewp_megaID = $this->cwp_elementor_builder_options_slug('mega-menu');
 		$menu_options = $this->get_wordpress_menu_options();
 
 		$this->start_controls_section('cubewp_menu_setting_section', array(
@@ -357,7 +399,7 @@ class CubeWp_Elementor_Mega_Menu_Widget extends Widget_Base
 		$this->add_responsive_control(
 			'menu_item_margin',
 			[
-				'label' => esc_html__('Margin', 'value-pack'),
+				'label' => esc_html__('Margin', 'cubewp-framework'),
 				'type' => Controls_Manager::DIMENSIONS,
 				'selectors' => [
 					'{{WRAPPER}} .cubewp-mega-menu .cubewp-mega-menu-item' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
@@ -627,7 +669,7 @@ class CubeWp_Elementor_Mega_Menu_Widget extends Widget_Base
 			Group_Control_Box_Shadow::get_type(),
 			[
 				'name' => 'dropdown_box_shadow',
-				'exclude' => [
+				'exclude' => [// phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_exclude
 					'box_shadow_position',
 				],
 				'selector' => '{{WRAPPER}} .elementor-cubewp-mega-nav-menu,{{WRAPPER}} .elementor-cubewp-mega-nav-menu .menu-item-has-children .sub-menu',
@@ -775,7 +817,7 @@ class CubeWp_Elementor_Mega_Menu_Widget extends Widget_Base
 
 		if (!empty($settings['menu_items']) && is_array($settings['menu_items'])) {
 			foreach ($settings['menu_items'] as $index => $item) {
-				$random_id = rand(100000, 999999);
+				$random_id = wp_rand(100000, 999999);
 				$menu_visibility = isset($item['menu_visibility']) ? $item['menu_visibility'] : 'mega_menu';
 
 				// Mega Menu
@@ -801,7 +843,7 @@ class CubeWp_Elementor_Mega_Menu_Widget extends Widget_Base
 					$custom_target = !empty($item['custom_link_url']['is_external']) ? ' target="_blank"' : '';
 					$custom_nofollow = !empty($item['custom_link_url']['nofollow']) ? ' rel="nofollow"' : '';
 
-					echo '<a class="cubewp-mega-menu-item hover" href="' . $custom_link . '"' . $custom_target . $custom_nofollow . '>';
+					echo '<a class="cubewp-mega-menu-item hover" href="' . esc_url($custom_link) . '"' . esc_attr($custom_target) . esc_attr($custom_nofollow) . '>';
 					echo '<span>' . esc_html($item['menu_name']) . '</span>';
 
 					if (!empty($item['menu_icon']) && is_array($item['menu_icon']) && !empty($item['menu_icon']['value'])) {
@@ -833,6 +875,7 @@ class CubeWp_Elementor_Mega_Menu_Widget extends Widget_Base
 						if (!empty($menu_html)) {
 							echo '<div class="cubewp-mega-nav-menu-dropdown" id="' . esc_attr($random_id) . '">';
 							echo '<h3 class="container-back-slide" style="display:none;">' . esc_html($item['menu_name']) . '</h3>';
+							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 							echo $menu_html;
 							echo '</div>';
 						}
@@ -855,6 +898,30 @@ class CubeWp_Elementor_Mega_Menu_Widget extends Widget_Base
 
 	public function cubewp_mega_menu_template($tempID)
 	{
-		return	 CubeWp_Theme_Builder::do_cubewp_theme_builder('mega-menu', $tempID);
+		$resolved_id = 0;
+		if (is_numeric($tempID)) {
+			$resolved_id = intval($tempID);
+		} else {
+			$maybe_post = get_page_by_path($tempID, OBJECT, 'cubewp-tb');
+			if ($maybe_post && ! is_wp_error($maybe_post)) {
+				$resolved_id = (int) $maybe_post->ID;
+			} else {
+				// Fallback resolution by name query
+				$by_name = get_posts(array(
+					'post_type'      => 'cubewp-tb',
+					'name'           => $tempID,
+					'posts_per_page' => 1,
+					'fields'         => 'ids',
+				));
+				if (! empty($by_name)) {
+					$resolved_id = (int) $by_name[0];
+				}
+			}
+		}
+
+		if ($resolved_id > 0) {
+			return CubeWp_Theme_Builder::do_cubewp_theme_builder('mega-menu', $resolved_id);
+		}
+		return;
 	}
 }

@@ -571,6 +571,7 @@ ul.cwp-single-category-widget-inner {
 .cwp-single-save-btns.cwp-single-widget {
     position: relative;
     display: inline-block;
+    width: fit-content;
 }
 
 .cwp-single-save-btns.cwp-single-widget span.cwp-main,
@@ -613,6 +614,7 @@ ul.cwp-single-category-widget-inner {
     right: 0px;
     z-index: 999;
     padding: 10px 0;
+    display: none;
 }
 
 .cwp-single-share-btn.cwp-single-widget:hover .cwp-share-modal {
@@ -764,6 +766,98 @@ ul.cwp-single-category-widget-inner li p {
     transition: width 0.3s ease;
 }
 
+.slick-arrows-wrapper .slick-arrow {
+    position: unset !important;
+}
+
+.slick-arrows-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    z-index: 999;
+    width: 100%;
+}
+
+/* slider counts  */
+.slick-arrows-wrapper.slider-counts {
+    max-width: fit-content;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translatex(-50%);
+}
+
+.slick-arrows-wrapper.slider-counts .slick-next.slick-arrow {
+    border-left-width: 1px !important;
+}
+
+.slick-arrows-wrapper.slider-counts .slick-prev.slick-arrow {
+    border-right-width: 1px !important;
+}
+
+.slick-arrows-wrapper.slider-counts .slick-arrow {
+    border-width: 0 !important;
+}
+
+.slick-arrows-wrapper.slider-counts .slick-counts-data {
+    display: flex;
+}
+
+.slick-arrows-wrapper.slider-counts .slick-counter-text {
+    border-width: 0px !important;
+    border-bottom-width: 1px !important;
+    width: 100%;
+    text-align: center;
+}
+
+/* CubeWP Term Slider */
+/* vp term slider */
+.cwp-taxonomy-term>.elementor {
+    height: 100%;
+}
+
+.cwp-taxonomy-terms.cubewp-term-slider.slick-initialized {
+    display: flex !important;
+    width: 100% !important;
+}
+
+/* slider style */
+.cubewp-term-slider {
+    position: relative;
+}
+
+.cubewp-term-slider .slick-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    width: auto;
+    height: fit-content;
+    z-index: 999;
+}
+
+/* slick dots style */
+.cubewp-term-slider .slick-dots {
+    padding: 0;
+    margin: 0;
+    width: fit-content;
+    height: fit-content;
+}
+
+.cubewp-term-slider .slick-dots li {
+    list-style-type: none;
+    display: flex;
+    align-items: center;
+}
+
+.cubewp-term-slider .slick-dots li button {
+    padding: 0px;
+    border: none;
+    background: none;
+    font-size: 0px;
+    outline: none;
+}
+
 /* CubeWP Search Widget  */
 #cubewp_searchTabContent .tab-pane {
     display: none;
@@ -792,6 +886,10 @@ ul.cwp-single-category-widget-inner li p {
 .cwp-field-radio-container li {
     padding: 0;
     margin: 0 !important;
+}
+
+body .cwp-frontend-search-form .cubewp-field-container .cwp-field-container.cwp-search-field {
+    width: 100% !important;
 }
 
 .cubewp-search-element .cubewp-field-container .cwp-field-checkbox {
@@ -1425,4 +1523,860 @@ ul.cwp-single-category-widget-inner li p {
     .cubwp-menu-desktop.mobile {
         display: block !important;
     }
+}
+
+/* CubeWP Title Tag Styling */
+.cubewp-post-title-tag {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cubewp-post-title-tag.cubewp-clamp-1 {
+    -webkit-line-clamp: 1;
+}
+
+.cubewp-post-title-tag.cubewp-clamp-2 {
+    -webkit-line-clamp: 2;
+}
+
+.cubewp-post-title-tag.cubewp-clamp-3 {
+    -webkit-line-clamp: 3;
+}
+
+.cubewp-post-title-tag.cubewp-clamp-4 {
+    -webkit-line-clamp: 4;
+}
+
+.cubewp-post-title-tag.cubewp-clamp-5 {
+    -webkit-line-clamp: 5;
+}
+
+/* CubeWP Hover Effects for Elementor Post Cards */
+
+/* Base transition for all hover elements */
+.cwp-hover-element {
+    transition: all var(--cwp-hover-duration, 0.3s) ease !important;
+}
+
+/* ===================================
+   ANIMATION DIRECTIONS (Default State)
+   =================================== */
+
+/* Top to Bottom Animation */
+.cwp-elementor-post-card .cwp-hover-element[data-cwp-direction="top"],
+.cwp-elementor-term-card .cwp-hover-element[data-cwp-direction="top"] {
+    transform: translateY(calc(-1 * var(--cwp-hover-distance, 30px))) !important;
+}
+
+/* Bottom to Top Animation */
+.cwp-elementor-post-card .cwp-hover-element[data-cwp-direction="bottom"],
+.cwp-elementor-term-card .cwp-hover-element[data-cwp-direction="bottom"] {
+    transform: translateY(var(--cwp-hover-distance, 30px)) !important;
+}
+
+/* Left to Right Animation */
+.cwp-elementor-post-card .cwp-hover-element[data-cwp-direction="left"],
+.cwp-elementor-term-card .cwp-hover-element[data-cwp-direction="left"] {
+    transform: translateX(calc(-1 * var(--cwp-hover-distance, 30px))) !important;
+}
+
+/* Right to Left Animation */
+.cwp-elementor-post-card .cwp-hover-element[data-cwp-direction="right"],
+.cwp-elementor-term-card .cwp-hover-element[data-cwp-direction="right"] {
+    transform: translateX(var(--cwp-hover-distance, 30px)) !important;
+}
+
+/* Fade In Animation */
+.cwp-elementor-post-card .cwp-hover-element[data-cwp-direction="fade"],
+.cwp-elementor-term-card .cwp-hover-element[data-cwp-direction="fade"] {
+    opacity: 0 !important;
+}
+
+/* Fade Out Animation (initially visible) */
+.cwp-elementor-post-card .cwp-hover-element[data-cwp-direction="fadeout"],
+.cwp-elementor-term-card .cwp-hover-element[data-cwp-direction="fadeout"] {
+    opacity: 1 !important;
+}
+
+/* ===================================
+   HOVER STATES FOR ANIMATIONS
+   =================================== */
+
+/* Reset transform and show on hover (for all except fadeout) */
+.cwp-elementor-post-card:hover .cwp-hover-element[data-cwp-direction="top"],
+.cwp-elementor-term-card:hover .cwp-hover-element[data-cwp-direction="top"],
+.cwp-elementor-term-card:hover .cwp-hover-element[data-cwp-direction="bottom"],
+.cwp-elementor-post-card:hover .cwp-hover-element[data-cwp-direction="bottom"],
+.cwp-elementor-post-card:hover .cwp-hover-element[data-cwp-direction="left"],
+.cwp-elementor-term-card:hover .cwp-hover-element[data-cwp-direction="left"],
+.cwp-elementor-post-card:hover .cwp-hover-element[data-cwp-direction="right"],
+.cwp-elementor-term-card:hover .cwp-hover-element[data-cwp-direction="right"],
+.cwp-elementor-post-card:hover .cwp-hover-element[data-cwp-direction="fade"],
+.cwp-elementor-term-card:hover .cwp-hover-element[data-cwp-direction="fade"] {
+    transform: none !important;
+    opacity: 1 !important;
+}
+
+/* Fade Out on hover */
+.cwp-elementor-post-card:hover .cwp-hover-element[data-cwp-direction="fadeout"],
+.cwp-elementor-term-card:hover .cwp-hover-element[data-cwp-direction="fadeout"] {
+    opacity: 0 !important;
+}
+
+/* ===================================
+   VISIBILITY CONTROLS
+   =================================== */
+
+/* Show on Hover (hidden by default) */
+.cwp-elementor-post-card .cwp-hover-element[data-cwp-visibility="show"],
+.cwp-elementor-term-card .cwp-hover-element[data-cwp-visibility="show"] {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transition: opacity 0.6s ease, visibility 0.6s ease !important;
+}
+
+/* For non-absolute elements, remove from flow when hidden */
+.cwp-elementor-post-card .cwp-hover-element[data-cwp-visibility="show"]:not([style*="position:absolute"]),
+.cwp-elementor-term-card .cwp-hover-element[data-cwp-visibility="show"]:not([style*="position:absolute"]) {
+    position: absolute !important;
+}
+
+/* Restore position on hover */
+.cwp-elementor-post-card:hover .cwp-hover-element[data-cwp-visibility="show"]:not([style*="position:absolute"]),
+.cwp-elementor-term-card:hover .cwp-hover-element[data-cwp-visibility="show"]:not([style*="position:absolute"]) {
+    position: relative !important;
+}
+
+/* Show on hover */
+.cwp-elementor-post-card:hover .cwp-hover-element[data-cwp-visibility="show"],
+.cwp-elementor-term-card:hover .cwp-hover-element[data-cwp-visibility="show"] {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    display: flex !important;
+}
+
+/* Hide on Hover (visible by default) */
+.cwp-elementor-post-card .cwp-hover-element[data-cwp-visibility="hide"],
+.cwp-elementor-term-card .cwp-hover-element[data-cwp-visibility="hide"] {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    transition: opacity 0.6s ease, visibility 0.6s ease !important;
+}
+
+/* Hide on hover */
+.cwp-elementor-post-card:hover .cwp-hover-element[data-cwp-visibility="hide"],
+.cwp-elementor-term-card:hover .cwp-hover-element[data-cwp-visibility="hide"] {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+/* Remove from flow when hidden on hover */
+.cwp-elementor-post-card:hover .cwp-hover-element[data-cwp-visibility="hide"]:not([style*="position:absolute"]),
+.cwp-elementor-term-card:hover .cwp-hover-element[data-cwp-visibility="hide"]:not([style*="position:absolute"]) {
+    position: absolute !important;
+}
+
+/* ===================================
+   BUTTON SPECIFIC HOVER EFFECTS
+   =================================== */
+
+/* Button background color on card hover - only when custom colors are set */
+.cwp-elementor-post-card:hover .cwp-hover-element[data-cwp-button-colors="true"] .elementor-button,
+.cwp-elementor-term-card:hover .cwp-hover-element[data-cwp-button-colors="true"] .elementor-button {
+    background-color: var(--cwp-hover-bg) !important;
+}
+
+/* Button text and icon color on card hover - only when custom colors are set */
+.cwp-elementor-post-card:hover .cwp-hover-element[data-cwp-button-colors="true"] .elementor-button,
+.cwp-elementor-term-card:hover .cwp-hover-element[data-cwp-button-colors="true"] .elementor-button,
+.cwp-elementor-post-card:hover .cwp-hover-element[data-cwp-button-colors="true"] .elementor-button .elementor-button-icon,
+.cwp-elementor-term-card:hover .cwp-hover-element[data-cwp-button-colors="true"] .elementor-button .elementor-button-icon {
+    color: var(--cwp-hover-color) !important;
+}
+
+/* Button icon SVG fill color on card hover - only when custom colors are set */
+.cwp-elementor-post-card:hover .cwp-hover-element[data-cwp-button-colors="true"] .elementor-button .elementor-button-icon svg path,
+.cwp-elementor-term-card:hover .cwp-hover-element[data-cwp-button-colors="true"] .elementor-button .elementor-button-icon svg path {
+    fill: var(--cwp-hover-color) !important;
+}
+
+/* ===================================
+   RESPONSIVE OPTIMIZATIONS
+   =================================== */
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    .cwp-hover-element {
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Performance optimization for mobile devices */
+@media (max-width: 768px) {
+    .cwp-hover-element {
+        will-change: transform, opacity;
+    }
+}
+
+/* Grid/List Switcher */
+.cubewp-view-switcher.cubewp-view-list {
+    display: none;
+}
+
+.cwp-grids-container.list-view .cubewp-view-switcher.cubewp-view-list {
+    display: block;
+}
+
+.cwp-grids-container.list-view .cubewp-view-switcher.cubewp-view-grid {
+    display: none !important;
+}
+
+.cwp-archive-map-wrapper.map-hidden .cwp-archive-content-map-map {
+    display: none;
+}
+
+
+/* archive map wrapper css */
+.elementor-widget-container .cwp-map-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+
+.elementor-widget-container .map-display-popup .cwp-archive-content-map-main .cwp-archive-content-map-inner {
+    margin: auto;
+    height: 100vh;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.elementor-widget-container .cwp-archive-content-map-main .cwp-archive-content-map-inner .cwp-archive-content-map {
+    width: 100%;
+}
+
+
+.elementor-widget-container .cwp-map-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    border-radius: 4px;
+}
+
+/* Toggle Mode Logic */
+.elementor-widget-container .map-display-toggle.map-hidden .cwp-archive-content-map {
+    display: none;
+}
+
+/* Popup Mode Logic */
+.elementor-widget-container .map-display-popup .cwp-archive-content-map-main {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100% !important;
+    z-index: 999999;
+    background: #fff;
+    display: none;
+}
+
+.elementor-widget-container .map-display-popup.map-active .cwp-archive-content-map-main {
+    display: block;
+}
+
+.elementor-widget-container .cwp-map-close-btn {
+    position: absolute;
+    z-index: 1000001;
+    cursor: pointer;
+    line-height: 1;
+    display: none;
+    transition: transform 0.2s ease;
+}
+
+.elementor-widget-container .cwp-map-close-btn:hover {
+    transform: scale(1.1);
+}
+
+.elementor-widget-container .map-display-popup.map-active .cwp-map-close-btn {
+    display: block;
+}
+
+body.cwp-map-open {
+    overflow: hidden;
+}
+
+
+/* CubeWP Filters Builder Widget */
+.cubewp-button-content-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+/* Custom Checkbox/Radio Styling */
+/* Only apply when custom styling is enabled via class */
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-checkbox-container .cwp-field-checkbox input[type="checkbox"],
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-radio-container .cwp-field-radio input[type="radio"],
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cubewp-filter-builder-field .cwp-field-checkbox-container .cwp-field-checkbox input[type="checkbox"],
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cubewp-filter-builder-field .cwp-field-radio-container .cwp-field-radio input[type="radio"],
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-search-field .cwp-field-checkbox-container .cwp-field-checkbox input[type="checkbox"],
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-search-field .cwp-field-radio-container .cwp-field-radio input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    pointer-events: none;
+}
+
+/* Add ::before pseudo-element to labels for custom checkbox/radio styling */
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-checkbox-container .cwp-field-checkbox label,
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-radio-container .cwp-field-radio label,
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cubewp-filter-builder-field .cwp-field-checkbox-container .cwp-field-checkbox label,
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cubewp-filter-builder-field .cwp-field-radio-container .cwp-field-radio label,
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-search-field .cwp-field-checkbox-container .cwp-field-checkbox label,
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-search-field .cwp-field-radio-container .cwp-field-radio label {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-checkbox-container .cwp-field-checkbox label::before,
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-radio-container .cwp-field-radio label::before,
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cubewp-filter-builder-field .cwp-field-checkbox-container .cwp-field-checkbox label::before,
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cubewp-filter-builder-field .cwp-field-radio-container .cwp-field-radio label::before,
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-search-field .cwp-field-checkbox-container .cwp-field-checkbox label::before,
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-search-field .cwp-field-radio-container .cwp-field-radio label::before {
+    content: "";
+    display: inline-block;
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+/* Radio buttons - make them circular */
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-radio-container .cwp-field-radio input[type="radio"]+label::before,
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cubewp-filter-builder-field .cwp-field-radio-container .cwp-field-radio input[type="radio"]+label::before,
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-search-field .cwp-field-radio-container .cwp-field-radio input[type="radio"]+label::before {
+    border-radius: 50%;
+}
+
+/* Checked state - checkbox checkmark */
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-checkbox-container .cwp-field-checkbox input[type="checkbox"]:checked+label::after,
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cubewp-filter-builder-field .cwp-field-checkbox-container .cwp-field-checkbox input[type="checkbox"]:checked+label::after,
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-search-field .cwp-field-checkbox-container .cwp-field-checkbox input[type="checkbox"]:checked+label::after {
+    position: absolute;
+    left: 3px;
+    top: 50%;
+    transform: translateY(-50%);
+    line-height: 1;
+    z-index: 1;
+}
+
+/* Checked state - radio button inner circle */
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-radio-container .cwp-field-radio input[type="radio"]:checked+label::after,
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cubewp-filter-builder-field .cwp-field-radio-container .cwp-field-radio input[type="radio"]:checked+label::after,
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-search-field .cwp-field-radio-container .cwp-field-radio input[type="radio"]:checked+label::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+}
+
+/* Default Checkbox/Radio Styling for Elementor Filter Builder */
+.elementor-widget-cubewp_search_filter_builder .cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-checkbox-container .cwp-field-checkbox input[type="checkbox"],
+.elementor-widget-cubewp_search_filter_builder .cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-radio-container .cwp-field-radio input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    pointer-events: none;
+}
+
+.elementor-widget-cubewp_search_filter_builder .cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-checkbox-container .cwp-field-checkbox label,
+.elementor-widget-cubewp_search_filter_builder .cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-radio-container .cwp-field-radio label {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    padding-left: 28px;
+    min-height: 20px;
+    line-height: 1.5;
+}
+
+.elementor-widget-cubewp_search_filter_builder .cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-checkbox-container .cwp-field-checkbox label::before,
+.elementor-widget-cubewp_search_filter_builder .cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-radio-container .cwp-field-radio label::before {
+    content: "";
+    display: inline-block;
+    position: absolute;
+    left: 0;
+    top: 50%;
+    font-family: "Font Awesome 5 Free";
+    transform: translateY(-50%);
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.elementor-widget-cubewp_search_filter_builder .cubewp-filter-builder-field-container {
+    width: 100% !important;
+}
+
+.elementor-widget-cubewp_search_filter_builder .cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-radio-container .cwp-field-radio label::before {
+    border-radius: 50%;
+}
+
+.elementor-widget-cubewp_search_filter_builder .cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-radio-container .cwp-field-radio input[type="radio"]:checked+label::after {
+    border-radius: 50%;
+    left: 4px;
+}
+
+.cubewp-filter-popup-content {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    max-width: 520px;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.18);
+    overflow: hidden;
+    z-index: 99999;
+    display: none;
+    animation: cwpPopupFade 0.25s ease-in-out;
+}
+
+.cubewp-popup-position-center {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: cwpFadeCenter 0.25s ease;
+    overflow: auto;
+}
+
+.cubewp-popup-position-top {
+    left: 50%;
+    transform: translateX(-50%);
+    animation: cwpSlideTop 0.3s ease;
+    width: 100%;
+    max-width: 100%;
+    z-index: 9999999999;
+    top: 0;
+    border-radius: unset;
+    max-height: 40vh;
+    overflow: auto;
+}
+
+.cubewp-popup-position-bottom {
+    bottom: 0;
+    animation: cwpSlideBottom 0.3s ease;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 100%;
+    z-index: 9999999999;
+    top: unset;
+    border-radius: unset;
+    max-height: 40vh;
+    overflow: auto;
+}
+
+.cubewp-popup-position-left {
+    top: 50%;
+    left: 20px;
+    transform: translateY(-50%);
+    animation: cwpSlideLeft 0.3s ease;
+    width: 400px;
+    height: 100vh;
+    z-index: 99999999999;
+    left: 0;
+    border-radius: 0;
+    overflow: auto;
+}
+
+.cubewp-popup-position-right {
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    animation: cwpSlideRight 0.3s ease;
+    width: 400px;
+    height: 100vh;
+    z-index: 99999999999;
+    border-radius: 0;
+    overflow: auto;
+    backdrop-filter: unset;
+    left: unset;
+}
+
+.cubewp-filter-popup-content.active {
+    display: block;
+}
+
+.cubewp-filter-popup-overlay {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    width: 100%;
+    height: 100%;
+    background-color: #0000002e;
+    left: 0;
+    top: 0;
+}
+
+.cubewp-filter-popup-overlay.active {
+    display: block;
+}
+
+@keyframes cwpFadeCenter {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -45%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}
+
+@keyframes cwpSlideTop {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+@keyframes cwpSlideBottom {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+@keyframes cwpSlideLeft {
+    from {
+        opacity: 0;
+        transform: translate(-20px, -50%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(0, -50%);
+    }
+}
+
+@keyframes cwpSlideRight {
+    from {
+        opacity: 0;
+        transform: translate(20px, -50%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(0, -50%);
+    }
+}
+
+@media (max-width: 576px) {
+    .cubewp-filter-popup-content {
+        max-width: calc(100% - 24px);
+        border-radius: 12px;
+    }
+
+    .cubewp-popup-position-left,
+    .cubewp-popup-position-right {
+        left: 50%;
+        right: auto;
+        top: auto;
+        bottom: 12px;
+        transform: translateX(-50%);
+    }
+}
+
+.cubewp-filter-popup-button .cubewp-button-content-wrapper.cubewp-icon-right {
+    flex-direction: row-reverse;
+}
+
+.cubewp-sorting-dropdown-menu {
+    display: none;
+}
+
+.cubewp-sorting-dropdown-menu.open {
+    display: flex !important;
+    flex-direction: column;
+    position: absolute;
+    z-index: 999999;
+    background-color: #fff;
+    left: 0;
+    top: 100%;
+    min-width: 200px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    list-style: none;
+    padding: 5px 0;
+    margin: 5px 0 0 0;
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.cubewp-business-hours-btn,
+.cubewp-sorting-dropdown-item {
+    cursor: pointer;
+}
+
+/* Default styling for sorting buttons */
+.cubewp-sorting-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.cubewp-sorting-buttons .cubewp-sorting-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+    color: #333;
+    font-size: 14px;
+    font-weight: 400;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    gap: 6px;
+}
+
+.cubewp-sorting-buttons .cubewp-sorting-btn:hover {
+    background-color: #f5f5f5;
+    border-color: #bbb;
+}
+
+.cubewp-sorting-buttons .cubewp-sorting-btn.active {
+    background-color: #0073aa;
+    color: #fff;
+    border-color: #0073aa;
+}
+
+.cubewp-sorting-buttons .cubewp-sorting-btn.active:hover {
+    background-color: #005a87;
+    border-color: #005a87;
+}
+
+.cubewp-sorting-buttons .cubewp-sorting-btn-icon {
+    display: inline-flex;
+    align-items: center;
+    font-size: 16px;
+}
+
+.cubewp-sorting-buttons .cubewp-sorting-btn-text {
+    display: inline-block;
+}
+
+/* Default styling for dropdown toggle button */
+.cubewp-sorting-dropdown-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+    color: #333;
+    font-size: 14px;
+    font-weight: 400;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    gap: 8px;
+}
+
+.cubewp-sorting-dropdown-toggle:hover {
+    background-color: #f5f5f5;
+    border-color: #bbb;
+}
+
+.cubewp-sorting-dropdown-toggle .cubewp-sorting-dropdown-icon {
+    display: inline-flex;
+    align-items: center;
+    font-size: 16px;
+}
+
+.cubewp-sorting-dropdown-toggle .cubewp-sorting-dropdown-text {
+    flex: 1;
+    text-align: left;
+}
+
+.cubewp-sorting-dropdown-toggle .cubewp-sorting-dropdown-arrow {
+    font-size: 12px;
+    transition: transform 0.3s ease;
+}
+
+.cubewp-sorting-dropdown-menu.open+.cubewp-sorting-dropdown-toggle .cubewp-sorting-dropdown-arrow,
+.cubewp-sorting-dropdown:has(.cubewp-sorting-dropdown-menu.open) .cubewp-sorting-dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.cubewp-filter-builder-reset-button-button {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+/**
+ * CubeWP Keyword Suggestions Styles
+ */
+
+.cubewp-keyword-suggestions-container {
+    position: absolute;
+    z-index: 1000;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-top: 2px;
+
+    min-width: 100%;
+}
+
+.cubewp-keyword-suggestions-list {
+    list-style: none;
+    margin: 0;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 0;
+}
+
+.cubewp-keyword-suggestion-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    position: relative;
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+.cubewp-keyword-suggestion-item:hover {
+    background-color: #f5f5f5;
+}
+
+.cubewp-keyword-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.cubewp-keyword-suggestion-item .suggestion-name {
+    font-weight: 500;
+    color: #333;
+}
+
+.cubewp-keyword-suggestion-item .suggestion-type {
+    font-size: 12px;
+    color: #999;
+    background: #f0f0f0;
+    float: right;
+    position: absolute;
+    right: 18px;
+    padding: 2px 8px;
+    border-radius: 3px;
+}
+
+.cubewp-keyword-suggestion-item.suggestion-post {
+    cursor: pointer;
+}
+
+.cubewp-keyword-suggestion-item.suggestion-post:hover {
+    background: #e6f7ff;
+}
+
+.cubewp-keyword-suggestion-item.suggestion-post .suggestion-type {
+    background: #e6f7ff;
+    color: #0066cc;
+}
+
+.cubewp-keyword-suggestion-item.suggestion-term {
+    cursor: pointer;
+}
+
+.cubewp-keyword-suggestion-item.suggestion-term:hover {
+    background: #f0f7ff;
+}
+
+.cubewp-keyword-suggestion-item.suggestion-term .suggestion-type {
+    background: #f0f0f0;
+    color: #666;
+}
+
+.cubewp-suggestions-loading {
+    padding: 15px;
+    text-align: center;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #0073aa;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Removed selected terms display - now using hidden fields only */
+
+/* Position relative for container */
+.cwp-field-container:has(input[name="s"]),
+.cubewp-filter-builder-field-container:has(input[name="s"]) {
+    position: relative;
+}
+
+/* Ensure input field container is relative */
+.cwp-field-container input[name="s"],
+.cubewp-filter-builder-field-container input[name="s"] {
+    position: relative;
 }

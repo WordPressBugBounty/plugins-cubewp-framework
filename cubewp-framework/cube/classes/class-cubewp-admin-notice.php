@@ -79,7 +79,7 @@ class CubeWp_Admin_Notice {
 		$notice_ui .= '<p>' . cubewp_core_data( $this->message ) . '</p>';
 		$notice_ui .= '</div>';
 
-		print( $notice_ui );
+		echo wp_kses_post( $notice_ui );
 	}
 
 	/**
@@ -175,14 +175,16 @@ class CubeWp_Admin_Notice {
 	 * @since  1.0.0
 	 */
 	private static function cubewp_remove_notices_permanently() {
+		/* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
 		if ( isset( $_GET['cubewp-remove-notice-permanently'] ) && ! empty( $_GET['cubewp-remove-notice-permanently'] ) ) {
 		   $permanently_removed_notices = get_option( 'permanently_removed_notices' );
 		   $permanently_removed_notices = ! empty( $permanently_removed_notices ) && is_array( $permanently_removed_notices ) ? $permanently_removed_notices : array();
-		   $permanently_removed_notices[] = sanitize_text_field( $_GET['cubewp-remove-notice-permanently'] );
+		   /* phpcs:ignore WordPress.Security.NonceVerification.Recommended */
+		   $permanently_removed_notices[] = sanitize_text_field( wp_unslash($_GET['cubewp-remove-notice-permanently'] ));
 		   update_option( 'permanently_removed_notices', $permanently_removed_notices );
 		   $current_url = cubewp_get_current_url();
 		   $current_url = remove_query_arg( 'cubewp-remove-notice-permanently', $current_url );
-		   wp_redirect( esc_url( $current_url ) );
+		   wp_safe_redirect( $current_url );
 		   exit;
 		}
 	}
@@ -201,13 +203,24 @@ class CubeWp_Admin_Notice {
 			'wordpress' => [
 				'version' => CubeWp_Load::$wp_req_version,
 				'i18n'    => [
-					'requirements' => sprintf( __( 'CubeWP requires WordPress version %1$s or higher. You are using version %2$s. Please upgrade WordPress to use CubeWP.', 'cubewp-framework' ), CubeWp_Load::$wp_req_version, $GLOBALS['wp_version'] ),
+					'requirements' => sprintf(
+						/* translators: 1: Required WordPress version, 2: Current WordPress version */
+						__( 'CubeWP requires WordPress version %1$s or higher. You are using version %2$s. Please upgrade WordPress to use CubeWP.', 'cubewp-framework' ),
+						CubeWp_Load::$wp_req_version,
+						$GLOBALS['wp_version']
+					),
 				],
 			],
-			'php'       => [
+			'php' => [
 				'version' => CubeWp_Load::$php_req_version,
 				'i18n'    => [
-					'requirements' => sprintf( __( 'CubeWP requires PHP version %1$s or higher. You are using version %2$s. Please <a href="%3$s">upgrade PHP</a> to use CubeWP.', 'cubewp-framework' ), CubeWp_Load::$php_req_version, PHP_VERSION, 'https://wordpress.org/support/upgrade-php/' ),
+					'requirements' => sprintf(
+						/* translators: 1: Required PHP version, 2: Current PHP version, 3: URL to upgrade PHP */
+						__( 'CubeWP requires PHP version %1$s or higher. You are using version %2$s. Please <a href="%3$s">upgrade PHP</a> to use CubeWP.', 'cubewp-framework' ),
+						CubeWp_Load::$php_req_version,
+						PHP_VERSION,
+						'https://wordpress.org/support/upgrade-php/'
+					),
 				],
 			],
 		];

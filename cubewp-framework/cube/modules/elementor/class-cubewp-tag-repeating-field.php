@@ -51,12 +51,16 @@ class CubeWp_Tag_Repeating_Field extends \Elementor\Core\DynamicTags\Tag {
 		$label = isset( $options["label"] ) ? $options["label"] : "";
 		$field_type = isset($options['type']) ? $options['type'] : '';
         $value = get_field_value( $field );
+		if( empty( $value ) ) {
+			return;
+		}
 		$args = array(
 			'type'                  =>    $field_type,
 			'container_class'       =>    "",
 			'value'                 =>    $value,
 			'label'                 =>    $label,
 		);
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo CubeWp_Single_Page_Trait::field_repeating_field($args);
 	}
     

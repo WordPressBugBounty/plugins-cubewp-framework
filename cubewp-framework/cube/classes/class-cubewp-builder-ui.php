@@ -152,7 +152,7 @@ trait CubeWp_Builder_Ui
 		$groups = cwp_get_groups_by_post_type($post_type);
 		if (isset($groups) && !empty($groups) && count($groups) > 0) {
 			foreach ($groups as $group) {
-				$widgets_ui .= '<div id="group-' . rand(000000, 999999) . '" class="cubewp-builder-section cubewp-expand-container">';
+				$widgets_ui .= '<div id="group-' . wp_rand(000000, 999999) . '" class="cubewp-builder-section cubewp-expand-container">';
 				$widgets_ui .= '<div class="cubewp-builder-section-header">';
 				$widgets_ui .= '<h3>' . esc_html(get_the_title($group)) . '</h3>';
 				$widgets_ui .= '<a href="https://cubewp.com/cubewp-frontend-pro/" target="_blank"><span class="cubewp-pro-tag">' . esc_html__("PRO", "cubewp-framework") . '</span></a>';
@@ -403,7 +403,7 @@ trait CubeWp_Builder_Ui
 		$options = self::$tab_options;
 		if (isset($options) && count($options) > 0) {
 			foreach ($options as $slug => $option) {
-				$output .= '<div id="type-' . esc_attr__($slug) . '" class="cubewp-type-container cubewp-switcher-tab-' . esc_attr__($slug) . ' cubewp-tab-switcher-target">';
+				$output .= '<div id="type-' . esc_attr($slug) . '" class="cubewp-type-container cubewp-switcher-tab-' . esc_attr($slug) . ' cubewp-tab-switcher-target">';
 				if (! $option["switcher"]) {
 					$output .= self::cubewp_builder_area_content($slug, $data);
 				} else {
@@ -412,7 +412,7 @@ trait CubeWp_Builder_Ui
 						foreach ($switcher["options"] as $id => $val) {
 							$data['content_switcher'] = $id;
 							$data_type = self::cubewp_check_switcher_type($id);
-							$output .= '<div id="plan-' . esc_attr__($id) . '" class="cubewp-plan-tab cubewp-switcher-tab-' . esc_attr__($id) . ' cubewp-tab-switcher-target" data-id="' . esc_attr__($id) . '" ' . $data_type . '>';
+							$output .= '<div id="plan-' . esc_attr($id) . '" class="cubewp-plan-tab cubewp-switcher-tab-' . esc_attr($id) . ' cubewp-tab-switcher-target" data-id="' . esc_attr($id) . '" ' . $data_type . '>';
 							$output .= self::cubewp_builder_area_content($slug, $data);
 							$output .= '</div>';
 						}
@@ -532,7 +532,7 @@ trait CubeWp_Builder_Ui
 		$options = self::$tab_options;
 		if (isset($options) && count($options) > 0) {
 			foreach ($options as $slug => $option) {
-				$output .= '<div id="type-' . esc_attr__($slug) . '" class="cubewp-type-container cubewp-switcher-tab-' . esc_attr__($slug) . ' cubewp-tab-switcher-target">';
+				$output .= '<div id="type-' . esc_attr($slug) . '" class="cubewp-type-container cubewp-switcher-tab-' . esc_attr($slug) . ' cubewp-tab-switcher-target">';
 				$output .= self::cubewp_builder_area_content($slug, $data);
 				$output .= '</div>';
 			}

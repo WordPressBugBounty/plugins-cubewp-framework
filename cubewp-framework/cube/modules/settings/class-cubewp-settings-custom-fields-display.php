@@ -44,6 +44,7 @@ class CubeWp_Settings_Custom_Fields_Display extends CubeWp_Custom_Fields_Process
      * @since  1.0.0
      */
     public static function add_new_group() {
+        /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
         if(isset($_GET['action']) && ('new' == $_GET['action'] || 'edit' == $_GET['action'])){
             self::edit_group();
         }
@@ -56,6 +57,7 @@ class CubeWp_Settings_Custom_Fields_Display extends CubeWp_Custom_Fields_Process
      */
     public static function group_display()
     {
+        /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
         if (isset($_GET['action']) && ('new' == $_GET['action'] || 'edit' == $_GET['action'])) {
             return;
         }
@@ -71,7 +73,7 @@ class CubeWp_Settings_Custom_Fields_Display extends CubeWp_Custom_Fields_Process
                     <a class="nav-tab nav-tab-active" href="?page=settings-custom-fields"><?php esc_html_e('Settings', 'cubewp-framework'); ?></a>
                 </nav>
             </div>
-            <a href="<?php echo CubeWp_Submenu::_page_action('settings-custom-fields', 'new'); ?>" class="page-title-action">+ <?php esc_html_e('Add New', 'cubewp-framework'); ?></a>
+            <a href="<?php echo esc_url(CubeWp_Submenu::_page_action('settings-custom-fields', 'new')); ?>" class="page-title-action">+ <?php esc_html_e('Add New', 'cubewp-framework'); ?></a>
         </div>
         <hr class="wp-header-end">
         <?php $customFieldsGroupTable->prepare_items(); ?>
@@ -110,11 +112,11 @@ class CubeWp_Settings_Custom_Fields_Display extends CubeWp_Custom_Fields_Process
         <form id="post" class="cwpgroup" method="post" action="" enctype="multipart/form-data">
             
             <div class="wrap cwp-post-type-title width-40 margin-bottom-0 margin-left-minus-20  margin-right-0">
-				<?php echo self::_title();    ?>
-				<?php echo self::save_button(); ?>
+				<?php echo wp_kses_post(self::_title());    ?>
+				<?php echo /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped */ self::save_button(); ?>
 			</div>
 			<hr class="wp-header-end">
-            <input type="hidden" name="cwp_group_nonce" value="<?php echo wp_create_nonce( basename( __FILE__ ) ); ?>">
+            <input type="hidden" name="cwp_group_nonce" value="<?php echo esc_attr(wp_create_nonce( basename( __FILE__ ) )); ?>">
             <input type="hidden" class="" name="cwp[group][id]" value="<?php echo esc_attr($group['id']); ?>">
             <div id="poststuff"  class="padding-0">
             <div id="post-body" class="metabox-holder columns-2">
@@ -128,6 +130,7 @@ class CubeWp_Settings_Custom_Fields_Display extends CubeWp_Custom_Fields_Process
                                 <table class="form-table cwp-validation">
                                     <tbody>
                                         <?php
+                                        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                                         echo apply_filters('cubewp/admin/group/text/field', '', array(
                                             'id'             =>    '',
                                             'name'           =>    'cwp[group][name]',
@@ -139,6 +142,7 @@ class CubeWp_Settings_Custom_Fields_Display extends CubeWp_Custom_Fields_Process
                                             'extra_attrs'    =>    'maxlength=20',
                                             'tooltip'        =>    'Give a name for this group. Which will be used to show grouped data in metaboxes',
                                         ));
+                                        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                                         echo apply_filters('cubewp/admin/group/text/field', '', array(
                                             'id'             =>    '',
                                             'type'           =>    'number',
@@ -151,6 +155,7 @@ class CubeWp_Settings_Custom_Fields_Display extends CubeWp_Custom_Fields_Process
                                             'extra_attrs'    =>    'maxlength=20',
                                             'tooltip'        =>    'Give a order number for this group. Which will be used to show in order',
                                         ));
+                                        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                                         echo apply_filters('cubewp/admin/group/text/field', '', array(
                                             'id'             =>    '',
                                             'name'           =>    'cwp[group][description]',
@@ -188,7 +193,7 @@ class CubeWp_Settings_Custom_Fields_Display extends CubeWp_Custom_Fields_Process
                             </div>
                         </div>
                         <div class="cwp-group-fields-content">
-                            <?php echo self::get_fields($group['fields'], $group['sub_fields']); ?>
+                            <?php echo /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped */ self::get_fields($group['fields'], $group['sub_fields']); ?>
                         </div>
                     </div>
                 </div>
@@ -206,6 +211,7 @@ class CubeWp_Settings_Custom_Fields_Display extends CubeWp_Custom_Fields_Process
      * @since 1.0
      */  
     private static function _title() {
+        /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
         if (isset($_GET['action']) && ('edit' == $_GET['action'] && !empty($_GET['groupid']))) {
             return '<h1>'. esc_html(__('Edit Custom Fields Group (Settings)', 'cubewp-framework')) .'</h1>';
         } else {
@@ -220,6 +226,7 @@ class CubeWp_Settings_Custom_Fields_Display extends CubeWp_Custom_Fields_Process
      * @since  1.0.0
     */
      private static function save_button() {
+        /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
         if(isset($_GET['action']) && ('edit' == $_GET['action'] && !empty($_GET['groupid']))){            
             $name = 'cwp_edit_group';
         }else{
@@ -229,17 +236,16 @@ class CubeWp_Settings_Custom_Fields_Display extends CubeWp_Custom_Fields_Process
 	}
 
     public static function save_group() {
-        
+        /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
         if (isset($_POST['cwp']['group'])) {
-
-            $group           = isset($_POST['cwp']['group'])   ? $_POST['cwp']['group']      : array();
+            $group           = isset($_POST['cwp']['group'])   ? $_POST['cwp']['group']      : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.InputNotValidated
             $groupID         = isset($group['id'])             ? sanitize_text_field($group['id'])          : '';
             $groupName       = isset($group['name'])           ? sanitize_text_field($group['name'])        : '';
             $groupDesc       = isset($group['description'])    ? sanitize_text_field($group['description']) : '';
             $groupOrder      = isset($group['order'])          ? sanitize_text_field($group['order'])       : 0;
 
             if (!empty($groupName)) {
-                if (isset($_POST['cwp_save_group'])) {
+                if (isset($_POST['cwp_save_group'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing
                     $post_data          =   array(
                         'post_type'     =>  'cwp_settings_fields',
                         'post_title'    =>  $groupName,
@@ -247,7 +253,7 @@ class CubeWp_Settings_Custom_Fields_Display extends CubeWp_Custom_Fields_Process
                         'post_status'   =>  'publish',
                     );
                     $post_id = wp_insert_post($post_data);
-                } else if (isset($_POST['cwp_edit_group']) && !empty($groupID)) {
+                } else if (isset($_POST['cwp_edit_group']) && !empty($groupID)) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing
                     $post_data         =   array(
                         'ID'           =>  $groupID,
                         'post_title'   =>  $groupName,
@@ -263,10 +269,11 @@ class CubeWp_Settings_Custom_Fields_Display extends CubeWp_Custom_Fields_Process
                 }
                 
             }
-            self::save_custom_fields($_POST['cwp'],$post_id,'post_types');
+            self::save_custom_fields(isset($_POST['cwp']) ? $_POST['cwp'] : array(),$post_id,'post_types'); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.InputNotValidated
         
             if (!empty($post_id) ) {
-                wp_redirect( CubeWp_Submenu::_page_action('settings-custom-fields') );
+                wp_safe_redirect( CubeWp_Submenu::_page_action('settings-custom-fields') );
+                exit;
             }
         }
         

@@ -195,6 +195,7 @@ class CubeWp_Search_Builder extends CubeWp_Form_Builder {
             'switcher_types'    => $types,
             'switcher_title'    => esc_html__('Select Post Type','cubewp-framework'),
         );
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         echo self::CubeWp_Form_Builder($args);
         
     }

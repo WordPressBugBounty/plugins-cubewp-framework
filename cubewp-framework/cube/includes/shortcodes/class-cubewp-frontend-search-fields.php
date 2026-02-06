@@ -74,15 +74,17 @@ class CubeWp_Frontend_Search_Fields {
      */
     public function cwp_search_form( $params = array() ) {
         
-        $output = '<div class="cwp-frontend-search-form '. esc_attr($this->form_container_class) .'">
+        $output = '<div class="cwp-frontend-form-container">
+        <div class="cwp-frontend-search-form '. esc_attr($this->form_container_class) .'">
             <form method="GET" id="'. esc_attr($this->form_id) .'" class="'. esc_attr($this->form_class) .'" action="'.esc_url(home_url('/')).'" class="cwp-search-form">
                 <input type="hidden" name="post_type" value="'. esc_attr($this->type) .'">
                 <input type="hidden" name="s" value="">';
         
-                $output .= $this->cwp_search_form_fields();
+                $fields_output = $this->cwp_search_form_fields();
+                $output .= is_string($fields_output) ? $fields_output : '';
    
                 $output .= '</form>
-        </div>';
+        </div></div>';
         
         $output = apply_filters('cubewp/frontend/search/form', $output, $params, $this->search_fields);
         

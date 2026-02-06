@@ -291,6 +291,7 @@ class CubeWp_Elementor_Search_Widget extends Widget_Base
                 $this->add_control(
                     'tabber_button_icon_' . $post_type_key,
                     [
+                        /* translators: %s: post type singular name. */
                         'label' => sprintf(esc_html__('%s Tab Icon', 'cubewp-framework'), $post_type_label),
                         'type' => Controls_Manager::ICONS,
                         'fa4compatibility' => 'icon',
@@ -575,6 +576,22 @@ class CubeWp_Elementor_Search_Widget extends Widget_Base
             ]
         );
 
+        $this->add_control(
+            'overflow_hidden',
+            [
+                'label' => esc_html__('Overflow Hidden', 'cubewp-framework'),
+                'type' => Controls_Manager::SWITCHER,
+                'label_on' => esc_html__('Yes', 'cubewp-framework'),
+                'label_off' => esc_html__('No', 'cubewp-framework'),
+                'return_value' => 'hidden',
+                'default' => '',
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-search-form' => 'overflow: {{VALUE}};',
+                ],
+                'description' => esc_html__('Enable to set overflow: hidden on the search form.', 'cubewp-framework'),
+            ]
+        );
+
         $this->add_group_control(
             \Elementor\Group_Control_Box_Shadow::get_type(),
             [
@@ -703,7 +720,7 @@ class CubeWp_Elementor_Search_Widget extends Widget_Base
         $this->start_controls_section(
             'input_style_section',
             [
-                'label' => esc_html__('Input Style', 'cubewp-framework'),
+                'label' => esc_html__('Input/Select Style', 'cubewp-framework'),
                 'tab' => \Elementor\Controls_Manager::TAB_STYLE,
             ]
         );
@@ -2065,6 +2082,537 @@ class CubeWp_Elementor_Search_Widget extends Widget_Base
         $this->end_controls_section();
 
 
+        // Select Arrow Icon Controls
+         $this->start_controls_section(
+            'google_address_field_icon',
+            [
+                'label' => esc_html__('Google Address Field Icon', 'cubewp-framework'),
+                'tab' => \Elementor\Controls_Manager::TAB_STYLE,
+            ]
+        );
+
+        // Icon Top position control
+        $this->add_responsive_control(
+            'google_address_icon_top',
+            [
+                'label' => esc_html__('Top', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', '%', 'em'],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-field-google-address-input-container svg.cwp-get-current-location' => 'top: {{SIZE}}{{UNIT}}; position: absolute;',
+                ],
+            ]
+        );
+
+        // Icon Left position control
+        $this->add_responsive_control(
+            'google_address_icon_left',
+            [
+                'label' => esc_html__('Left', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', '%', 'em'],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-field-google-address-input-container svg.cwp-get-current-location' => 'left: {{SIZE}}{{UNIT}}; position: absolute;',
+                ],
+            ]
+        );
+
+        // Icon Size (width and height)
+        $this->add_responsive_control(
+            'google_address_icon_size',
+            [
+                'label' => esc_html__('Size', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', 'em', 'rem'],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-field-google-address-input-container svg.cwp-get-current-location' => 'width: {{SIZE}}{{UNIT}}; height: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        // Icon Color (fill)
+        $this->add_control(
+            'google_address_icon_color',
+            [
+                'label' => esc_html__('Color', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-field-google-address-input-container svg.cwp-get-current-location' => 'fill: {{VALUE}}; color: {{VALUE}};',
+                    '{{WRAPPER}} .cwp-field-google-address-input-container svg.cwp-get-current-location path' => 'fill: {{VALUE}}; color: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->end_controls_section();
+
+
+        // Suggestions Taxonomies Controls
+        $this->start_controls_section(
+            'suggestions_taxonomies_section',
+            [
+                'label' => esc_html__('Keyword Suggestions', 'cubewp-framework'),
+                'tab' => \Elementor\Controls_Manager::TAB_STYLE,
+            ]
+        );
+
+        // === WRAPPER OPTIONS SEPARATOR ===
+        $this->add_control(
+            'cwp_suggestions_wrapper_options_heading',
+            [
+                'type' => \Elementor\Controls_Manager::HEADING,
+                'label' => esc_html__('Wrapper', 'cubewp-framework'),
+                'separator' => 'before',
+            ]
+        );
+
+        // Wrapper Background Color
+        $this->add_control(
+            'cwp_keyword_suggestions_wrapper_bg',
+            [
+                'label' => esc_html__('Background Color', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-keyword-suggestions-container' => 'background-color: {{VALUE}};', 
+                ],
+            ]
+        );
+
+        // Wrapper Padding
+        $this->add_responsive_control(
+            'cwp_keyword_suggestions_wrapper_padding',
+            [
+                'label' => esc_html__('Padding', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => [ 'px', 'em', '%' ],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-keyword-suggestions-container' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};', 
+                ],
+            ]
+        );
+
+        // Wrapper Border
+        $this->add_group_control(
+            \Elementor\Group_Control_Border::get_type(),
+            [
+                'name' => 'cwp_keyword_suggestions_wrapper_border',
+                'label' => esc_html__('Border', 'cubewp-framework'),
+                'selector' => '{{WRAPPER}} .cubewp-keyword-suggestions-container',
+            ]
+        );
+
+        // Wrapper Box Shadow
+        $this->add_group_control(
+            \Elementor\Group_Control_Box_Shadow::get_type(),
+            [
+                'name' => 'cwp_keyword_suggestions_wrapper_box_shadow',
+                'label' => esc_html__('Box Shadow', 'cubewp-framework'),
+                'selector' => '{{WRAPPER}} .cubewp-keyword-suggestions-container',
+            ]
+        );
+
+        // Wrapper Border Radius
+        $this->add_responsive_control(
+            'cwp_keyword_suggestions_wrapper_border_radius',
+            [
+                'label' => esc_html__('Border Radius', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => [ 'px', '%', 'em' ],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-keyword-suggestions-container' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};', 
+                ],
+            ]
+        );
+
+        // Wrapper Margin
+        $this->add_responsive_control(
+            'cwp_keyword_suggestions_wrapper_margin',
+            [
+                'label' => esc_html__('Margin', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => [ 'px', '%', 'em' ],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-keyword-suggestions-container' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};', 
+                ],
+            ]
+        );
+
+        // === ITEM OPTIONS SEPARATOR ===
+        $this->add_control(
+            'cwp_suggestions_item_options_heading',
+            [
+                'type' => \Elementor\Controls_Manager::HEADING,
+                'label' => esc_html__('Item', 'cubewp-framework'),
+                'separator' => 'before',
+            ]
+        );
+
+        // Tabs: Normal / Hover
+        $this->start_controls_tabs('cwp_keyword_suggestions_item_style_tabs');
+
+        // NORMAL TAB
+        $this->start_controls_tab(
+            'cwp_keyword_suggestions_item_tab_normal',
+            [
+                'label' => esc_html__('Normal', 'cubewp-framework'),
+            ]
+        );
+
+        $this->add_control(
+            'cwp_keyword_suggestions_item_bg',
+            [
+                'label' => esc_html__('Background Color', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-keyword-suggestion-item' => 'background-color: {{VALUE}};',
+                ],
+            ]
+        );
+        $this->add_control(
+            'cwp_keyword_suggestions_item_color',
+            [
+                'label' => esc_html__('Text Color', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-keyword-suggestion-item' => 'color: {{VALUE}};',
+                ],
+            ]
+        );
+        $this->add_responsive_control(
+            'cwp_keyword_suggestions_item_padding',
+            [
+                'label' => esc_html__('Padding', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => [ 'px', '%', 'em' ],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-keyword-suggestion-item' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+        $this->add_responsive_control(
+            'cwp_keyword_suggestions_item_margin',
+            [
+                'label' => esc_html__('Margin', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => [ 'px', '%', 'em' ],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-keyword-suggestion-item' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+        $this->add_group_control(
+            \Elementor\Group_Control_Typography::get_type(),
+            [
+                'name' => 'cwp_keyword_suggestions_item_typography',
+                'label' => esc_html__('Typography', 'cubewp-framework'),
+                'selector' => '{{WRAPPER}} .cubewp-keyword-suggestion-item',
+            ]
+        );
+        $this->add_group_control(
+            \Elementor\Group_Control_Box_Shadow::get_type(),
+            [
+                'name' => 'cwp_keyword_suggestions_item_box_shadow',
+                'label' => esc_html__('Box Shadow', 'cubewp-framework'),
+                'selector' => '{{WRAPPER}} .cubewp-keyword-suggestion-item',
+            ]
+        );
+        $this->add_group_control(
+            \Elementor\Group_Control_Border::get_type(),
+            [
+                'name' => 'cwp_keyword_suggestions_item_border',
+                'label' => esc_html__('Border', 'cubewp-framework'),
+                'selector' => '{{WRAPPER}} .cubewp-keyword-suggestion-item',
+            ]
+        );
+        $this->add_responsive_control(
+            'cwp_keyword_suggestions_item_border_radius',
+            [
+                'label' => esc_html__('Border Radius', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => [ 'px', '%', 'em' ],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-keyword-suggestion-item' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+        
+        // --- Name and Type custom controls remain at the end as in original ---
+        $this->add_control(
+            'cwp_name_options_heading',
+            [
+                'type' => \Elementor\Controls_Manager::HEADING,
+                'label' => esc_html__('Name & Type Styling', 'cubewp-framework'),
+                'separator' => 'before',
+            ]
+        );
+        // Name
+        $this->add_group_control(
+            \Elementor\Group_Control_Typography::get_type(),
+            [
+                'name' => 'cwp_keyword_suggestions_name_typography',
+                'selector' => '{{WRAPPER}} .cubewp-keyword-suggestion-item .suggestion-name',
+                'label' => esc_html__('Name Typography', 'cubewp-framework'),
+            ]
+        );
+        $this->add_control(
+            'cwp_keyword_suggestions_name_color',
+            [
+                'label' => esc_html__('Name Color', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-keyword-suggestion-item .suggestion-name' => 'color: {{VALUE}};',
+                ],
+            ]
+        );
+        // Type
+        $this->add_control(
+            'cwp_keyword_suggestions_type_show',
+            [
+                'label' => esc_html__('Type Show/Hide Mode', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::SELECT,
+                'options' => [
+                    'block' => esc_html__('Show', 'cubewp-framework'),
+                    'none' => esc_html__('Hide', 'cubewp-framework'),
+                ],
+                'default' => 'block',
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-keyword-suggestion-item .suggestion-type' => 'display: {{VALUE}};',
+                ],
+            ]
+        );
+        $this->add_group_control(
+            \Elementor\Group_Control_Typography::get_type(),
+            [
+                'name' => 'cwp_keyword_suggestions_type_typography',
+                'selector' => '{{WRAPPER}} .cubewp-keyword-suggestion-item .suggestion-type',
+                'label' => esc_html__('Type Typography', 'cubewp-framework'),
+                'condition' => [
+                    'cwp_keyword_suggestions_type_show' => 'block',
+                ],
+            ]
+        );
+        $this->add_control(
+            'cwp_keyword_suggestions_type_color',
+            [
+                'label' => esc_html__('Type Color', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-keyword-suggestion-item .suggestion-type' => 'color: {{VALUE}};',
+                ],
+                'condition' => [
+                    'cwp_keyword_suggestions_type_show' => 'block',
+                ],
+            ]
+        );
+        $this->add_control(
+            'cwp_keyword_suggestions_type_background_color',
+            [
+                'label' => esc_html__('Type Background Color', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-keyword-suggestion-item .suggestion-type' => 'background-color: {{VALUE}};',
+                ],
+                'condition' => [
+                    'cwp_keyword_suggestions_type_show' => 'block',
+                ],
+            ]
+        );
+        
+        $this->add_responsive_control(
+            'cwp_keyword_suggestions_thumbnail_show',
+            [
+                'label' => esc_html__('Image Show/Hide Mode', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::SELECT,
+                'options' => [
+                    'block' => esc_html__('Show', 'cubewp-framework'),
+                    'none' => esc_html__('Hide', 'cubewp-framework'),
+                ],
+                'default' => 'block',
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-keyword-suggestion-item .suggestion-thumbnail' => 'display: {{VALUE}};',
+                ],
+            ]
+        );
+        $this->add_responsive_control(
+            'cwp_keyword_suggestions_thumbnail_width',
+            [
+                'label' => esc_html__('Image Width', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::SLIDER,
+                'size_units' => [ 'px', '%' ],
+                'default' => [
+                    'unit' => 'px',
+                    'size' => 50,
+                ],
+                'range' => [
+                    'px' => [ 'min' => 20, 'max' => 200 ],
+                    '%' => [ 'min' => 5, 'max' => 100 ],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-keyword-suggestion-item .suggestion-thumbnail img' => 'width: {{SIZE}}{{UNIT}};',
+                ],
+                'condition' => [
+                    'cwp_keyword_suggestions_thumbnail_show' => 'block',
+                ],
+            ]
+        );
+        $this->add_responsive_control(
+            'cwp_keyword_suggestions_thumbnail_height',
+            [
+                'label' => esc_html__('Image Height', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::SLIDER,
+                'size_units' => [ 'px', '%' ],
+                'default' => [
+                    'unit' => 'px',
+                    'size' => 50,
+                ],
+                'range' => [
+                    'px' => [ 'min' => 20, 'max' => 200 ],
+                    '%' => [ 'min' => 5, 'max' => 100 ],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-keyword-suggestion-item .suggestion-thumbnail img' => 'height: {{SIZE}}{{UNIT}};',
+                ],
+                'condition' => [
+                    'cwp_keyword_suggestions_thumbnail_show' => 'block',
+                ],
+            ]
+        );
+        $this->add_control(
+            'cwp_keyword_suggestions_thumbnail_object_fit',
+            [
+                'label' => esc_html__('Image Object Fit', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::SELECT,
+                'default' => 'cover',
+                'options' => [
+                    'fill' => esc_html__('Fill', 'cubewp-framework'),
+                    'contain' => esc_html__('Contain', 'cubewp-framework'),
+                    'cover' => esc_html__('Cover', 'cubewp-framework'),
+                    'none' => esc_html__('None', 'cubewp-framework'),
+                    'scale-down' => esc_html__('Scale Down', 'cubewp-framework'),
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-keyword-suggestion-item .suggestion-thumbnail img' => 'object-fit: {{VALUE}};',
+                ],
+                'condition' => [
+                    'cwp_keyword_suggestions_thumbnail_show' => 'block',
+                ],
+            ]
+        );
+        $this->add_responsive_control(
+            'cwp_keyword_suggestions_thumbnail_border_radius',
+            [
+                'label' => esc_html__('Image Border Radius', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => [ 'px', '%', 'em' ],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-keyword-suggestion-item .suggestion-thumbnail img' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+                'condition' => [
+                    'cwp_keyword_suggestions_thumbnail_show' => 'block',
+                ],
+            ]
+        );
+        $this->add_responsive_control(
+            'cwp_keyword_suggestions_thumbnail_margin',
+            [
+                'label' => esc_html__('Image Margin', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => [ 'px', '%', 'em' ],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-keyword-suggestion-item .suggestion-thumbnail' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+                'condition' => [
+                    'cwp_keyword_suggestions_thumbnail_show' => 'block',
+                ],
+            ]
+        );
+        $this->add_group_control(
+            \Elementor\Group_Control_Box_Shadow::get_type(),
+            [
+                'name' => 'cwp_keyword_suggestions_thumbnail_box_shadow',
+                'label' => esc_html__('Image Box Shadow', 'cubewp-framework'),
+                'selector' => '{{WRAPPER}} .cubewp-keyword-suggestion-item .suggestion-thumbnail img',
+                'condition' => [
+                    'cwp_keyword_suggestions_thumbnail_show' => 'block',
+                ],
+            ]
+        );
+        $this->add_group_control(
+            \Elementor\Group_Control_Border::get_type(),
+            [
+                'name' => 'cwp_keyword_suggestions_thumbnail_border',
+                'label' => esc_html__('Image Border', 'cubewp-framework'),
+                'selector' => '{{WRAPPER}} .cubewp-keyword-suggestion-item .suggestion-thumbnail img',
+                'condition' => [
+                    'cwp_keyword_suggestions_thumbnail_show' => 'block',
+                ],
+            ]
+        );
+
+
+        $this->end_controls_tab(); // End Normal
+
+        // HOVER TAB
+        $this->start_controls_tab(
+            'cwp_keyword_suggestions_item_tab_hover',
+            [
+                'label' => esc_html__('Hover', 'cubewp-framework'),
+            ]
+        );
+
+        $this->add_control(
+            'cwp_keyword_suggestions_item_hover_bg',
+            [
+                'label' => esc_html__('Background Color', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-keyword-suggestion-item:hover' => 'background-color: {{VALUE}};',
+                ],
+            ]
+        );
+        $this->add_control(
+            'cwp_keyword_suggestions_item_hover_color',
+            [
+                'label' => esc_html__('Text Color', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-keyword-suggestion-item:hover' => 'color: {{VALUE}};',
+                ],
+            ]
+        );
+        $this->add_group_control(
+            \Elementor\Group_Control_Border::get_type(),
+            [
+                'name' => 'cwp_keyword_suggestions_item_hover_border',
+                'label' => esc_html__('Border', 'cubewp-framework'),
+                'selector' => '{{WRAPPER}} .cubewp-keyword-suggestion-item:hover',
+            ]
+        );
+        $this->add_group_control(
+            \Elementor\Group_Control_Box_Shadow::get_type(),
+            [
+                'name' => 'cwp_keyword_suggestions_item_hover_box_shadow',
+                'label' => esc_html__('Box Shadow', 'cubewp-framework'),
+                'selector' => '{{WRAPPER}} .cubewp-keyword-suggestion-item:hover',
+            ]
+        );
+        $this->add_responsive_control(
+            'cwp_keyword_suggestions_item_hover_border_radius',
+            [
+                'label' => esc_html__('Border Radius', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => [ 'px', '%', 'em' ],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-keyword-suggestion-item:hover' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->end_controls_tab(); // End Hover
+
+        $this->end_controls_tabs();
+
+       
+        $this->end_controls_section();
 
 
 
@@ -2101,16 +2649,118 @@ class CubeWp_Elementor_Search_Widget extends Widget_Base
                     $this->start_controls_section(
                         'field_' . $field_key . '_style_section',
                         [
-                            'label' =>  esc_html__($field_label . ' ( ' . $postType . ' Field Container)', 'cubewp-framework'),
+                            /* translators: %1$s: field label, %2$s: post type singular name. */
+                            'label' =>  sprintf( esc_html__( '%1$s ( %2$s Field Container)', 'cubewp-framework' ), $field_label, $postType ),
                             'tab' => \Elementor\Controls_Manager::TAB_STYLE,
                             'condition' => [
                                 'post_type' => $postType,
-                            ],
-                            // Add Elementor's 'heading_size' to reduce label size
+                            ], 
                             'heading_size' => 'h6',
                         ]
                     );
-
+                    $this->add_responsive_control(
+                        'field_' . $field_key . '_label_bg_color',
+                        [
+                            'label' => esc_html__('Label Background Color', 'cubewp-framework'),
+                            'type' => Controls_Manager::COLOR,
+                            'selectors' => [
+                                $selector . ' .cwp-field-container> label' => 'background-color: {{VALUE}};',
+                            ], 
+                        ]
+                    );
+                    $this->add_responsive_control(
+                        'field_' . $field_key . '_label_bg_padding',
+                        [
+                            'label' => esc_html__('Label Padding', 'cubewp-framework'),
+                            'type' => Controls_Manager::DIMENSIONS,
+                            'size_units' => ['px', '%', 'em'],
+                            'selectors' => [
+                                $selector . ' .cwp-field-container> label' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                            ], 
+                        ]
+                    );
+                    $this->add_responsive_control(
+                        'field_' . $field_key . '_label_bg_border_radius',
+                        [
+                            'label' => esc_html__('Label Border Radius', 'cubewp-framework'),
+                            'type' => Controls_Manager::DIMENSIONS,
+                            'size_units' => ['px', '%', 'em'],
+                            'selectors' => [
+                                $selector . ' .cwp-field-container> label' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                            ], 
+                        ]
+                    );
+                    $this->add_responsive_control(
+                        'field_' . $field_key . '_label_position',
+                        [
+                            'label' => esc_html__('Label Position', 'cubewp-framework'),
+                            'type' => Controls_Manager::SELECT,
+                            'options' => [
+                                'static' => esc_html__('Static', 'cubewp-framework'),
+                                'absolute' => esc_html__('Absolute', 'cubewp-framework'),
+                            ],
+                            'default' => 'static',
+                            'selectors' => [
+                                $selector . ' .cwp-field-container> label' => 'position: {{VALUE}};',
+                            ],
+                        ]
+                    );
+                    $this->add_responsive_control(
+                        'field_' . $field_key . '_label_z_index',
+                        [
+                            'label' => esc_html__('Label Z-Index', 'cubewp-framework'),
+                            'type' => Controls_Manager::NUMBER,
+                            'min' => 0,
+                            'max' => 9999,
+                            'step' => 1,
+                            'default' => 1,
+                            'selectors' => [
+                                $selector . ' .cwp-field-container> label' => 'z-index: {{VALUE}};',
+                            ],
+                            'condition' => [
+                                'field_' . $field_key . '_label_position' => 'absolute',
+                            ],
+                        ]
+                    );
+                    $this->add_responsive_control(
+                        'field_' . $field_key . '_label_position_top',
+                        [
+                            'label' => esc_html__('Label Position Top', 'cubewp-framework'),
+                            'type' => Controls_Manager::SLIDER,
+                            'size_units' => ['px', '%', 'em'],
+                            'selectors' => [
+                                $selector . ' .cwp-field-container> label' => 'top: {{SIZE}}{{UNIT}};',
+                            ],
+                            'condition' => [
+                                'field_' . $field_key . '_label_position' => 'absolute',
+                            ],
+                        ]
+                    );
+                    $this->add_responsive_control(
+                        'field_' . $field_key . '_label_position_left',
+                        [
+                            'label' => esc_html__('Label Position Left', 'cubewp-framework'),
+                            'type' => Controls_Manager::SLIDER,
+                            'size_units' => ['px', '%', 'em'],
+                            'selectors' => [
+                                $selector . ' .cwp-field-container> label' => 'left: {{SIZE}}{{UNIT}};',
+                            ],
+                            'condition' => [
+                                'field_' . $field_key . '_label_position' => 'absolute',
+                            ],
+                        ]
+                    ); 
+                    $this->add_responsive_control(
+                        'field_' . $field_key . '_input_padding',
+                        [
+                            'label' => esc_html__('Input/Select Padding', 'cubewp-framework'),
+                            'type' => Controls_Manager::DIMENSIONS,
+                            'size_units' => ['px', '%', 'vw'], 
+                            'selectors' => [
+                                $selector . ' select, ' . $selector . ' input' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}} !important; position: relative;',
+                            ], 
+                        ]
+                    );
                     $this->add_responsive_control(
                         'field_' . $field_key . '_width',
                         [
@@ -2122,7 +2772,7 @@ class CubeWp_Elementor_Search_Widget extends Widget_Base
                                 'unit' => '%',
                             ],
                             'selectors' => [
-                                $selector => 'width: {{SIZE}}{{UNIT}}; position: relative;',
+                                $selector => 'width: {{SIZE}}{{UNIT}} !important; position: relative;',
                                 '{{WRAPPER}} .cwp-field-container' => 'padding: 0;margin: 0;',
                             ],
                             'condition' => [
@@ -2383,6 +3033,9 @@ class CubeWp_Elementor_Search_Widget extends Widget_Base
                                     $selector . ' .field-icons i' => 'font-size: {{SIZE}}{{UNIT}}; width: {{SIZE}}{{UNIT}}; height: auto;',
                                     $selector . ' .field-icons svg' => 'width: {{SIZE}}{{UNIT}}; height: auto;',
                                 ],
+                                'condition' => [
+                                    'field_' . $field_key . '_icon[value]!' => '',
+                                ],
                             ]
                         );
 
@@ -2397,9 +3050,27 @@ class CubeWp_Elementor_Search_Widget extends Widget_Base
                                     $selector . ' .field-icons svg' => 'fill: {{VALUE}}; color: {{VALUE}};',
                                     $selector . ' .field-icons path' => 'fill: {{VALUE}}; color: {{VALUE}};',
                                 ],
+                                'condition' => [
+                                    'field_' . $field_key . '_icon[value]!' => '',
+                                ],
                             ]
                         );
 
+                        // Icon Position Left
+                        $this->add_responsive_control(
+                            'field_' . $field_key . '_icon_z-index',
+                            [
+                                'label' => esc_html__('Icon Z-Index', 'cubewp-framework'),
+                                'type' => Controls_Manager::NUMBER,
+                                'selectors' => [
+                                    $selector . ' .field-icons' => 'z-index: {{VALUE}};',
+                                ],
+                                'default' => 10,
+                                'condition' => [
+                                    'field_' . $field_key . '_icon[value]!' => '',
+                                ],
+                            ]
+                        );
                         // Icon Position Left
                         $this->add_responsive_control(
                             'field_' . $field_key . '_icon_left',
@@ -2413,6 +3084,9 @@ class CubeWp_Elementor_Search_Widget extends Widget_Base
                                 'default' => [
                                     'size' => 0,
                                     'unit' => 'px',
+                                ],
+                                'condition' => [
+                                    'field_' . $field_key . '_icon[value]!' => '',
                                 ],
                             ]
                         );
@@ -2429,6 +3103,9 @@ class CubeWp_Elementor_Search_Widget extends Widget_Base
                                 'default' => [
                                     'size' => 0,
                                     'unit' => 'px',
+                                ],
+                                'condition' => [
+                                    'field_' . $field_key . '_icon[value]!' => '',
                                 ],
                             ]
                         );
@@ -2795,6 +3472,7 @@ class CubeWp_Elementor_Search_Widget extends Widget_Base
             'settings' => $settings,
         );
 
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         echo apply_filters('cubewp_search_shortcode_output', '', $args);
     }
 }

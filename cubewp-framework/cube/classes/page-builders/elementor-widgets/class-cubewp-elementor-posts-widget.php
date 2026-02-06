@@ -114,6 +114,14 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			),
 			'default' => '3'
 		));
+		$this->add_control('ajax_base_posts', array(
+			'type'    => Controls_Manager::SWITCHER,
+			'label'   => esc_html__('Load via AJAX', 'cubewp-framework'),
+			'label_on' => esc_html__('Yes', 'cubewp-framework'),
+			'label_off' => esc_html__('No', 'cubewp-framework'),
+			'return_value' => 'yes',
+			'default' => 'no',
+		));
 		$this->add_control('load_more', array(
 			'type'      => Controls_Manager::SWITCHER,
 			'label'     => esc_html__('Load More Button', 'cubewp-framework'),
@@ -199,6 +207,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			'default' => '4',
 			'condition' => array(
 				'posts_per_row' => 'auto',
+				'ajax_base_posts' => 'no',
 			),
 		));
 
@@ -216,7 +225,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		$this->end_controls_section();
 
 		$this->start_controls_section('cubewp_posts_widget_additional_setting_section', array(
-			'label' => esc_html__('Filter By Meta / Custom Fields', 'cubewp-classifiad'),
+			'label' => esc_html__('Filter By Meta / Custom Fields', 'cubewp-framework'),
 			'tab'   => Controls_Manager::TAB_CONTENT,
 			'condition' => array(
 				'posts_by'  => array('all', 'taxonomy'),
@@ -230,11 +239,11 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 
 		$this->add_control('meta_relation', array(
 			'type'      => Controls_Manager::SELECT,
-			'label'     => esc_html__('Select Relation', 'cubewp-classifiad'),
+			'label'     => esc_html__('Select Relation', 'cubewp-framework'),
 			'description'   => esc_html__("e.g. If you have multiple custom field's conditions and you set relation OR then system will get result if one of these conditions will be true.", "cubewp-framework"),
 			'options'   => array(
-				'OR'  => esc_html__('OR', 'cubewp-classifiad'),
-				'AND'  => esc_html__("AND", 'cubewp-classifiad'),
+				'OR'  => esc_html__('OR', 'cubewp-framework'),
+				'AND'  => esc_html__("AND", 'cubewp-framework'),
 			),
 			'default'   => 'or',
 			'condition' => array(
@@ -244,11 +253,42 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 
 		$repeater = new Repeater();
 
+		// Get fields by type for options
+		$field_options = get_fields_by_type(array('number', 'text', 'checkbox', 'dropdown'));
+		// Add "custom" option at the beginning
+		$field_options = array('custom' => esc_html__('Custom Key', 'cubewp-framework')) + $field_options;
+
 		$repeater->add_control('meta_key', array(
 			'type'      => Controls_Manager::SELECT2,
 			'label'     => esc_html__('Select Custom Field', 'cubewp-framework'),
-			'options'   => get_fields_by_type(array('number', 'text', 'checkbox', 'dropdown')),
+			'options'   => $field_options,
 			'label_block' => true,
+		));
+
+		$repeater->add_control('custom_field_name', array(
+			'type'      => Controls_Manager::TEXT,
+			'label'     => esc_html__('Custom Field Name', 'cubewp-framework'),
+			'placeholder'   => esc_html__("e.g. my_custom_field", "cubewp-framework"),
+			'description'   => esc_html__("Enter the custom field name (meta key) to filter by.", "cubewp-framework"),
+			'label_block' => true,
+			'condition' => array(
+				'meta_key' => 'custom',
+			),
+		));
+
+		$repeater->add_control('meta_value_source', array(
+			'type'      => Controls_Manager::SELECT,
+			'label'     => esc_html__('Meta Value Source', 'cubewp-framework'),
+			'description'   => esc_html__("Select where to get the meta value from.", "cubewp-framework"),
+			'options'   => array(
+				'custom_value'  => esc_html__('Custom Value', 'cubewp-framework'),
+				'current_post_id'  => esc_html__('Current Post ID', 'cubewp-framework'),
+				'specific_user_id'  => esc_html__('Specific User ID', 'cubewp-framework'),
+			),
+			'default'   => 'custom_value',
+			'condition' => array(
+				'meta_key!'  => '',
+			),
 		));
 
 		$repeater->add_control('meta_value', array(
@@ -257,11 +297,15 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			'placeholder'   => esc_html__("e.g. APPLE", "cubewp-framework"),
 			'description'   => esc_html__("e.g. If custom field is BRAND NAME, you can set value as APPLE to get all those posts who set this meta.", "cubewp-framework"),
 			'label_block' => true,
+			'condition' => array(
+				'meta_key!'  => '',
+				'meta_value_source' => 'custom_value',
+			),
 		));
 
 		$repeater->add_control('meta_compare', array(
 			'type'      => Controls_Manager::SELECT,
-			'label'     => esc_html__('Select Operator to compare ', 'cubewp-classifiad'),
+			'label'     => esc_html__('Select Operator to compare ', 'cubewp-framework'),
 			'description'   => esc_html__("e.g. If going to select BETWEEN or NOT BETWEEN then add value like this [100, 200].", "cubewp-framework"),
 			'options'   => array(
 				'='  => esc_html__('Equal', 'cubewp-framework'),
@@ -282,12 +326,11 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			'default'   => 'LIKE',
 			'condition' => array(
 				'meta_key!'  => '',
-				'meta_value!' => '',
 			),
 		));
 
 		$this->add_control('filter_by_custom_fields', array(
-			'label'       => esc_html__('Add Conditions', 'cubewp-classifiad'),
+			'label'       => esc_html__('Add Conditions', 'cubewp-framework'),
 			'type'        => Controls_Manager::REPEATER,
 			'fields'      => $repeater->get_controls(),
 			'title_field' => '{{{ meta_key }}}',
@@ -324,7 +367,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			$this->add_control('posttype', array(
 				'type'        => Controls_Manager::SELECT2,
 				'multiple'    => true,
-				'label'       => esc_html__('Select Post Types', 'cubewp-classifiad'),
+				'label'       => esc_html__('Select Post Types', 'cubewp-framework'),
 				'description' => esc_html__('You can select one or multiple post types to show post cards.', 'cubewp-framework'),
 				'options'     => $post_types,
 				'default'     => array('post'),
@@ -341,7 +384,8 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		if (!empty(cubewp_post_card_styles($post_type))) {
 			$this->add_control($post_type . '_card_style', array(
 				'type'        => Controls_Manager::SELECT,
-				'label'       => esc_html__('Card Style for ' . self::get_post_type_name_by_slug($post_type), 'cubewp-framework'),
+				/* translators: %s: post type singular name. */
+				'label'       => sprintf( esc_html__( 'Card Style for %s', 'cubewp-framework' ), self::get_post_type_name_by_slug($post_type) ),
 				'options'     => cubewp_post_card_styles($post_type),
 				'default'     => 'default_style',
 				'condition'   => array(
@@ -357,12 +401,14 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		$post_types = self::$post_types;
 		if (is_array($post_types) && ! empty($post_types)) {
 			$options = array(
-				"all" => esc_html__("All"),
-				"taxonomy" => esc_html__("By Taxonomy"),
-				"post_ids" => esc_html__("By IDs"),
+				'all' => esc_html__('All', 'cubewp-framework'),
+				'taxonomy' => esc_html__('By Taxonomy', 'cubewp-framework'),
+				'post_ids' => esc_html__('By IDs', 'cubewp-framework'),
+				'related' => esc_html__('Related Posts', 'cubewp-framework'),
+				'nearby' => esc_html__('Nearby Posts', 'cubewp-framework'),
 			);
 			if (class_exists('CubeWp_Booster_Load')) {
-				$options['boosted'] = esc_html__("Boosted Only");
+				$options['boosted'] = esc_html__('Boosted Only', 'cubewp-framework');
 			}
 			$this->add_control('posts_by', array(
 				'type'    => Controls_Manager::SELECT,
@@ -376,6 +422,8 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			foreach ($post_types as $slug => $post_type) {
 				$this->add_taxonomy_controls($slug);
 				$this->add_posttype_controls($slug);
+				$this->add_related_posts_controls($slug);
+				$this->add_nearby_posts_controls($slug);
 			}
 		}
 	}
@@ -387,7 +435,8 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		if (is_array($taxonomies) && ! empty($taxonomies)) {
 			$this->add_control('taxonomy-' . $post_type, array(
 				'type'      => Controls_Manager::SELECT2,
-				'label'     => esc_html__('Select Terms for ' . self::get_post_type_name_by_slug($post_type), 'cubewp-framework'),
+				/* translators: %s: post type singular name. */
+				'label'     => sprintf( esc_html__( 'Select Terms for %s', 'cubewp-framework' ), self::get_post_type_name_by_slug($post_type) ),
 				'description' => esc_html__('Leave empty if you want to display all posts.', 'cubewp-framework'),
 				'options'   => self::get_terms_by_post_type($post_type),
 				'multiple'  => true,
@@ -411,6 +460,177 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 				'posttype' => $post_type
 			),
 			'label_block' => true,
+		));
+	}
+
+	private function add_related_posts_controls($post_type)
+	{
+		$taxonomies = get_object_taxonomies($post_type);
+		if (empty($taxonomies)) {
+			return;
+		}
+
+		// Source post selection
+		$this->add_control('related_source_post_' . $post_type, array(
+			'type'        => Controls_Manager::SELECT,
+			'label'       => sprintf(esc_html__('Source Post for %s', 'cubewp-framework'), self::get_post_type_name_by_slug($post_type)),
+			'description' => esc_html__('Select which post to use as the source for finding related posts.', 'cubewp-framework'),
+			'options'     => array(
+				'current'  => esc_html__('Current Post', 'cubewp-framework'),
+				'specific' => esc_html__('Specific Post', 'cubewp-framework'),
+			),
+			'default'     => 'current',
+			'condition'   => array(
+				'posts_by' => 'related',
+				'posttype' => $post_type,
+			),
+		));
+
+		$this->add_control('related_source_post_id_' . $post_type, array(
+			'type'        => Controls_Manager::NUMBER,
+			'label'       => sprintf(esc_html__('Source Post ID for %s', 'cubewp-framework'), self::get_post_type_name_by_slug($post_type)),
+			'description' => esc_html__('Enter the post ID to use as the source for finding related posts.', 'cubewp-framework'),
+			'default'     => '',
+			'min'         => 1,
+			'condition'   => array(
+				'posts_by' => 'related',
+				'posttype' => $post_type,
+				'related_source_post_' . $post_type => 'specific',
+			),
+		));
+
+		$repeater = new Repeater();
+
+		$taxonomy_options = array();
+		foreach ($taxonomies as $taxonomy) {
+			$taxonomy_obj = get_taxonomy($taxonomy);
+			if ($taxonomy_obj) {
+				$taxonomy_options[$taxonomy] = $taxonomy_obj->label;
+			}
+		}
+
+		$repeater->add_control('related_taxonomy', array(
+			'type'    => Controls_Manager::SELECT,
+			'label'   => esc_html__('Taxonomy', 'cubewp-framework'),
+			'options' => $taxonomy_options,
+			'default' => !empty($taxonomy_options) ? array_key_first($taxonomy_options) : '',
+		));
+
+		$this->add_control('related_posts_' . $post_type, array(
+			'type'        => Controls_Manager::REPEATER,
+			'label'       => sprintf(esc_html__('Related Posts Settings for %s', 'cubewp-framework'), self::get_post_type_name_by_slug($post_type)),
+			'fields'      => $repeater->get_controls(),
+			'default'     => array(),
+			'title_field' => '{{{ related_taxonomy }}}',
+			'condition'   => array(
+				'posts_by' => 'related',
+				'posttype' => $post_type,
+			),
+		));
+	}
+
+	private function add_nearby_posts_controls($post_type)
+	{
+		// Source post selection
+		$this->add_control('nearby_source_post_' . $post_type, array(
+			'type'        => Controls_Manager::SELECT,
+			'label'       => sprintf(esc_html__('Source Post for %s', 'cubewp-framework'), self::get_post_type_name_by_slug($post_type)),
+			'description' => esc_html__('Select which post to use as the source for finding nearby posts.', 'cubewp-framework'),
+			'options'     => array(
+				'current'  => esc_html__('Current Post', 'cubewp-framework'),
+				'specific' => esc_html__('Specific Post', 'cubewp-framework'),
+			),
+			'default'     => 'current',
+			'condition'   => array(
+				'posts_by' => 'nearby',
+				'posttype' => $post_type,
+			),
+		));
+
+		$this->add_control('nearby_source_post_id_' . $post_type, array(
+			'type'        => Controls_Manager::NUMBER,
+			'label'       => sprintf(esc_html__('Source Post ID for %s', 'cubewp-framework'), self::get_post_type_name_by_slug($post_type)),
+			'description' => esc_html__('Enter the post ID to use as the source for finding nearby posts.', 'cubewp-framework'),
+			'default'     => '',
+			'min'         => 1,
+			'condition'   => array(
+				'posts_by' => 'nearby',
+				'posttype' => $post_type,
+				'nearby_source_post_' . $post_type => 'specific',
+			),
+		));
+
+		// Get google address fields for this post type
+		$google_address_fields = self::get_google_address_fields($post_type);
+		
+		if (!empty($google_address_fields)) {
+			$this->add_control('nearby_address_field_' . $post_type, array(
+				'type'        => Controls_Manager::SELECT,
+				'label'       => sprintf(esc_html__('Address Field for %s', 'cubewp-framework'), self::get_post_type_name_by_slug($post_type)),
+				'description' => esc_html__('Select the address field to use for finding nearby posts.', 'cubewp-framework'),
+				'options'     => $google_address_fields,
+				'default'     => !empty($google_address_fields) ? array_key_first($google_address_fields) : '',
+				'condition'   => array(
+					'posts_by' => 'nearby',
+					'posttype' => $post_type,
+				),
+				'label_block' => true,
+			));
+		}
+
+		// Radius controls
+		$this->add_control('nearby_min_radius_' . $post_type, array(
+			'type'        => Controls_Manager::NUMBER,
+			'label'       => sprintf(esc_html__('Minimum Radius for %s', 'cubewp-framework'), self::get_post_type_name_by_slug($post_type)),
+			'description' => esc_html__('Minimum radius value.', 'cubewp-framework'),
+			'default'     => 1,
+			'min'         => 0,
+			'step'        => 0.1,
+			'condition'   => array(
+				'posts_by' => 'nearby',
+				'posttype' => $post_type,
+			),
+		));
+
+		$this->add_control('nearby_default_radius_' . $post_type, array(
+			'type'        => Controls_Manager::NUMBER,
+			'label'       => sprintf(esc_html__('Default Radius for %s', 'cubewp-framework'), self::get_post_type_name_by_slug($post_type)),
+			'description' => esc_html__('Default radius value to use for nearby posts search.', 'cubewp-framework'),
+			'default'     => 10,
+			'min'         => 0,
+			'step'        => 0.1,
+			'condition'   => array(
+				'posts_by' => 'nearby',
+				'posttype' => $post_type,
+			),
+		));
+
+		$this->add_control('nearby_max_radius_' . $post_type, array(
+			'type'        => Controls_Manager::NUMBER,
+			'label'       => sprintf(esc_html__('Maximum Radius for %s', 'cubewp-framework'), self::get_post_type_name_by_slug($post_type)),
+			'description' => esc_html__('Maximum radius value.', 'cubewp-framework'),
+			'default'     => 100,
+			'min'         => 0,
+			'step'        => 0.1,
+			'condition'   => array(
+				'posts_by' => 'nearby',
+				'posttype' => $post_type,
+			),
+		));
+
+		$this->add_control('nearby_radius_unit_' . $post_type, array(
+			'type'        => Controls_Manager::SELECT,
+			'label'       => sprintf(esc_html__('Radius Unit for %s', 'cubewp-framework'), self::get_post_type_name_by_slug($post_type)),
+			'description' => esc_html__('Select the unit for radius measurement.', 'cubewp-framework'),
+			'options'     => array(
+				'km'    => esc_html__('Kilometers', 'cubewp-framework'),
+				'miles' => esc_html__('Miles', 'cubewp-framework'),
+			),
+			'default'     => 'km',
+			'condition'   => array(
+				'posts_by' => 'nearby',
+				'posttype' => $post_type,
+			),
 		));
 	}
 
@@ -454,6 +674,27 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		return null;
 	}
 
+	/**
+	 * Get google address fields for a specific post type
+	 * 
+	 * @param string $post_type Post type slug
+	 * @return array Array of field_key => field_label
+	 */
+	private static function get_google_address_fields($post_type)
+	{
+		$fields = array('' => esc_html__('Select Address Field', 'cubewp-framework'));
+		if (function_exists('get_fields_by_post_type')) {
+			$post_type_fields = get_fields_by_post_type($post_type);
+			foreach ($post_type_fields as $field_key => $field_label) {
+				$field_options = get_field_options($field_key);
+				if (isset($field_options['type']) && $field_options['type'] === 'google_address') {
+					$fields[$field_key] = $field_label;
+				}
+			}
+		}
+		return $fields;
+	}
+
 	protected static function split_taxonomy_and_term($input)
 	{
 		if (preg_match('/\[(.*?)\](.*)/', $input, $matches)) {
@@ -474,11 +715,50 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			$meta_query['relation'] = $args['relation'];
 			$numeric_comparisons = ['=', '!=', '>', '>=', '<', '<=', 'BETWEEN', 'NOT BETWEEN'];
 			foreach ($args['query'] as $index => $query) {
+				// Determine the meta key
+				$meta_key = '';
+				if (isset($query['meta_key'])) {
+					if ($query['meta_key'] === 'custom') {
+						// Use custom field name if meta_key is "custom"
+						$meta_key = isset($query['custom_field_name']) ? $query['custom_field_name'] : '';
+					} else {
+						// Use the selected field
+						$meta_key = $query['meta_key'];
+					}
+				}
+
+				if (empty($meta_key)) {
+					continue; // Skip if no meta key
+				}
+
+				// Determine the meta value based on source
+				$meta_value = '';
+				$meta_value_source = isset($query['meta_value_source']) ? $query['meta_value_source'] : 'custom_value';
+				
+				if ($meta_value_source === 'current_post_id') {
+					// Get meta value from current post
+					$meta_value = get_the_ID();
+				} elseif ($meta_value_source === 'current_user_id') {
+					// Get meta value from current user
+					$meta_value = get_current_user_id();
+				} else {
+					// Use custom value
+					$meta_value = isset($query['meta_value']) ? $query['meta_value'] : '';
+				}
+
+				// Build meta query array
 				$meta_query[$index] = array(
-					'key'  => $query['meta_key'],
-					'value'	    => $query['meta_value'],
-					'compare'   => $query['meta_compare'],
+					'key'  => $meta_key,
+					'compare'   => isset($query['meta_compare']) ? $query['meta_compare'] : 'LIKE',
 				);
+
+				// Add value only if not EXISTS/NOT EXISTS (these don't need values)
+				$compare = isset($query['meta_compare']) ? $query['meta_compare'] : 'LIKE';
+				if (!in_array($compare, array('EXISTS', 'NOT EXISTS'))) {
+					$meta_query[$index]['value'] = $meta_value;
+				}
+
+				// Set numeric type for numeric comparisons
 				if (isset($query['meta_compare']) && in_array($query['meta_compare'], $numeric_comparisons)) {
 					$meta_query[$index]['type'] = 'NUMERIC';
 				}
@@ -496,9 +776,9 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 
 		$widget_id = $this->get_id();
 		if ($settings['enable_scroll_on_small_devices'] === 'yes') {
-			echo '<style>
+			echo '<style type="text/css">
             @media (max-width: 767px) {
-                .elementor-element-' . $widget_id . ' .cwp-row {
+                .elementor-element-' . esc_attr($widget_id) . ' .cwp-row {
                     overflow: scroll;
                     flex-wrap: nowrap;
                 }
@@ -512,9 +792,10 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			'orderby'         => $settings['orderby'],
 			'order'           => $settings['order'],
 			'number_of_posts' => $settings['number_of_posts'],
+			'load_via_ajax'   => (isset($settings['ajax_base_posts']) && $settings['ajax_base_posts'] === 'yes') ? 'yes' : 'no',
 			'load_more'       => $settings['load_more'],
 			'posts_per_page'  => $settings['posts_per_page'],
-			'processing_grids_per_row' => $settings['processing_grids_per_row'],
+			'processing_grids_per_row' => $settings['processing_grids_per_row'] ?? '4',
 			'layout'          => $settings['layout'],
 			'posts_per_row'   => isset($settings['posts_per_row']) ? $settings['posts_per_row'] : 'auto',
 			'posts_per_row_tablet'   => isset($settings['posts_per_row_tablet']) ? $settings['posts_per_row_tablet'] : 'auto',
@@ -525,6 +806,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			'cwp_enable_slider' => $settings['cwp_enable_slider'] === 'yes' ? 'cubewp-post-slider' : '',
 			'promotional_card' => $settings['cubewp_promotional_card'] === 'yes' ? true : false,
 			'promotional_cards' => $settings['cubewp_promotional_cards_list'],
+			'posts_by'        => $posts_by, // Pass posts_by to shortcode
 		);
 
 		// Add slider parameters only if the slider is enabled
@@ -579,6 +861,91 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 							}
 						}
 					}
+				} elseif ($posts_by == 'related') {
+					// Handle related posts - pass settings to shortcode for processing
+					$related_settings = isset($settings['related_posts_' . $post_type]) ? $settings['related_posts_' . $post_type] : array();
+					if (!empty($related_settings)) {
+						// Store related posts settings in args for shortcode to process
+						$args['related_posts_' . $post_type] = $related_settings;
+						
+						// Get source post ID
+						$source_post_option = isset($settings['related_source_post_' . $post_type]) ? $settings['related_source_post_' . $post_type] : 'current';
+						if ($source_post_option === 'specific') {
+							$source_post_id = isset($settings['related_source_post_id_' . $post_type]) ? intval($settings['related_source_post_id_' . $post_type]) : 0;
+							if ($source_post_id > 0) {
+								$args['related_source_post_id_' . $post_type] = $source_post_id;
+							}
+						}
+					}
+				} elseif ($posts_by == 'nearby') {
+					// Handle nearby posts based on address field - using CubeWP's proximity SQL approach
+					$address_field = isset($settings['nearby_address_field_' . $post_type]) ? $settings['nearby_address_field_' . $post_type] : '';
+					
+					if (!empty($address_field)) {
+						// Get source post ID
+						$source_post_option = isset($settings['nearby_source_post_' . $post_type]) ? $settings['nearby_source_post_' . $post_type] : 'current';
+						$source_post_id = null;
+						
+						if ($source_post_option === 'specific') {
+							$source_post_id = isset($settings['nearby_source_post_id_' . $post_type]) ? intval($settings['nearby_source_post_id_' . $post_type]) : 0;
+						} else {
+							// Use current post
+							$source_post_id = get_the_ID();
+						}
+						
+						// Get address coordinates from source post
+						$lat = null;
+						$lng = null;
+						
+						if ($source_post_id && $source_post_id > 0) {
+							// Try to get from meta field directly
+							$lat = get_post_meta($source_post_id, $address_field . '_lat', true);
+							$lng = get_post_meta($source_post_id, $address_field . '_lng', true);
+							// If not found, try getting from address array
+							if (empty($lat) || empty($lng)) {
+								$address_meta = get_post_meta($source_post_id, $address_field, true);
+								
+								if (is_array($address_meta)) {
+									$lat = isset($address_meta['latitude']) ? $address_meta['latitude'] : (isset($address_meta['lat']) ? $address_meta['lat'] : null);
+									$lng = isset($address_meta['longitude']) ? $address_meta['longitude'] : (isset($address_meta['lng']) ? $address_meta['lng'] : null);
+								}
+							}
+						}
+						
+						// If we have coordinates, add parameters for nearby query
+						if (!empty($lat) && !empty($lng)) {
+							$args[$address_field] = 1; // Indicate this field should be used
+							$args[$address_field . '_lat'] = floatval($lat);
+							$args[$address_field . '_lng'] = floatval($lng);
+
+							// Get radius settings
+							$min_radius = isset($settings['nearby_min_radius_' . $post_type]) ? floatval($settings['nearby_min_radius_' . $post_type]) : 1;
+							$default_radius = isset($settings['nearby_default_radius_' . $post_type]) ? floatval($settings['nearby_default_radius_' . $post_type]) : 10;
+							$max_radius = isset($settings['nearby_max_radius_' . $post_type]) ? floatval($settings['nearby_max_radius_' . $post_type]) : 100;
+							$radius_unit = isset($settings['nearby_radius_unit_' . $post_type]) ? $settings['nearby_radius_unit_' . $post_type] : 'km';
+							
+							// Check if range is provided (for dynamic radius)
+							$range = isset($settings[$address_field . '_range']) ? floatval($settings[$address_field . '_range']) : $default_radius;
+							
+							// Ensure range is within min/max bounds
+							if ($range < $min_radius) {
+								$range = $min_radius;
+							}
+							if ($range > $max_radius) {
+								$range = $max_radius;
+							}
+							
+							$args[$address_field . '_range'] = $range;
+							$args['nearby_address_field'] = $address_field;
+							$args['nearby_radius_unit'] = $radius_unit;
+							$args['nearby_min_radius'] = $min_radius;
+							$args['nearby_max_radius'] = $max_radius;
+							
+							if ($source_post_option === 'specific' && $source_post_id > 0) {
+								$args['nearby_source_post_id'] = $source_post_id;
+							}
+						}
+					}
 				}
 				$card_style = isset($settings[$post_type . '_card_style']) ? $settings[$post_type . '_card_style'] : '';
 				if (!empty($card_style)) {
@@ -594,11 +961,12 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		}
 
 		if ($filter_by_meta == 'yes') {
-			$meta_query['query'] = isset($settings['filter_by_custom_fields']) ? $settings['filter_by_custom_fields'] : array();
+			$meta_query['query'] = isset($settings['filter_by_custom_fields']) ? $settings['filter_by_custom_fields'] : array();// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 			$meta_query['relation'] = isset($settings['meta_relation']) ? $settings['meta_relation'] : 'OR';
-			$args['meta_query'] = self::_meta_query($meta_query);
+			$args['meta_query'] = self::_meta_query($meta_query); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 		}
 
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo apply_filters('cubewp_shortcode_posts_output', '', $args);
 	}
 
@@ -638,7 +1006,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 				'selectors'  => [
 					'{{WRAPPER}} .cubewp-post-slider .slick-slide>div ' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}} !important;',
 					'{{WRAPPER}} .cwp-row>div' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}} !important;',
-				],
+				]
 			]
 		);
 
@@ -721,9 +1089,9 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			'fade_effect',
 			[
 				'type' => Controls_Manager::SWITCHER,
-				'label' => esc_html__('Fade Effect', 'value-pack'),
+				'label' => esc_html__('Fade Effect', 'cubewp-framework'),
 				'default' => '',
-				'description' => esc_html__('Enable fade effect for slides transition.', 'value-pack'),
+				'description' => esc_html__('Enable fade effect for slides transition.', 'cubewp-framework'),
 				'condition' => [
 					'cwp_enable_slider' => 'yes',
 				],
@@ -1232,9 +1600,13 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			Group_Control_Box_Shadow::get_type(),
 			[
 				'name' => 'slider_arrow_box_shadow',
-				'label' => __('Arrow Box Shadow', 'value-pack'),
+				'label' => __('Arrow Box Shadow', 'cubewp-framework'),
 				'selector' => '{{WRAPPER}} .cubewp-post-slider .slick-arrow',
 				'separator' => 'before',
+				'condition' => [
+					'cwp_enable_slider' => 'yes',
+					'custom_arrows' => 'yes',
+				],
 			]
 		);
 
@@ -2013,7 +2385,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		$this->add_control(
 			'slider_dots_wrap_settings_heading',
 			[
-				'label' => esc_html__('Wrap Dots With Arrows', 'value-pack'),
+				'label' => esc_html__('Wrap Dots With Arrows', 'cubewp-framework'),
 				'type' => Controls_Manager::HEADING,
 				'separator' => 'before',
 				'condition'   => [
@@ -2025,10 +2397,10 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		$this->add_control(
 			'enable_wrap_dots_arrows',
 			[
-				'label'        => esc_html__('Enable Wrap Dots With Arrows', 'value-pack'),
+				'label'        => esc_html__('Enable Wrap Dots With Arrows', 'cubewp-framework'),
 				'type'         => Controls_Manager::SWITCHER,
-				'label_on'     => esc_html__('Yes', 'value-pack'),
-				'label_off'    => esc_html__('No', 'value-pack'),
+				'label_on'     => esc_html__('Yes', 'cubewp-framework'),
+				'label_off'    => esc_html__('No', 'cubewp-framework'),
 				'return_value' => 'yes',
 				'default'      => '',
 				'condition'   => [
@@ -2062,7 +2434,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		$this->add_responsive_control(
 			'vp_scrollbar_Top_position',
 			[
-				'label' => esc_html__('Top Position', 'value-pack'),
+				'label' => esc_html__('Top Position', 'cubewp-framework'),
 				'type' => Controls_Manager::SLIDER,
 				'size_units' => ['px', '%', 'em'],
 				'default' => [
@@ -2098,7 +2470,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		$this->add_responsive_control(
 			'vp_scrollbar_bottom_position',
 			[
-				'label' => esc_html__('Bottom Position', 'value-pack'),
+				'label' => esc_html__('Bottom Position', 'cubewp-framework'),
 				'type' => Controls_Manager::SLIDER,
 				'size_units' => ['px', '%', 'em'],
 				'default' => [
@@ -2158,7 +2530,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		$this->add_responsive_control(
 			'vp_scrollbar_right_position',
 			[
-				'label' => esc_html__('Right Position', 'value-pack'),
+				'label' => esc_html__('Right Position', 'cubewp-framework'),
 				'type' => Controls_Manager::SLIDER,
 				'size_units' => ['px', '%', 'em'],
 				'default' => [
@@ -2194,7 +2566,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		$this->add_responsive_control(
 			'vp_scrollbar_left_position',
 			[
-				'label' => esc_html__('Left Position', 'value-pack'),
+				'label' => esc_html__('Left Position', 'cubewp-framework'),
 				'type' => Controls_Manager::SLIDER,
 				'size_units' => ['px', '%', 'em'],
 				'default' => [
@@ -2230,7 +2602,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		$this->add_responsive_control(
 			'gap_between_items',
 			[
-				'label' => esc_html__('Gap Between Items', 'value-pack'),
+				'label' => esc_html__('Gap Between Items', 'cubewp-framework'),
 				'type' => Controls_Manager::SLIDER,
 				'size_units' => ['px', '%', 'em'],
 				'default' => [
@@ -2267,15 +2639,15 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		$this->add_responsive_control(
 			'wrap_justify_content',
 			[
-				'label' => esc_html__('Justify Content', 'value-pack'),
+				'label' => esc_html__('Justify Content', 'cubewp-framework'),
 				'type' => Controls_Manager::SELECT,
 				'options' => [
-					'flex-start' => esc_html__('Flex Start', 'value-pack'),
-					'center' => esc_html__('Center', 'value-pack'),
-					'flex-end' => esc_html__('Flex End', 'value-pack'),
-					'space-between' => esc_html__('Space Between', 'value-pack'),
-					'space-around' => esc_html__('Space Around', 'value-pack'),
-					'space-evenly' => esc_html__('Space Evenly', 'value-pack'),
+					'flex-start' => esc_html__('Flex Start', 'cubewp-framework'),
+					'center' => esc_html__('Center', 'cubewp-framework'),
+					'flex-end' => esc_html__('Flex End', 'cubewp-framework'),
+					'space-between' => esc_html__('Space Between', 'cubewp-framework'),
+					'space-around' => esc_html__('Space Around', 'cubewp-framework'),
+					'space-evenly' => esc_html__('Space Evenly', 'cubewp-framework'),
 				],
 				'default' => 'center',
 				'condition' => [
@@ -2291,7 +2663,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		$this->add_responsive_control(
 			'wrap_dots_arrows_padding',
 			[
-				'label' => esc_html__('Padding', 'value-pack'),
+				'label' => esc_html__('Padding', 'cubewp-framework'),
 				'type' => Controls_Manager::DIMENSIONS,
 				'size_units' => ['px', '%', 'em'],
 				'default' => [

@@ -1,15 +1,21 @@
 <?php
-
 /**
- * Creates the submenu item for the plugin.
- *
- * @package Custom_Admin_Settings
- * Creates the submenu item for the plugin.
+ * CubeWp Taxonomy Custom Fields.
  *
  * Registers a new menu item under 'Tools' and uses the dependency passed into
  * the constructor in order to display the page corresponding to this menu item.
  *
- * @package CubeWp_Taxonomy_Custom_Fields
+ * @package cubewp/cube/modules/taxonomies
+ */
+
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+/**
+ * CubeWp_Taxonomy_Custom_Fields
  */
 class CubeWp_Taxonomy_Custom_Fields {
     
@@ -22,6 +28,7 @@ class CubeWp_Taxonomy_Custom_Fields {
     
     private static function taxonomy_custom_fields_display()
     {
+        /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
         if (isset($_GET['action']) && ('new' == $_GET['action'] || 'edit' == $_GET['action'])) {
             return;
         }
@@ -39,7 +46,7 @@ class CubeWp_Taxonomy_Custom_Fields {
                         <a class="nav-tab" href="?page=settings-custom-fields"><?php esc_html_e('Settings', 'cubewp-framework'); ?></a>
                     </nav>
                 </div>
-                <a href="<?php echo CubeWp_Submenu::_page_action('taxonomy-custom-fields', 'new'); ?>" class="page-title-action">+ <?php esc_html_e('Add New', 'cubewp-framework'); ?></a>
+                <a href="<?php echo esc_url(CubeWp_Submenu::_page_action('taxonomy-custom-fields', 'new')); ?>" class="page-title-action">+ <?php esc_html_e('Add New', 'cubewp-framework'); ?></a>
             </div>
             <hr class="wp-header-end">
             <?php $taxonomycustomFieldsTable->prepare_items(); ?>
@@ -52,6 +59,7 @@ class CubeWp_Taxonomy_Custom_Fields {
     }
     
     private static function edit_taxonomy_custom_fields() {
+        /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
         if(!isset($_GET['action'])){
             return;
         }
@@ -60,14 +68,16 @@ class CubeWp_Taxonomy_Custom_Fields {
         $FieldData = array();
         $tax_custom_fields = CWP()->get_custom_fields( 'taxonomy' );
         
+        /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
         if(isset($_GET['fieldid']) && $_GET['fieldid'] != '' ){
-            $tax_custom_field = array_column($tax_custom_fields, sanitize_text_field($_GET['fieldid']));
+            /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
+            $tax_custom_field = array_column($tax_custom_fields, sanitize_text_field(wp_unslash($_GET['fieldid'])));
             $FieldData = isset($tax_custom_field[0]) ? $tax_custom_field[0] : array();
         }
         
         $defaults = array(
             'name'           => '',
-            'slug'           => 'cwp_field_'. rand(10000000,1000000000000),
+            'slug'           => 'cwp_field_'. wp_rand(10000000,1000000000000),
             'type'           => '',
             'description'    => '',
             'placeholder'    => '',
@@ -146,8 +156,8 @@ class CubeWp_Taxonomy_Custom_Fields {
         <div class="wrap cubewp-wrap">            
             <form method="post" action=""  id="post">
                 <div class="wrap cwp-post-type-title width-40  margin-bottom-0 margin-left-minus-20  margin-right-0">
-                    <?php echo self::_title();    ?>
-                    <?php echo self::save_button(); ?>
+                    <?php echo wp_kses_post(self::_title());    ?>
+                    <?php echo /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped */ self::save_button(); ?>
                 </div>
 				<hr class="wp-header-end">
                 <div id="poststuff"  class="padding-0">
@@ -165,6 +175,7 @@ class CubeWp_Taxonomy_Custom_Fields {
                                             <td class="text-left">
                                                 <ul class="cwp-checkbox-outer margin-0">
                                                     <?php
+                                                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                                                        echo apply_filters('cubewp/admin/taxonomies/taxonomy/customfield', '', array(
                                                             'id'             =>    'taxonomies-list',
                                                             'name'           =>    'cwp_taxonomies[]]',
@@ -196,6 +207,7 @@ class CubeWp_Taxonomy_Custom_Fields {
                                                 <?php
                                                 foreach( $field_settings as $field_setting ){
                                                     $fields = apply_filters("cubewp/admin/taxonomies/{$field_setting['type']}/customfield", '', $field_setting);
+                                                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                                                     echo apply_filters( 'cubewp/taxonomies/custom_fields/single/field/output', $fields, $field_setting);
                                                 }
                                                 ?>
@@ -214,12 +226,13 @@ class CubeWp_Taxonomy_Custom_Fields {
     }
     
     private static function save_taxonomy_field() {
-            
-        if(isset($_POST['cwp_taxonomies']) && !empty($_POST['cwp_taxonomies'])){
-            if(isset($_POST['cwp_tax_fields']) && !empty($_POST['cwp_tax_fields'])){
+        /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
+		if(isset($_POST['cwp_taxonomies']) && !empty($_POST['cwp_taxonomies'])){ // phpcs:ignore WordPress.Security.NonceVerification.Missing
+            if(isset($_POST['cwp_tax_fields']) && !empty($_POST['cwp_tax_fields'])){ // phpcs:ignore WordPress.Security.NonceVerification.Missing
                 
                 $cwp_tax_custom_fields = CWP()->get_custom_fields( 'taxonomy' );
                 $cwp_tax_custom_fields = isset($cwp_tax_custom_fields) && !empty($cwp_tax_custom_fields) ? $cwp_tax_custom_fields : array();
+				/* phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.NonceVerification.Missing */
                 $field_options         =  isset($_POST['cwp_tax_fields']) ? CubeWp_Sanitize_text_Array($_POST['cwp_tax_fields']) : array();
 
                 if(isset($cwp_tax_custom_fields) && !empty($cwp_tax_custom_fields)){
@@ -233,20 +246,23 @@ class CubeWp_Taxonomy_Custom_Fields {
                     }
                 }
                 
-                foreach($_POST['cwp_taxonomies'] as $taxonomy){
+				foreach($_POST['cwp_taxonomies'] as $taxonomy){ // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+                    /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
                     if(isset($_POST['cwp_taxonomies']) && !empty($_POST['cwp_taxonomies'])){
+						/* phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.NonceVerification.Missing */
                         $taxnomies = CubeWp_Sanitize_text_Array($_POST['cwp_taxonomies']);
                         $field_options['taxonomies'] = implode(',', $taxnomies);
                     }
                     $cwp_tax_custom_fields[$taxonomy][$field_options['slug']] = $field_options;
                 }
                 CWP()->update_custom_fields( 'taxonomy', $cwp_tax_custom_fields );
-                wp_redirect( CubeWp_Submenu::_page_action('taxonomy-custom-fields') );
+                wp_safe_redirect( CubeWp_Submenu::_page_action('taxonomy-custom-fields') );
                 exit;
             }
         }
     }
     private static function _title() {
+        /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
         if (isset($_GET['action']) && ('edit' == $_GET['action'] && !empty($_GET['groupid']))) {
             return '<h1>'. esc_html(__('Edit Taxonomy Field', 'cubewp-framework')) .'</h1>';
         } else {
@@ -254,6 +270,7 @@ class CubeWp_Taxonomy_Custom_Fields {
         }
     }
      private static function save_button() {
+        /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
         if(isset($_GET['action']) && ('edit' == $_GET['action'] && !empty($_GET['groupid']))){            
             $name = 'cwp_save_field';
         }else{

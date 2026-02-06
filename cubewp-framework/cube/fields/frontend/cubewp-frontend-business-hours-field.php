@@ -109,7 +109,7 @@ class CubeWp_Frontend_Business_Hours_Field extends CubeWp_Frontend {
         $args['id'] = $field_id . '_day';
         $args['custom_name'] = $field_name . '_day';
         $args['label'] = '';
-        $args['placeholder'] = esc_html__('Select Day', 'cubewp-yellow-books');
+        $args['placeholder'] = esc_html__('Select Day', 'cubewp-framework');
         $args['field_size'] = 'size-1-3';
         $args['class'] = 'business-days';
         $output .= apply_filters("cubewp/frontend/dropdown/field", $output, $args);
@@ -118,7 +118,7 @@ class CubeWp_Frontend_Business_Hours_Field extends CubeWp_Frontend {
         $args['custom_name'] = $field_name . '_open_time';
         $args['type'] = 'time_picker';
         $args['label'] = '';
-        $args['placeholder'] = esc_html__('Open Time', 'cubewp-yellow-books');
+        $args['placeholder'] = esc_html__('Open Time', 'cubewp-framework');
         $args['field_size'] = 'size-1-3';
         $args['class'] = 'business-open-time';
         $output .= apply_filters("cubewp/frontend/time_picker/field", $output, $args);
@@ -126,16 +126,16 @@ class CubeWp_Frontend_Business_Hours_Field extends CubeWp_Frontend {
         $args['id'] = $field_id . '_close_time';
         $args['custom_name'] = $field_name . '_close_time';
         $args['label'] = '';
-        $args['placeholder'] = esc_html__('Close Time', 'cubewp-yellow-books');
+        $args['placeholder'] = esc_html__('Close Time', 'cubewp-framework');
         $args['field_size'] = 'size-1-3';
         $args['class'] = 'business-close-time';
         $output .= apply_filters("cubewp/frontend/time_picker/field", $output, $args);
         $output .= '<div class="yb_business_hour_fulldayopen">
                         <input type="checkbox" id="yb_fulldayopen" class="yb_fulldayopen">
-                        <label>' . esc_html__('24 Hours', 'cubewp-yellow-books') . '</label>
+                        <label>' . esc_html__('24 Hours', 'cubewp-framework') . '</label>
                     </div>';
         $output .= '</div>';
-        $output .= '<button class="cwp-add-new-business-hour" data-id="' . $field_id . '" data-name="' . $field_name . '"  data-fullday="' . __('24 hours open', 'cubewp-yellow-books') . '">
+        $output .= '<button class="cwp-add-new-business-hour" data-id="' . $field_id . '" data-name="' . $field_name . '"  data-fullday="' . __('24 hours open', 'cubewp-framework') . '">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                             <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"/>
                         </svg>

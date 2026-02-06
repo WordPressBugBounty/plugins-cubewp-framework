@@ -51,6 +51,7 @@ class CubeWp_Admin_File_Field extends CubeWp_Admin {
         }else {
             $accept = esc_html__("PDF, zip, txt, word and other file types", 'cubewp-framework');
         }
+        /* translators: %s: allowed file types. */
         $attr   .= 'placeholder="'.sprintf(esc_html__("Allowed only: '%s'.", 'cubewp-framework'), $accept).'"';
 		$output .= '<div class="cwp-custom-field cwp-upload-field">
             <div class="cwp-field">

@@ -6,6 +6,8 @@
  * @package cubewp/cube/classes
  */
 
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -28,7 +30,7 @@ class CubeWp_Custom_Fields_Markup
     {
         $defaults = array(
             'label' => '',
-            'name' => 'cwp_field_' . rand( (int) 10000000, (int) 1000000000000 ),
+            'name' => 'cwp_field_' . wp_rand( (int) 10000000, (int) 1000000000000 ),
             'type' => '',
             'description' => '',
             'map_use' => '',
@@ -57,7 +59,7 @@ class CubeWp_Custom_Fields_Markup
             'relationship' => 0,
             'rest_api' => 0,
             'validation_msg' => '',
-            'id' => 'cwp_field_' . rand( (int) 10000000, (int) 1000000000000 ),
+            'id' => 'cwp_field_' . wp_rand( (int) 10000000, (int) 1000000000000 ),
             'class' => '',
             'container_class' => '',
             'conditional' => '',
@@ -76,7 +78,8 @@ class CubeWp_Custom_Fields_Markup
         $closed_class = (isset($FieldData['label']) && $FieldData['label'] != '') ? 'closed' : '';
         $hide_class = (isset($FieldData['label']) && $FieldData['label'] != '') ? 'hidden' : '';
         $field_type = (isset($FieldData['type']) && $FieldData['type'] == '') ? 'text' : $FieldData['type'];
-        $group_secure = isset($_GET['groupid']) ? cubewp_custom_field_group_secure($_GET['groupid']) : false;
+        /* phpcs:ignore WordPress.Security.NonceVerification.Recommended */
+        $group_secure = isset($_GET['groupid']) ? cubewp_custom_field_group_secure(sanitize_text_field(wp_unslash($_GET['groupid']))) : false;
         $secure_class = ($group_secure == true) ? 'group_visibility_secure' : '';
         $counter = isset($FieldData["counter"]) ? $FieldData["counter"] : 1;
 
@@ -657,7 +660,7 @@ class CubeWp_Custom_Fields_Markup
     {
         $defaults = array(
             'label' => '',
-            'name' => 'cwp_field_' . rand(10000000, 1000000000000),
+            'name' => 'cwp_field_' . wp_rand(10000000, 1000000000000),
             'type' => '',
             'description' => '',
             'default_value' => '',
@@ -680,7 +683,7 @@ class CubeWp_Custom_Fields_Markup
             'appearance' => '',
             'required' => '',
             'validation_msg' => '',
-            'id' => 'cwp_field_' . rand(10000000, 1000000000000),
+            'id' => 'cwp_field_' . wp_rand(10000000, 1000000000000),
             'class' => '',
             'files_save' => 'ids',
             'files_save_separator' => 'array',

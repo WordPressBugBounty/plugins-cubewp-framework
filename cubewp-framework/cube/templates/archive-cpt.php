@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
 get_header();
 global $cubewp_frontend, $cwpOptions;
 
@@ -26,10 +27,10 @@ if (CubeWp_Theme_Builder::is_cubewp_theme_builder_active('archive')) {
     ?>
     <div class="cwp-container cwp-archive-container">
         <div class="cwp-row">
-            <div class="<?php esc_attr_e($filter_area_cols); ?> cwp-archive-sidebar-filters-container">
+            <div class="<?php echo esc_attr($filter_area_cols); ?> cwp-archive-sidebar-filters-container">
                 <?php $cubewp_frontend->filters(); ?>
             </div>
-            <div class="<?php esc_attr_e($content_area_cols); ?> cwp-archive-content-container">
+            <div class="<?php echo esc_attr($content_area_cols); ?> cwp-archive-content-container">
                 <div class="cwp-archive-content-listing">
                     <div class="cwp-breadcrumb-results">
                         <?php if ($archive_sort_filter || $archive_layout || $archive_found_text) { ?>

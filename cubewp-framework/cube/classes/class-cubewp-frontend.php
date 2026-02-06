@@ -421,6 +421,7 @@ class CubeWp_Frontend {
             </div>
         </div>';
 
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         echo apply_filters('cubewp/frontend/archive/list/switcher', $output);
     }
         
@@ -449,11 +450,13 @@ class CubeWp_Frontend {
             'class'        => 'cwp-orderby',
             'id'           => 'cwp-sorting-filter',
             'name'         => 'cwp_orderby',
-            'value'        => isset($_GET['orderby']) && !empty($_GET['orderby']) ? sanitize_text_field($_GET['orderby']) : 'DESC',
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only use of query vars to render notice; no state change performed.
+            'value'        => isset($_GET['orderby']) && !empty($_GET['orderby']) ? sanitize_text_field(wp_unslash($_GET['orderby'])) : 'DESC',
             'options'      => $option,
             'extra_attrs'  => '',
             'placeholder'  => esc_html__('Sort By','cubewp-framework')
         );
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         echo cwp_render_dropdown_input( $input_attrs );
     }
 

@@ -6,6 +6,8 @@
  * @package cubewp/cube/classes
  */
 
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -80,7 +82,10 @@ class CubeWp_Enqueue extends CubeWp_Admin_Enqueue {
 			}
 		}
 
-		echo apply_filters( 'frontend/script/enqueue', '' );
+		$cubewp_front_inline = apply_filters( 'frontend/script/enqueue', '' );
+		if ( ! empty( $cubewp_front_inline ) ) {
+			echo wp_kses_post( $cubewp_front_inline );
+		}
 		self::cubewp_enqueue_settings_css_js();
 
 	}
@@ -171,6 +176,11 @@ class CubeWp_Enqueue extends CubeWp_Admin_Enqueue {
 				'deps'    => array( 'jquery' ),
 				'version' => CUBEWP_VERSION,
 			),
+			'cwp-filter-builder'     => array(
+                'src'     => CWP_PLUGIN_URI . 'cube/assets/frontend/js/cubewp-elementor-filter-builder.js',
+                'deps'    => array( 'jquery' ),
+                'version' => CUBEWP_VERSION,
+            ),
 			'cwp-google-address-field' => array(
 				'src'     => CWP_PLUGIN_URI . 'cube/assets/frontend/js/google-address-field.js',
 				'deps'    => array( 'google_map_api' ),
@@ -359,9 +369,10 @@ class CubeWp_Enqueue extends CubeWp_Admin_Enqueue {
 			  global $cwpOptions;
 			  $cwpOptions = ! empty( $cwpOptions ) && is_array( $cwpOptions ) ? $cwpOptions : get_option( 'cwpOptions' );
 			  $cubewp_css = isset( $cwpOptions['cubewp-css'] ) && ! empty( $cwpOptions['cubewp-css'] ) ? $cwpOptions['cubewp-css'] : '';
-			  echo '<style type="text/css">
-				 ' . $cubewp_css . '
-				</style>';
+			  if ( ! empty( $cubewp_css ) ) {
+				  // Attach custom CSS inline to a known handle to avoid raw echo.
+				  wp_add_inline_style( 'cwp-styles', $cubewp_css );
+			  }
 		   } );
 	
 		   add_action( 'wp_footer', function(){
@@ -369,9 +380,10 @@ class CubeWp_Enqueue extends CubeWp_Admin_Enqueue {
 			  $cwpOptions = ! empty( $cwpOptions ) && is_array( $cwpOptions ) ? $cwpOptions : get_option( 'cwpOptions' );
 			  $cubewp_js = isset( $cwpOptions['cubewp-js'] ) && ! empty( $cwpOptions['cubewp-js'] ) ? $cwpOptions['cubewp-js'] : '';
 			  wp_enqueue_script( 'jquery' );
-			  echo '<script type="text/javascript">
-				 ' . $cubewp_js . '
-				</script>';
+			  if ( ! empty( $cubewp_js ) ) {
+				  // Attach custom JS inline to jQuery handle to avoid raw echo.
+				  wp_add_inline_script( 'jquery', $cubewp_js );
+			  }
 		   } );
 		}
 	}

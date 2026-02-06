@@ -1,4 +1,13 @@
 <?php
+/**
+ * CubeWp Terms Widget.
+ *
+ * @version 1.0
+ * @package cubewp/cube/includes/widgets
+ */
+
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -26,11 +35,15 @@ class CubeWp_Terms_Widget extends WP_Widget {
 		$after_title = !isset($after_title) ? $args['after_title'] : $after_title;
 		$after_widget = !isset($after_widget) ? $args['after_widget'] : $after_widget;
 		$title = apply_filters( 'widget_title', $instance['title'] );
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo cubewp_core_data($before_widget);
 		if ( ! empty( $title ) ) {
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			echo cubewp_core_data($before_title) . sanitize_text_field($title) . cubewp_core_data($after_title);
 		}
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo self::cwp_widget_get_terms();
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo cubewp_core_data($after_widget);
 	}
 
@@ -88,7 +101,8 @@ class CubeWp_Terms_Widget extends WP_Widget {
         <p>
             <label for="<?php echo esc_attr( $this->get_field_id( 'Taxonomy' ) ); ?>"><?php esc_html_e( 'Select Taxonomy', 'cubewp-framework' ); ?></label>
             <select id="<?php echo esc_attr( $this->get_field_id( 'Taxonomy' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'Taxonomy' ) ); ?>" class="widefat">
-                <?php echo self::cwp_widget_get_taxonomies_options( $Taxonomy ); ?>
+                <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                echo self::cwp_widget_get_taxonomies_options( $Taxonomy ); ?>
             </select>
         </p>
         <p>
@@ -136,12 +150,12 @@ class CubeWp_Terms_Widget extends WP_Widget {
 	public function update( $new_instance, $old_instance ) {
 		$instance = array();
 
-		$instance['title'] = (!empty($new_instance['title'])) ? strip_tags($new_instance['title']) : '';
-		$instance['Taxonomy'] = (!empty($new_instance['Taxonomy'])) ? strip_tags($new_instance['Taxonomy']) : '';
-		$instance['termsNumber'] = (!empty($new_instance['termsNumber'])) ? strip_tags($new_instance['termsNumber']) : '';
-		$instance['hideEmpty'] = (!empty($new_instance['hideEmpty'])) ? strip_tags($new_instance['hideEmpty']) : '';
-		$instance['orderBy'] = (!empty($new_instance['orderBy'])) ? strip_tags($new_instance['orderBy']) : '';
-		$instance['termsOrder'] = (!empty($new_instance['termsOrder'])) ? strip_tags($new_instance['termsOrder']) : '';
+		$instance['title'] = (!empty($new_instance['title'])) ? wp_strip_all_tags($new_instance['title']) : '';
+		$instance['Taxonomy'] = (!empty($new_instance['Taxonomy'])) ? wp_strip_all_tags($new_instance['Taxonomy']) : '';
+		$instance['termsNumber'] = (!empty($new_instance['termsNumber'])) ? wp_strip_all_tags($new_instance['termsNumber']) : '';
+		$instance['hideEmpty'] = (!empty($new_instance['hideEmpty'])) ? wp_strip_all_tags($new_instance['hideEmpty']) : '';
+		$instance['orderBy'] = (!empty($new_instance['orderBy'])) ? wp_strip_all_tags($new_instance['orderBy']) : '';
+		$instance['termsOrder'] = (!empty($new_instance['termsOrder'])) ? wp_strip_all_tags($new_instance['termsOrder']) : '';
 
 		return $instance;
 	}

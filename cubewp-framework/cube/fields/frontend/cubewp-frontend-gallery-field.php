@@ -59,12 +59,12 @@ class CubeWp_Frontend_Gallery_Field extends CubeWp_Frontend {
 				<p class="cwp-gallery-field-trigger"><?php esc_html_e("Choose Images", "cubewp-framework"); ?></p>
 				<div class="cwp-gallery-field-inputs">
 					<?php
-					$rand_id     = rand(123456789, 1111111111);
+					$rand_id     = wp_rand(123456789, 1111111111);
 					$input_attrs = array(
 						'name'  => ! empty($args['custom_name']) ? $args['custom_name'] . '[]' : $args['name'],
 						'value' => $rand_id,
 					);
-					echo cwp_render_hidden_input($input_attrs);
+					echo cwp_render_hidden_input( $input_attrs );
 					if (isset($args["file_types"]) && !empty($args["file_types"])) {
 						$accept = 'accept="' . $args["file_types"] . '"';
 					}else {
@@ -78,7 +78,7 @@ class CubeWp_Frontend_Gallery_Field extends CubeWp_Frontend {
 						'value'       => '',
 						'extra_attrs' => $accept . ' multiple="multiple"',
 					);
-					echo cwp_render_file_input($input_attrs);
+					echo  cwp_render_file_input( $input_attrs );
 					?>
 				</div>
 			</div>
@@ -103,9 +103,9 @@ class CubeWp_Frontend_Gallery_Field extends CubeWp_Frontend {
 						'name'         => !empty($args['custom_name']) ? $args['custom_name'].'[]' : $args['name'],
 						'value'        => $attachment_id,
 					);
-					$rand_id     = rand(123456789, 1111111111);
+					$rand_id     = wp_rand(123456789, 1111111111);
 					?>
-					<div class="cwp-gallery-field-preview cloned batch-<?php esc_attr_e($rand_id); ?>" data-batch-id="batch-<?php esc_attr_e($rand_id); ?>" style="display: block;">
+					<div class="cwp-gallery-field-preview cloned batch-<?php echo esc_attr($rand_id); ?>" data-batch-id="batch-<?php echo esc_attr($rand_id); ?>" style="display: block;">
                         <span>
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
                                 <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
@@ -113,7 +113,8 @@ class CubeWp_Frontend_Gallery_Field extends CubeWp_Frontend {
                         </span>
 						<img src="<?php echo esc_url($fileurl); ?>" alt="image">
 						<p><?php echo esc_html($filename); ?></p>
-						<?php echo cwp_render_hidden_input( $input_attrs ); ?>
+						<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						echo cwp_render_hidden_input( $input_attrs ); ?>
 					</div>
 					<?php
 				}

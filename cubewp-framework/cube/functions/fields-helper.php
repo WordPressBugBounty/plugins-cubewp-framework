@@ -5,6 +5,9 @@
  * @version 1.0
  * @package cubewp/cube/functions
  */
+
+ // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
+
 if ( ! defined('ABSPATH')) {
 	exit;
 }
@@ -24,8 +27,11 @@ if ( ! function_exists("cwp_convert_choices_to_array")) {
 		if (is_array($options)) {
 			return $options;
 		}
-		$options = json_decode($options, true);
-		if (isset($options['label']) && ! empty($options['label'])) {
+		$decoded = json_decode($options, true);
+		if (json_last_error() === JSON_ERROR_NONE && $decoded !== null) {
+			$options = $decoded;
+		}
+		if (is_array($options) && isset($options['label']) && ! empty($options['label'])) {
 			$options_arr = array();
 			foreach ($options['label'] as $key => $label) {
 				$value = isset($options['value'][$key]) ? $options['value'][$key] : '';
@@ -35,16 +41,36 @@ if ( ! function_exists("cwp_convert_choices_to_array")) {
 			}
 
 			return $options_arr;
+		} elseif (is_array($options)) {
+			// If decoded to an array but not the expected ['label'=>[], 'value'=>[]] shape,
+			// normalize into key=>label pairs.
+			$options_arr = array();
+			$is_assoc = array_keys($options) !== range(0, count($options) - 1);
+			if ($is_assoc) {
+				foreach ($options as $key => $val) {
+					if (is_scalar($val)) {
+						$options_arr[$key] = (string) $val;
+					}
+				}
+			} else {
+				foreach ($options as $val) {
+					if (is_scalar($val)) {
+						$val = (string) $val;
+						$options_arr[$val] = $val;
+					}
+				}
+			}
+			return $options_arr;
 		}
 		$options_arr = array();
-		$options     = explode("\n", $options);
+		$options     = explode("\n", (string) $options);
 		foreach ($options as $option) {
 			$key = trim($option);
 			$val = trim($option);
 			if (is_string($option) && strpos($option, " : ") !== false) {
-				$option = explode(' : ', $option);
-				$key    = trim($option[0]);
-				$val    = trim($option[1]);
+				$option = explode(' : ', $option, 2);
+				$key    = isset($option[0]) ? trim($option[0]) : $key;
+				$val    = isset($option[1]) ? trim($option[1]) : $val;
 			}
 			$options_arr[$key] = $val;
 		}
@@ -93,7 +119,7 @@ if ( ! function_exists("cwp_esc_field_attrs")) {
 if ( ! function_exists("cwp_get_terms")) {
 	function cwp_get_terms($taxonomy = '') {
 		$options = array();
-		$terms   = get_terms($taxonomy, array('hide_empty' => false, 'parent' => 0));
+		$terms   = get_terms(array('taxonomy' => $taxonomy, 'hide_empty' => false, 'parent' => 0));
 		if (isset($terms) && ! empty($terms) && ! is_wp_error($terms)) {
 			foreach ($terms as $term) {
 				$options[$term->slug] = array(
@@ -119,10 +145,7 @@ if ( ! function_exists("cwp_get_terms")) {
 if ( ! function_exists("cwp_get_child_terms")) {
 	function cwp_get_child_terms($term = '') {
 		$options  = array();
-		$children = get_terms($term->taxonomy, array(
-			'parent'     => $term->term_id,
-			'hide_empty' => false
-		));
+		$children = get_terms(array('taxonomy' => $term->taxonomy, 'parent' => $term->term_id, 'hide_empty' => false));
 		if ($children) { // get_terms will return false if tax does not exist or term wasn't found.
 			foreach ($children as $child) {
 				$options[$child->slug] = array(
@@ -148,10 +171,7 @@ if ( ! function_exists("cwp_get_child_terms")) {
 if ( ! function_exists("cwp_get_child_terms_level2")) {
 	function cwp_get_child_terms_level2($term = '') {
 		$options  = array();
-		$children = get_terms($term->taxonomy, array(
-			'parent'     => $term->term_id,
-			'hide_empty' => false
-		));
+		$children = get_terms(array('taxonomy' => $term->taxonomy, 'parent' => $term->term_id, 'hide_empty' => false));
 		if ($children) { // get_terms will return false if tax does not exist or term wasn't found.
 			foreach ($children as $child) {
 				$options[$child->slug] = array(
@@ -520,7 +540,7 @@ if ( ! function_exists("cwp_render_switch_input")) {
 
 		$defaults = array(
 			'type'        => 'checkbox',
-			'id'          => 'id-'.rand(),
+			'id'          => 'id-'.wp_rand(),
 			'name'        => '',
 			'placeholder' => '',
 			'class'       => '',
@@ -874,15 +894,15 @@ if ( ! function_exists("include_fields")) {
 
 if ( ! function_exists("cubewp_dynamic_options")) {
 	function cubewp_dynamic_options() {
-		if ( ! wp_verify_nonce($_POST['security_nonce'], "cubewp_dynamic_options")) {
+		if ( !isset($_POST['security_nonce']) || ! wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['security_nonce'])), "cubewp_dynamic_options")) {
 			wp_send_json_error(array(
-				'msg' => esc_html__('Sorry! Security Verification Failed.', 'cubewp-frontend'),
+				'msg' => esc_html__('Sorry! Security Verification Failed.', 'cubewp-framework'),
 			), 404);
 		}
 
-		$dropdown_type   = sanitize_text_field($_POST['dropdown_type']);
-		$dropdown_values = sanitize_text_field($_POST['dropdown_values']);
-		$keyword         = sanitize_text_field($_POST['keyword']);
+		$dropdown_type   = isset($_POST['dropdown_type']) ? sanitize_text_field(wp_unslash($_POST['dropdown_type'])) : '';
+		$dropdown_values = isset($_POST['dropdown_values']) ? sanitize_text_field(wp_unslash($_POST['dropdown_values'])) : '';
+		$keyword         = isset($_POST['keyword']) ? sanitize_text_field(wp_unslash($_POST['keyword'])) : '';
 		$options         = array();
 		if ( ! empty($dropdown_type) && ! empty($dropdown_values) && ! empty($keyword)) {
 			if ($dropdown_type == 'post' || $dropdown_type == 'user-posts') {
@@ -920,7 +940,7 @@ if ( ! function_exists("cubewp_dynamic_options")) {
 						'user_nicename',
 						'display_name'
 					),
-					'meta_query' => array(
+					'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 						'relation' => 'OR',
 						array(
 							'key' => 'first_name',
@@ -969,7 +989,7 @@ if ( ! function_exists("cubewp_dynamic_options")) {
 
 		if (empty($options) || ! is_array($options)) {
 			wp_send_json_error(array(
-				'msg' => esc_html__('No Result Found.', 'cubewp-frontend'),
+				'msg' => esc_html__('No Result Found.', 'cubewp-framework'),
 			), 404);
 		}
 

@@ -47,9 +47,41 @@ class CubeWp_Tag_Wysiwyg_Editor extends \Elementor\Core\DynamicTags\Tag {
 		if ( ! $field ) {
 			return;
 		}
-        $value = get_field_value( $field );
-		echo cubewp_core_data($value);
+		$value = get_field_value( $field );
+		// Ensure string, preserve line breaks/paragraphs, then allow safe HTML + SVG.
+		$value = is_string( $value ) ? $value : '';
+		$value = wpautop( $value );
+		echo wp_kses( $value, $this->allowed_svg() );
 	}
-    
 
+	public function allowed_svg(): array {
+		$allowed = wp_kses_allowed_html('post'); // start from default post context
+		$allowed['svg'] = [
+			'class'       => true,
+			'xmlns'       => true,
+			'width'       => true,
+			'height'      => true,
+			'viewBox'     => true,
+			'fill'        => true,
+			'stroke'      => true,
+			'stroke-width'=> true,
+			'role'        => true,
+			'aria-hidden' => true,
+			'focusable'   => true,
+		];
+		$allowed['path'] = [
+			'd'           => true,
+			'fill'        => true,
+			'stroke'      => true,
+			'stroke-width'=> true,
+			'fill-rule'   => true,
+			'clip-rule'   => true,
+			'stroke-linecap'  => true,
+			'stroke-linejoin' => true,
+		];
+		$allowed['g']     = [ 'fill' => true, 'stroke' => true, 'clip-path' => true ];
+		$allowed['title'] = [];
+		$allowed['use']   = [ 'href' => true, 'xlink:href' => true ];
+		return $allowed;
+	}
 }

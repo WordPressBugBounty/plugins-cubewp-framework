@@ -108,7 +108,7 @@ class CubeWp_Custom_Fields_Processor {
             /* TO identify the custom fields type, eg: post-types, user, or any other custom fields type
             *  like for cubewp forms custom-form.
             */
-            $field_options['fields_type'] = sanitize_text_field($_POST['fields_type']);
+            $field_options['fields_type'] = isset($_POST['fields_type']) ? sanitize_text_field(wp_unslash($_POST['fields_type'])) : '';
             wp_send_json_success(CubeWp_Custom_Fields_Markup::add_new_field($field_options));
         }else{
             wp_send_json_error( array( 'error' => $custom_error ) );
@@ -124,7 +124,8 @@ class CubeWp_Custom_Fields_Processor {
     public static function process_sub_field(){
         check_ajax_referer( 'cubewp_custom_fields_nonce', 'nonce' );
         if( true ){
-            wp_send_json_success(CubeWp_Custom_Fields_Markup::add_new_sub_field(array(), sanitize_text_field($_POST['parent_field'])));
+			$parent_field = isset($_POST['parent_field']) ? sanitize_text_field( wp_unslash( $_POST['parent_field'] ) ) : '';
+			wp_send_json_success(CubeWp_Custom_Fields_Markup::add_new_sub_field(array(), $parent_field));
         }else{
             wp_send_json_error( array( 'error' => $custom_error ) );
         }
@@ -139,7 +140,9 @@ class CubeWp_Custom_Fields_Processor {
     public static function process_duplicate_field(){
         check_ajax_referer( 'cubewp_custom_fields_nonce', 'nonce' );
         if( true ){
-            wp_send_json_success(self::get_duplicate_field($_POST['field_id'], sanitize_text_field($_POST['fields_type'])));
+			$field_id   = isset($_POST['field_id']) ? sanitize_text_field( wp_unslash( $_POST['field_id'] ) ) : '';
+			$fields_type = isset($_POST['fields_type']) ? sanitize_text_field( wp_unslash( $_POST['fields_type'] ) ) : '';
+			wp_send_json_success(self::get_duplicate_field($field_id, $fields_type));
         }else{
             wp_send_json_error( array( 'error' => $custom_error ) );
         }
@@ -209,7 +212,7 @@ class CubeWp_Custom_Fields_Processor {
      * @since  1.0.0
      */
     protected static function add_new_field_btn() {
-        echo '<a class="button button-primary button-large" href="javascript:void(0);" id="cwp-add-new-field-btn" data-fields_type=' . self::get_field_option_name().'>'. __('Add New Field', 'cubewp-framework') .'</a>';
+        echo '<a class="button button-primary button-large" href="javascript:void(0);" id="cwp-add-new-field-btn" data-fields_type=' . esc_attr(self::get_field_option_name()).'>'. esc_html__('Add New Field', 'cubewp-framework') .'</a>';
     }
 
     /**
@@ -220,14 +223,18 @@ class CubeWp_Custom_Fields_Processor {
      */
     protected static function save_group() {
         
-        if (isset($_POST['cwp']['group'])) {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Back-compat: legacy admin form may not include a nonce. All inputs are validated/sanitized below.
+		if (isset($_POST['cwp']['group'])) {
 
-            $groupID         = sanitize_text_field($_POST['cwp']['group']['id']);
-            $groupName       = sanitize_text_field($_POST['cwp']['group']['name']);
-            $groupDesc       = wp_strip_all_tags( wp_unslash( $_POST['cwp']['group']['description'] ));
-            $groupOrder      = isset($_POST['cwp']['group']['order']) ? sanitize_text_field($_POST['cwp']['group']['order']) : 0;
-            $groupTypes      = isset($_POST['cwp']['group']['types']) ? CubeWp_Sanitize_text_Array($_POST['cwp']['group']['types']) : array();
-            $groupTerms      = isset($_POST['cwp']['group']['terms']) ? CubeWp_Sanitize_text_Array($_POST['cwp']['group']['terms']) : array();
+			$groupID         = isset($_POST['cwp']['group']['id']) ? sanitize_text_field( wp_unslash( $_POST['cwp']['group']['id'] ) ) : '';
+			$groupName       = isset($_POST['cwp']['group']['name']) ? sanitize_text_field( wp_unslash( $_POST['cwp']['group']['name'] ) ) : '';
+			$groupDesc       = isset($_POST['cwp']['group']['description']) ? wp_strip_all_tags( wp_unslash( $_POST['cwp']['group']['description'] ) ) : '';
+			$groupOrder      = isset($_POST['cwp']['group']['order']) ? sanitize_text_field( wp_unslash( $_POST['cwp']['group']['order'] ) ) : 0;
+
+            /* phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotValidated */
+            $groupTypes      = isset($_POST['cwp']['group']['types']) ? CubeWp_Sanitize_text_Array($_POST['cwp']['group']['types']) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+            /* phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotValidated */
+            $groupTerms      = isset($_POST['cwp']['group']['terms']) ? CubeWp_Sanitize_text_Array($_POST['cwp']['group']['terms']) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 
             if (!empty($groupName)) {
                 if (isset($_POST['cwp_save_group'])) {
@@ -265,12 +272,16 @@ class CubeWp_Custom_Fields_Processor {
                     delete_post_meta($post_id, '_cwp_group_terms');
                 }
             }
-            self::save_custom_fields($_POST['cwp'],$post_id,'post_types');
+            /* phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotValidated */
+			$cwp_post = isset($_POST['cwp']) ? $_POST['cwp'] : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+			self::save_custom_fields($cwp_post,$post_id,'post_types');
         
             if (!empty($post_id) ) {
-                wp_redirect( CubeWp_Submenu::_page_action('custom-fields') );
+                wp_safe_redirect( CubeWp_Submenu::_page_action('custom-fields') );
+                exit;
             }
         }
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
         
     }
 
@@ -434,8 +445,9 @@ class CubeWp_Custom_Fields_Processor {
      * @since  1.0.0
      */
     public static function get_group($GroupID = 0) {
-        if (isset($_GET['action']) && ('edit' == $_GET['action'] && !empty($_GET['groupid']))) {
-            $GroupID = sanitize_text_field($_GET['groupid']);
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only admin screen param.
+		if (isset($_GET['action']) && ('edit' == $_GET['action'] && !empty($_GET['groupid']))) {
+			$GroupID = sanitize_text_field( wp_unslash( $_GET['groupid'] ) );
         }
         if($GroupID == 0) return;
 

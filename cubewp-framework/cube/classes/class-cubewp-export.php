@@ -67,7 +67,7 @@ class CubeWp_Export {
         <form class="export-form" method="post" action="">
             <input type="hidden" name="action" value="cwp_export_data">
             <input type="hidden" name="cwp_export_type" value="all">
-            <input type="hidden" name="cwp_export_nonce" value="<?php echo wp_create_nonce( 'cwp_export_data_nonce' ); ?>">
+            <input type="hidden" name="cwp_export_nonce" value="<?php echo esc_attr( wp_create_nonce( 'cwp_export_data_nonce' ) ); ?>">
             <div class="cubewp-import-box-container">
                 <div class="cubewp-import-box">
                     <div class="cubewp-import-card">
@@ -207,15 +207,15 @@ class CubeWp_Export {
             wp_send_json( array( 'success' => 'false', 'msg' => esc_html__('You do not have permission to perform this action.', 'cubewp-framework') ) );
             wp_die();
         }
-        if ( !isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'cubewp-admin-nonce') ) {
+        if ( !isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'cubewp-admin-nonce') ) {
             wp_send_json( array( 'success' => 'false', 'msg' => esc_html__('Invalid nonce. You are not authorized to perform this action.', 'cubewp-framework') ) );
             wp_die();
         }
-        if(isset($_POST['export']) && $_POST['export'] == 'success'){
+        if(isset($_POST['export']) && sanitize_text_field(wp_unslash($_POST['export'])) == 'success'){
             $buffer = self::cwp_custom_fields_posts('cwp_user_fields');
             $files = self::cwp_file_names();
             if (self::cwp_file_force_contents($files['cwp_user_groups'], $buffer)) {
-                $download_now = isset( $_POST['download_now'] ) ? sanitize_text_field( $_POST['download_now'] ) : 'true';
+                $download_now = isset( $_POST['download_now'] ) ? sanitize_text_field( wp_unslash( $_POST['download_now'] ) ) : 'true';
                 if ( $download_now != 'false' ) {
                     self::cwp_create_zip_file();
                 }
@@ -238,11 +238,11 @@ class CubeWp_Export {
             wp_send_json( array( 'success' => 'false', 'msg' => esc_html__('You do not have permission to perform this action.', 'cubewp-framework') ) );
             wp_die();
         }
-        if ( !isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'cubewp-admin-nonce') ) {
+        if ( !isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'cubewp-admin-nonce') ) {
             wp_send_json( array( 'success' => 'false', 'msg' => esc_html__('Invalid nonce. You are not authorized to perform this action.', 'cubewp-framework') ) );
             wp_die();
         }
-        if(isset($_POST['export']) && $_POST['export'] == 'success'){
+        if(isset($_POST['export']) && sanitize_text_field(wp_unslash($_POST['export'])) == 'success'){
             $buffer = self::cwp_custom_fields_posts('cwp_forms');
             $files = self::cwp_file_names();
             if (self::cwp_file_force_contents($files['cwp_custom_forms'], $buffer)) {
@@ -272,7 +272,7 @@ class CubeWp_Export {
             wp_send_json( array( 'success' => 'false', 'msg' => esc_html__('You do not have permission to perform this action.', 'cubewp-framework') ) );
             wp_die();
         }
-        if ( !isset($_POST['cwp_export_nonce']) || !wp_verify_nonce($_POST['cwp_export_nonce'], 'cwp_export_data_nonce') ) {
+        if ( !isset($_POST['cwp_export_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['cwp_export_nonce'])), 'cwp_export_data_nonce') ) {
             wp_send_json( array( 'success' => 'false', 'msg' => esc_html__('Invalid nonce. You are not authorized to perform this action.', 'cubewp-framework') ) );
             wp_die();
         }
@@ -285,6 +285,7 @@ class CubeWp_Export {
 				));
 			} else {
 				$export_content = array();
+                /* phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized */
 				foreach ($_POST['cwp_export_content_type'] as $content_type) {
 					switch ($content_type) {
 						case 'post_types':
@@ -398,11 +399,11 @@ class CubeWp_Export {
         $post_cards_dir = $upload_dir['basedir'] . '/cubewp-post-cards';
 
         if (!is_dir($export_path)) {
-            mkdir($export_path, 0755, true); // Ensure export directory exists
+            wp_mkdir_p( $export_path );
         }
 
         if (file_exists($export_path . $DelFilePath)) {
-            unlink($export_path . $DelFilePath);
+            wp_delete_file($export_path . $DelFilePath);
         }
 
         if ($zip->open($export_path . $DelFilePath, ZIPARCHIVE::CREATE) !== TRUE) {
@@ -414,8 +415,8 @@ class CubeWp_Export {
         $zip->addFile($files['cwp_post_groups'], 'cwp_post_groups.json');
         $zip->addFile($files['cwp_user_groups'], 'cwp_user_groups.json');
         $zip->addFile($files['cwp_custom_forms'], 'cwp_custom_forms.json');
-
-        $export_post_cards = isset($_POST['export_post_cards']) ? sanitize_text_field($_POST['export_post_cards']) : 'false';
+        /*phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
+        $export_post_cards = isset($_POST['export_post_cards']) ? sanitize_text_field(wp_unslash($_POST['export_post_cards'])) : 'false';
         // Add "cubewp-post-cards" to the zip archive
         if ($export_post_cards == 'true' && is_dir($post_cards_dir)) {
             $this->add_post_cards_folder_to_zip($post_cards_dir, $zip, 'cubewp-post-cards');
@@ -425,10 +426,10 @@ class CubeWp_Export {
         $zip->close();
 
         // Cleanup temporary files
-        unlink($files['setup_file']);
-        unlink($files['cwp_post_groups']);
-        unlink($files['cwp_user_groups']);
-        unlink($files['cwp_custom_forms']);
+        wp_delete_file($files['setup_file']);
+        wp_delete_file($files['cwp_post_groups']);
+        wp_delete_file($files['cwp_user_groups']);
+        wp_delete_file($files['cwp_custom_forms']);
     }
 
     /**
@@ -464,11 +465,11 @@ class CubeWp_Export {
      * Method cwp_file_force_contents
      *
      * @param string $file_path
-     * @param Json $file_content
-     * @param bolean $flags
+     * @param string $file_content
+     * @param int $flags
      * @param int $permissions
      *
-     * @return Json
+     * @return boolean
 	 * @since  1.0.0
      */
     private static function cwp_file_force_contents($file_path, $file_content, $flags = 0, $permissions = 0777) {
@@ -476,8 +477,9 @@ class CubeWp_Export {
 		array_pop($parts);
 		$dir = implode('/', $parts);
 
-		if ( ! is_dir($dir)) {
-			mkdir($dir, $permissions, true);
+		if ( ! is_dir( $dir ) ) {
+			// Use WordPress API to create directories recursively.
+			wp_mkdir_p( $dir );
 		}
 
 		return file_put_contents($file_path, $file_content, $flags);

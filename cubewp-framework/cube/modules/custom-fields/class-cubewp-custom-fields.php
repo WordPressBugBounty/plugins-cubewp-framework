@@ -167,8 +167,8 @@ class CubeWp_Custom_Fields {
                             $value = self::get_single_meta_value($meta_key,$field_type, $userid);
                             $args[$meta_key] = array(
                                 'type'                  =>    $field_type,
-                                'meta_key'              =>    $meta_key,
-                                'meta_value'            =>    $value,
+                                'meta_key'              =>    $meta_key,// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+                                'meta_value'            =>    $value,// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
                                 'label'                 =>    $label,
                             );
                         }

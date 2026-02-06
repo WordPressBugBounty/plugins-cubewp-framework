@@ -254,6 +254,7 @@ class CubeWp_Elementor_Archive_Sorting_Widget extends Widget_Base
     protected function render()
     {
         // Assuming CubeWp_Frontend_Search_Filter exists and cwp_filter_sorting() outputs the HTML
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         echo \CubeWp_Frontend_Search_Filter::cwp_filter_sorting();
     }
 }

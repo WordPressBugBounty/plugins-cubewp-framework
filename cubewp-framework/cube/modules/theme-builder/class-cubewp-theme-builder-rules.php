@@ -124,6 +124,61 @@ class CubeWp_Theme_Builder_Rules {
         $template_options .= '</optgroup>';
         return $template_options;
     }
+
+    /**
+     * Method render_postcard_options
+     *
+     * @return string
+     * @since   1.1.28
+     */
+    public static function render_postcard_options() {
+        $template_options = '';
+        $template_options .= '<optgroup label="Posts">';
+        foreach (self::get_public_post_types() as $post_type) {
+            $template_options .= '<option value="postcard_' . esc_attr($post_type['name']) . '">Post Card ' . esc_html($post_type['label']) . '</option>';
+        }
+        $template_options .= '</optgroup>';
+        return $template_options;
+    }
+
+    /**
+     * Method render_termcard_options
+     *
+     * @return string
+     * @since   1.1.28
+     */
+    public static function render_termcard_options() {
+        $template_options = '';
+        $template_options .= '<optgroup label="Taxonomies">';
+        foreach (self::get_public_taxonomies() as $taxonomy) {
+            $template_options .= '<option value="termcard_' . esc_attr($taxonomy['name']) . '">' . esc_html($taxonomy['label']) . '</option>';
+        }
+        $template_options .= '</optgroup>';
+        return $template_options;
+    }
+    
+    /**
+     * Method render_pages_options
+     *
+     * @return string
+     * @since   1.1.xx
+     */
+    public static function render_pages_options()
+    {
+        $template_options = '';
+        $pages = get_pages(array(
+            'sort_column' => 'post_title',
+            'sort_order'  => 'ASC',
+        ));
+        if (! empty($pages)) {
+            $template_options .= '<optgroup label="Specific Pages">';
+            foreach ($pages as $page) {
+                $template_options .= '<option value="single_page_' . esc_attr($page->ID) . '">' . esc_html($page->post_title) . '</option>';
+            }
+            $template_options .= '</optgroup>';
+        }
+        return $template_options;
+    }
     
     /**
      * Method render_block_options
@@ -191,39 +246,63 @@ class CubeWp_Theme_Builder_Rules {
      * @return JSON
      * @since   1.1.16
      */
-    public static function get_template_options() {
+    public static function get_template_options()
+    {
+        /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
         if (!isset($_POST['template_type'])) {
             wp_send_json_error(['message' => 'Template type not specified']);
         }
-    
-        $template_type = sanitize_text_field($_POST['template_type']);
+        /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
+        $template_type = sanitize_text_field(wp_unslash($_POST['template_type']));
+        $custom_template_types = apply_filters('cubewp/theme_builder/options/register', array());
         $template_options = '';
         //$exclude_options = '';
-    
-        switch ($template_type) {
-            case 'single':
-                $template_options .= self::render_single_options();
-                break;
-    
-            case 'archive':
-                $template_options .= self::render_archive_options();
-                break;
-    
-            case 'block':
-                $template_options .= self::render_block_options(); 
-                break;
-    
-            case '404':
-            case 'mega-menu':
-            case 'shop':
-                $template_options .= '<option value="all">all</option>';
-                break;
-    
-            default:
+        if (isset($custom_template_types[$template_type])) {
+            $custom_template_options = apply_filters('cubewp_tb_custom_template_options', '', $template_type);
+            if (!empty($custom_template_options)) {
+                $template_options .= $custom_template_options;
+            } else {
                 $template_options .= self::render_default_options();
-                break;
+            }
+        } else {
+            switch ($template_type) {
+                case 'single':
+                    $template_options .= self::render_single_options();
+                    break;
+
+                case 'archive':
+                    $template_options .= self::render_archive_options();
+                    break;
+
+                case 'postcard':
+                    $template_options .= self::render_postcard_options();
+                    break;
+                
+                case 'termcard':
+                    $template_options .= self::render_termcard_options();
+                    break;
+
+                case 'block':
+                    $template_options .= self::render_block_options();
+                    break;
+
+                case 'header':
+                case 'footer':
+                    $template_options .= self::render_default_options();
+                    $template_options .= self::render_pages_options();
+                    break;
+
+                case '404':
+                case 'mega-menu':
+                case 'shop':
+                    $template_options .= '<option value="all">all</option>';
+                    break;
+
+                default:
+                    $template_options .= self::render_default_options();
+                    break;
+            }
         }
-    
         wp_send_json_success([
             'template_options' => $template_options,
             //'exclude_options' => $exclude_options

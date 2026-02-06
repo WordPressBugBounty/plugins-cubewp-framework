@@ -51,11 +51,15 @@ class CubeWp_Frontend_Number_Field extends CubeWp_Frontend {
     public function render_search_filters_number_field( $output = '', $args = array() ){
         $args = apply_filters( 'cubewp/frontend/field/parametrs', $args );
         $minval = $maxval = '';
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only use of query vars to render notice; no state change performed.
         if(isset($_GET['min-'.$args['name']])){
-            $minval = sanitize_text_field($_GET['min-'.$args['name']]);
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only use of query vars to render notice; no state change performed.
+            $minval = sanitize_text_field(wp_unslash($_GET['min-'.$args['name']]));
         }
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only use of query vars to render notice; no state change performed.
         if(isset($_GET['max-'.$args['name']])){
-            $maxval = sanitize_text_field($_GET['max-'.$args['name']]);
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only use of query vars to render notice; no state change performed.
+            $maxval = sanitize_text_field(wp_unslash($_GET['max-'.$args['name']]));
         }
         $output         = self::cwp_frontend_search_field_container($args);
             $output .= self::cwp_frontend_search_field_label($args);

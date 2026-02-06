@@ -1,11 +1,12 @@
 <?php
-
 /**
  * CubeWp Frontend templates is for display of single post and archive templates
  *
  * @version 1.0.5
  * @package cubewp/cube/classes
  */
+
+ // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -86,7 +87,7 @@ class CubeWp_Frontend_Templates {
                     $hook = get_post_meta( $template_id, 'template_location', true );
                     $content_to_echo = CubeWp_Theme_Builder::do_cubewp_theme_builder('block', $template_id, true);
                     add_action( $hook, function() use ( $content_to_echo ) {
-                        echo $content_to_echo;
+                        echo wp_kses_post($content_to_echo);
                     });
                 }
             }
@@ -351,9 +352,11 @@ class CubeWp_Frontend_Templates {
                 'author.php'
             );
         }elseif (is_search()) {
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only use of query vars to render notice; no state change performed.
             if ( isset( $_GET['post_type'] ) && !empty( $_GET['post_type'] ) ) {
                 // Sanitize the post_type value from the query string
-                $post_type = sanitize_text_field( $_GET['post_type'] );
+                // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only use of query vars to render notice; no state change performed.
+                $post_type = sanitize_text_field( wp_unslash($_GET['post_type']) );
                 
                 // Define the template array
                 $templates = array(

@@ -15,27 +15,27 @@ class CubeWp_Settings_Ajax_Hooks {
                 'status' => 'error',
                 'html'   => esc_html__('Invalid User Session.', 'cubewp-framework'),
             ));
-            die($res);
+            die(wp_kses_post($res));
         }
-        if (!isset($_POST['cwpNonce']) || !wp_verify_nonce( $_POST['cwpNonce'], 'plugin_settings-options' )) {
+        if (!isset($_POST['cwpNonce']) || !wp_verify_nonce( sanitize_text_field(wp_unslash($_POST['cwpNonce'])), 'plugin_settings-options' )) {
             $res = json_encode(array(
                 'status' => 'error',
                 'html'   => esc_html__('There Is A Problem With Nonce.', 'cubewp-framework'),
             ));
-            die($res);
+            die(wp_kses_post($res));
         }
 
         if (isset($_POST['activeTab']) && !empty($_POST['activeTab'])) {
             // Saving Last Options Tab User Use Via Cookie For 1 Day
             $cookie_name = "cwp-options-lastUsedTab";
-            $cookie_value = sanitize_text_field($_POST['activeTab']);
+            $cookie_value = isset($_POST['activeTab']) ? sanitize_text_field(wp_unslash($_POST['activeTab'])) : '';
             setcookie($cookie_name, $cookie_value, time() + (86400 * 30), "/");
         }
 
         $status = 'error';
         $msg = esc_html__('Unexpected Error Occurred.', 'cubewp-framework');
         $settings_helpers = new CubeWp_Settings_Helpers();
-        $post_data = wp_unslash( $_POST['cwpOptions'] );
+        $post_data = isset($_POST['cwpOptions']) ? wp_unslash( $_POST['cwpOptions'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $values    = $settings_helpers::parse_str( $post_data );
 
         if(isset($_POST['reset'])){
@@ -84,7 +84,7 @@ class CubeWp_Settings_Ajax_Hooks {
         if($update == true){
             do_action( 'cubewp/after/settings/saved', 'saved');
         }
-        die($res);
+        die(wp_kses_post($res));
     }
     
     public static function cwp_save_default_options( $reset = '', $resetID = 0 ) {
@@ -94,7 +94,7 @@ class CubeWp_Settings_Ajax_Hooks {
                 'status' => 'error',
                 'html'   => esc_html__('Invalid User Session.', 'cubewp-framework'),
             ));
-            die($res);
+            die(wp_kses_post($res));
         }
         
         if($reset == 'all'){
@@ -124,8 +124,8 @@ class CubeWp_Settings_Ajax_Hooks {
     }
 
     public static function cwp_get_font_attributes(){
-        
-        $font_family            = isset($_POST['font_family']) ? sanitize_text_field($_POST['font_family']) : '';
+        /* phpcs:ignore WordPress.Security.NonceVerification.Missing */
+        $font_family            = isset($_POST['font_family']) ? sanitize_text_field(wp_unslash($_POST['font_family'])) : '';
         $font_styles_options    = apply_filters("cubewp/settings/font_styles/options", '', $font_family);
         $font_subsets_options   = apply_filters("cubewp/settings/font_subsets/options", '', $font_family);
         

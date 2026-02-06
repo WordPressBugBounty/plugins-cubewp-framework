@@ -87,7 +87,8 @@ class CubeWp_Admin_Taxonomy_Field extends CubeWp_Admin {
 			}
 
 			if ($taxonomy->name == 'category' || $taxonomy->name == 'post_tag' || $taxonomy->name == 'post_format') {
-				$taxonomy_label = sprintf(__('%s (WP Core)'), $taxonomy->label);
+				/* translators: %s: taxonomy label. */
+				$taxonomy_label = sprintf(__( '%s (WP Core)', 'cubewp-framework' ), $taxonomy->label);
 			} else {
 				$taxonomy_label = $taxonomy->label;
 			}

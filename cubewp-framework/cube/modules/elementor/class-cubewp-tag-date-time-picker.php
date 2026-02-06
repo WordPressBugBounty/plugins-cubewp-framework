@@ -49,7 +49,7 @@ class CubeWp_Tag_Date_Time_Picker extends \Elementor\Core\DynamicTags\Tag {
 		}
         $value = get_field_value( $field );
         
-		echo cubewp_core_data($value);
+		echo esc_html(cubewp_core_data($value));
 	}
     
 

@@ -28,11 +28,11 @@ class CubeWp_Metabox
         $args = array(
             'numberposts' => -1,
             'post_type'   => 'cwp_form_fields',
-            'meta_key'    => '_cwp_group_order',
+            'meta_key'    => '_cwp_group_order',// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
             'orderby'     => 'meta_value_num',
             'order'       => 'ASC',
             'post_status' => array('publish', 'private'),
-            'meta_query'  => array(
+            'meta_query'  => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
                 'key'       => '_cwp_group_types',
                 'value'     => '',
                 'compare'   => '!='
@@ -160,7 +160,10 @@ class CubeWp_Metabox
         if (isset($taxonomies) && !empty($taxonomies)) {
             $comma = $_group_terms = $_group_terms_name = '';
             foreach ($taxonomies as $single => $objects) {
-                $terms = get_terms($single, array('hide_empty' => false));
+                $terms = get_terms(array(
+                    'taxonomy' => $single,
+                    'hide_empty' => false,
+                ));
                 if (!empty($terms)) {
                     foreach ($terms as $term) {
                         if (isset($group_terms) && is_array($group_terms) && in_array($term->term_id, $group_terms)) {
@@ -221,6 +224,7 @@ class CubeWp_Metabox
         $output .= '</tbody>';
         $output .= '</table>';
 
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         echo cubewp_core_data($output);
     }
 
@@ -238,7 +242,7 @@ class CubeWp_Metabox
         if (isset($_POST['cwp_meta_box_nonce'])) {
 
             // verify nonce
-            if (! wp_verify_nonce($_POST['cwp_meta_box_nonce'], basename(__FILE__)))
+            if (! isset($_POST['cwp_meta_box_nonce']) || ! wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['cwp_meta_box_nonce'])), basename(__FILE__)))
                 return $post_id;
 
             // check autosave
@@ -246,7 +250,7 @@ class CubeWp_Metabox
                 return $post_id;
 
             // check permissions
-            if ('page' == $_POST['post_type']) {
+            if (isset($_POST['post_type']) && 'page' == sanitize_text_field(wp_unslash($_POST['post_type']))) {
                 if (! current_user_can('edit_page', $post_id))
                     return $post_id;
             } elseif (! current_user_can('edit_post', $post_id)) {
@@ -254,7 +258,7 @@ class CubeWp_Metabox
             }
 
             if (isset($_POST['cwp_meta'])) {
-
+                /* phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized  */
                 $fields = CubeWp_Sanitize_Fields_Array($_POST['cwp_meta'], 'post_types');
 
                 $fieldOptions = CWP()->get_custom_fields('post_types');

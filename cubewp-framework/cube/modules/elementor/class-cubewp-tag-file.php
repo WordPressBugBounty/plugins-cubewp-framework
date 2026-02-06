@@ -49,7 +49,14 @@ class CubeWp_Tag_File extends \Elementor\Core\DynamicTags\Tag {
 			return;
 		}
         $value = get_field_value( $field );
-		echo cubewp_core_data($value);
+		if( empty( $value ) ) {
+			return;
+		}
+		$fileItemURL = wp_get_attachment_url($value);
+		if( empty( $fileItemURL ) ) {
+			return;
+		}
+		echo '<a href="' . esc_url($fileItemURL) . '" download>' . esc_html__('Download File', 'cubewp-framework') . '</a>';
 	}
     
 

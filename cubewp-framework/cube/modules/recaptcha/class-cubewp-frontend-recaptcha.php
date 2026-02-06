@@ -1,4 +1,12 @@
 <?php
+/**
+ * CubeWp Frontend Recaptcha.
+ *
+ * @version 1.0
+ * @package cubewp/cube/modules/recaptcha
+ */
+
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
 
 if (! defined('ABSPATH')) {
 	exit;
@@ -78,7 +86,7 @@ class CubeWp_Frontend_Recaptcha
 		}
 		$output = '';
 		if (self::$recaptcha_type == 'google_v2') {
-			$output .= '<div class="cubewp-form-recaptcha" id="cubewp-form-recaptcha-' . rand(000000000, 999999999) . '"></div>';
+			$output .= '<div class="cubewp-form-recaptcha" id="cubewp-form-recaptcha-' . wp_rand(000000000, 999999999) . '"></div>';
 		}
 		return $output;
 	}
@@ -89,7 +97,7 @@ class CubeWp_Frontend_Recaptcha
 			wp_send_json(
 				array(
 					'type' => 'error',
-					'msg'  => esc_html__('Error! Please Check Captcha.', 'cubewp-frontend'),
+					'msg'  => esc_html__('Error! Please Check Captcha.', 'cubewp-framework'),
 				)
 			);
 		}
@@ -98,7 +106,7 @@ class CubeWp_Frontend_Recaptcha
 			wp_send_json(
 				array(
 					'type' => 'error',
-					'msg'  => esc_html__('Captcha Error! Please Disable VPN Or Try Again Later.', 'cubewp-frontend'),
+					'msg'  => esc_html__('Captcha Error! Please Disable VPN Or Try Again Later.', 'cubewp-framework'),
 				)
 			);
 		}

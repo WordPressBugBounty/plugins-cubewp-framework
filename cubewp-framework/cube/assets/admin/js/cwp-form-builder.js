@@ -405,7 +405,7 @@
             $.ajax({
                 type: 'POST',
                 url: cwp_vars_params.ajax_url,
-                data: $('#section_form').serialize() + '&action=cwpform_add_section',
+                data: $('#section_form').serialize() + '&action=cwpform_add_section&security_nonce='+cwp_vars_params.nonce,
                 dataType: 'json',
                 success: function (res) {
                     if ($('.cubewp-type-container.active-tab').find('.cubewp-plan-tab').length > 0) {
@@ -576,7 +576,7 @@
         $.ajax({
             type: 'POST',
             url: cwp_vars_params.ajax_url,
-            data: parent.find('.cubewp-builder-area').find(':input').serialize() + '&form_relation=' + form_relation + '&form_type=' + form_type + '&action=cwpform_save_shortcode',
+            data: parent.find('.cubewp-builder-area').find(':input').serialize() + '&form_relation=' + form_relation + '&form_type=' + form_type + '&action=cwpform_save_shortcode&security_nonce='+cwp_vars_params.nonce,
             success: function (data) {
                 var $class = '';
                if (form_type === 'single_layout' || form_type === 'search_filters' || form_type === 'loop_builder') {

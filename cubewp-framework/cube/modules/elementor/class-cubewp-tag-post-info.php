@@ -40,9 +40,9 @@ class CubeWp_Tag_Post_Info extends Tag {
 		if ( $field == 'publish_date' ) {
 			echo get_the_date( '', $post_id );
 		} else if ( $field == 'publish_time' ) {
-			echo get_the_time( '', $post_id );
+			echo esc_html(get_the_time( '', $post_id ));
 		} else if ( $field == 'views' ) {
-			echo get_post_meta( $post_id, 'cubewp_post_views', true );
+			echo esc_html(get_post_meta( $post_id, 'cubewp_post_views', true ));
 		}
 	}
 

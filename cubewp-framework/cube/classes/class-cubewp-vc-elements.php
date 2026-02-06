@@ -34,7 +34,8 @@ class CubeWp_Vc_Elements {
 				if (class_exists($class)) {
 					new $class();
 				}else {
-					wp_die(sprintf(esc_html__("%s Class Doesn't Exist.", "cubewp-framework"), $class));
+					/* translators: %s: class name. */
+					wp_die(sprintf(esc_html__("%s Class Doesn't Exist.", "cubewp-framework"), esc_html($class)));
 				}
 			}
 		}

@@ -1,11 +1,13 @@
 <?php
-
 /**
  * CubeWp Initialization.
  *
  * @package cubewp/cube/classes
  * @version 1.0
  */
+
+ // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
+
 defined('ABSPATH') || exit;
 
 /**
@@ -22,7 +24,7 @@ final class CubeWp_Load
      *
      * @var string
      */
-    public static $CubeWp_version = '1.1.27';
+    public static $CubeWp_version = '1.1.29';
 
     /**
      * Wordpress required version.
@@ -145,6 +147,7 @@ final class CubeWp_Load
     public function frontend_includes()
     {
         add_action('cubewp_loaded', array('CubeWp_Frontend', 'init'), 9);
+        add_action('cubewp_loaded', array('CubeWp_Keyword_Suggestions', 'init'), 10);
     }
 
     /**

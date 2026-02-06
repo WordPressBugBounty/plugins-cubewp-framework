@@ -9,6 +9,8 @@
  * @version 1.0
  */
 
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }

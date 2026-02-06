@@ -57,18 +57,18 @@ class CubeWp_Builder_Pro {
             $background_image_src = CWP_PLUGIN_URI.'cube/assets/admin/images/user-dashboard-screen.png';
         }
 		echo'<div id="cubewp-title-bar">
-		<h1>'.$page_header.'</h1>
+		<h1>'.esc_html($page_header).'</h1>
 		</div>
 		<div class="cubewp-subscription-frame">
-			<img class="cubewp-subscription-frame-bg" src="'.$background_image_src.'" alt="">
+			<img class="cubewp-subscription-frame-bg" src="'.esc_url($background_image_src).'" alt="">
 			<div class="cubewp-subscription-main">
 				<div class="cubewp-subscription-form">
-					<div class="cube-subscription-header" style="background-image: url('.CWP_PLUGIN_URI.'cube/assets/admin/images/addon-pop-header@2x.png)">
-						<img class="subscription-header-super" src="'.CWP_PLUGIN_URI.'cube/assets/admin/images/wp-super.png" alt="image">
+					<div class="cube-subscription-header" style="background-image: url('.esc_url(CWP_PLUGIN_URI.'cube/assets/admin/images/addon-pop-header-2x.png').')">
+						<img class="subscription-header-super" src="'.esc_url(CWP_PLUGIN_URI.'cube/assets/admin/images/wp-super.png').'" alt="image">
 					</div>
 					<div class="cubewp-subscription-contant">
 						<div class="cubewp-subscription-logo">
-							 <img src="'.CWP_PLUGIN_URI.'cube/assets/admin/images/cube-logo.svg" alt="">
+							 <img src="'.esc_url(CWP_PLUGIN_URI.'cube/assets/admin/images/cube-logo.svg').'" alt="">
 						</div>
 						<div class="cube-popup-title">
 							<h2>Unlock (8) Super Powerful Frontend Builders</h2>
@@ -93,7 +93,7 @@ class CubeWp_Builder_Pro {
 								<span class="cube-award-option">Create Your Own Test Sandbox Powered by</span>
 							</div>
 							<div class="cubewp-logo">
-								<img src="'.CWP_PLUGIN_URI.'cube/assets/admin/images/demowp.png" alt="">
+								<img src="'.esc_url(CWP_PLUGIN_URI.'cube/assets/admin/images/demowp.png').'" alt="">
 							</div>
 						</div>
 					</div>

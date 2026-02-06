@@ -44,7 +44,7 @@ class CubeWp_Frontend_Date_Time_Picker_Field extends CubeWp_Frontend {
         $output         = self::cwp_frontend_post_field_container($args);
 
         if($args['value'] != '' && is_numeric($args['value'])){
-            $args['value'] = date(get_option('date_format') .' '. get_option('time_format'), $args['value']);
+            $args['value'] = wp_date(get_option('date_format') .' '. get_option('time_format'), $args['value']);
         }
 
             $output .= self::cwp_frontend_field_label($args);

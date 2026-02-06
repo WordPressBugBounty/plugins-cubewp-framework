@@ -1,4 +1,13 @@
 <?php
+/**
+ * CubeWp Settings.
+ *
+ * @version 1.0
+ * @package cubewp/cube/modules/settings
+ */
+
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
+
 if ( ! defined('ABSPATH')) {
 	exit;
 }
@@ -65,7 +74,7 @@ class CubeWp_Settings {
         <div id="cubewp-settings-tabs">
             <div class="cubewp-settings-tabs-header">
                 <img src="<?php echo esc_url(CWP_PLUGIN_URI . "cube/assets/admin/images/logo-2.png"); ?>"
-                     alt="<?php esc_html_e("CubeWP Logo", "cube"); ?>">
+                     alt="<?php esc_html_e("CubeWP Logo", "cubewp-framework"); ?>">
             </div>
 			<?php
 			$counter = 0;
@@ -79,8 +88,8 @@ class CubeWp_Settings {
                 }
 				$counter ++;
 				?>
-                <div class="cubewp-setting-tab <?php esc_attr_e($class); ?>" data-target-id="<?php esc_attr_e($id); ?>">
-                    <span class="dashicons <?php esc_attr_e($icon); ?>"></span>
+                <div class="cubewp-setting-tab <?php echo esc_attr($class); ?>" data-target-id="<?php echo esc_attr($id); ?>">
+                    <span class="dashicons <?php echo esc_attr($icon); ?>"></span>
 					<?php echo esc_html($data['title']); ?>
                 </div>
 				<?php
@@ -91,9 +100,9 @@ class CubeWp_Settings {
 					$id = 'section_'.$group;
 					$class = 'custom-section';
 					?>
-					<div class="cubewp-setting-tab <?php esc_attr_e($class); ?>" data-target-id="<?php esc_attr_e($id); ?>">
-						<span class="dashicons <?php esc_attr_e($icon); ?>"></span>
-						<?php echo get_the_title($group) ?>
+					<div class="cubewp-setting-tab <?php echo esc_attr($class); ?>" data-target-id="<?php echo esc_attr($id); ?>">
+						<span class="dashicons <?php echo esc_attr($icon); ?>"></span>
+						<?php echo esc_html(get_the_title($group)); ?>
 					</div>
 					<?php
 				}
@@ -115,7 +124,7 @@ class CubeWp_Settings {
 				$class .= " " . self::current_active_tab($id, $counter);
 				$counter ++;
 				?>
-                <div id="<?php esc_attr_e($id) ?>" class="cubewp-settings-tabs-content <?php esc_attr_e($class) ?>">
+                <div id="<?php echo esc_attr($id) ?>" class="cubewp-settings-tabs-content <?php echo esc_attr($class) ?>">
                     <h2><?php echo esc_html($data['title']) ?></h2>
                     <table class="form-table">
                         <tbody>
@@ -124,7 +133,8 @@ class CubeWp_Settings {
 							$field = self::set_field_value($field);
 							?>
                             <tr>
-								<?php echo apply_filters("cubewp/settings/{$field['type']}/field", '', $field) ?>
+								<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+								echo apply_filters("cubewp/settings/{$field['type']}/field", '', $field); ?>
                             </tr>
 							<?php
 							$this->check_dependencies($field);
@@ -142,8 +152,8 @@ class CubeWp_Settings {
 					$id = 'section_'.$group;
 					$class = 'custom-section';
 					?>
-					<div id="<?php esc_attr_e($id) ?>" class="cubewp-settings-tabs-content <?php esc_attr_e($class) ?>">
-						<h2><?php echo get_the_title($group) ?></h2>
+					<div id="<?php echo esc_attr($id) ?>" class="cubewp-settings-tabs-content <?php echo esc_attr($class) ?>">
+						<h2><?php echo esc_html(get_the_title($group)); ?></h2>
 						<table class="form-table">
 							<tbody>
 							<?php
@@ -159,6 +169,7 @@ class CubeWp_Settings {
 								$field['desc'] = $field['description'];
 								$field['title'] = $field['label'];
 								$field = self::set_field_value($field);
+								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 								echo apply_filters("cubewp/admin/post/{$field['type']}/field", '', $field);
 								$this->check_dependencies($field);
 							}
@@ -186,7 +197,7 @@ class CubeWp_Settings {
 
 		$cookie_name = "cwp-options-lastUsedTab";
 		if (isset($_COOKIE[$cookie_name]) && ! empty($_COOKIE[$cookie_name])) {
-			$lastUsedTab = sanitize_text_field( $_COOKIE[$cookie_name] );
+			$lastUsedTab = sanitize_text_field( wp_unslash($_COOKIE[$cookie_name]) );
 		}
 
 		if ($counter == 0 && empty($lastUsedTab)) {
@@ -202,7 +213,7 @@ class CubeWp_Settings {
 
 	public function cubewp_setting_actions(string $position) {
 		?>
-        <div class="cubewp-setting-actions cubewp-setting-actions-<?php esc_attr_e($position); ?>">
+        <div class="cubewp-setting-actions cubewp-setting-actions-<?php echo esc_attr($position); ?>">
             <button class="button-primary cwp-save-settings">
 		        <?php esc_html_e('Save settings', 'cubewp-framework'); ?>
             </button>

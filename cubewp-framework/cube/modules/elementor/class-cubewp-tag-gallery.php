@@ -19,7 +19,6 @@ class CubeWp_Tag_Gallery extends \Elementor\Core\DynamicTags\Data_Tag {
 
 	public function get_categories() {
 		return [ 
-                \Elementor\Modules\DynamicTags\Module::IMAGE_CATEGORY,
                 \Elementor\Modules\DynamicTags\Module::GALLERY_CATEGORY,
                 \Elementor\Modules\DynamicTags\Module::MEDIA_CATEGORY,
                ];
@@ -51,23 +50,43 @@ class CubeWp_Tag_Gallery extends \Elementor\Core\DynamicTags\Data_Tag {
 		}
         $values = get_field_value( $field );
         $returnArr = array();
-        if(is_array($values) && count($values)>0){
-            foreach($values as $key=> $value ){
-				if(get_post($value)){
-                	$returnArr[$key] = [
-                        'id' =>$value,
-                        'url' => wp_get_attachment_image_src($value, 'full')[0],
-                    ];
+        if ( is_array( $values ) && count( $values ) > 0 ) {
+            foreach ( $values as $key => $value ) {
+				// Normalize ID
+				$image_id = is_numeric( $value ) ? (int) $value : 0;
+				if ( ! $image_id ) {
+					continue;
 				}
+				// Ensure it's an image attachment
+				if ( ! wp_attachment_is_image( $image_id ) ) {
+					continue;
+				}
+				$url = wp_get_attachment_image_url( $image_id, 'full' );
+				if ( ! $url ) {
+					continue;
+				}
+				$returnArr[$key] = array(
+					'id'  => $image_id,
+					'url' => $url,
+				);
             }
-        }else{
-            $imageID = attachment_url_to_postid($values);
-            if(get_post($imageID)){
-                $returnArr = [
-                    'id' =>$imageID,
-                    'url' => wp_get_attachment_image_src($imageID, 'full')[0],
-                ]; 
-            }
+        } else {
+            $image_id = 0;
+			// Accept raw URL fallback
+			if ( is_string( $values ) && filter_var( $values, FILTER_VALIDATE_URL ) ) {
+				$image_id = attachment_url_to_postid( $values );
+			} elseif ( is_numeric( $values ) ) {
+				$image_id = (int) $values;
+			}
+			if ( $image_id && wp_attachment_is_image( $image_id ) ) {
+				$url = wp_get_attachment_image_url( $image_id, 'full' );
+				if ( $url ) {
+					$returnArr = array(
+						'id'  => $image_id,
+						'url' => $url,
+					);
+				}
+			}
         }
 		return $returnArr;
 	}

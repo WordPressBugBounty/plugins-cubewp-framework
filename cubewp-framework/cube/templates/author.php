@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
 /**
  * Method cubewp_author
  *
@@ -32,12 +33,14 @@ function cubewp_author(){
     ?>
     <div class="cwp-author-page">
     <?php
+    /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
+    $active_tab = isset($_GET['tab']) ? sanitize_key(wp_unslash($_GET['tab'])) : 'all';
     $author_banner_image = isset($cwpOptions['author_banner_image']) ? wp_get_attachment_image_src($cwpOptions['author_banner_image']) : array();
     $author_banner_image_src = is_array($author_banner_image) && count($author_banner_image) > 0 ? 'style="background-image: url('.$author_banner_image[0].')"' : '';
     ?>
-    <div class="cwp-auther-page-banner" <?php echo $author_banner_image_src; ?> >
+    <div class="cwp-auther-page-banner" <?php echo wp_kses($author_banner_image_src, cubewp_kses_allowed_svg()); ?> >
     </div>
-    <?php echo cwp_author_banner($author_id,$author_name); ?>
+    <?php echo wp_kses(cwp_author_banner($author_id,$author_name), cubewp_kses_allowed_svg()); ?>
     <div class="cwp-auther-page-content">
         <div class="cwp-container">
             <div class="cwp-row">
@@ -47,7 +50,7 @@ function cubewp_author(){
                     $author_contact_info = isset($cwpOptions['author_contact_info']) ? $cwpOptions['author_contact_info'] : '';
                     if($author_contact_info=='1'){ ?>
                     <div class="cwp-author-contact-detail">
-                        <?php echo get_author_contact_info($author_id); ?>
+                        <?php echo wp_kses(get_author_contact_info($author_id), cubewp_kses_allowed_svg()); ?>
                     </div>
                     <?php }
                     if(!empty($author_description)){ ?>
@@ -56,13 +59,13 @@ function cubewp_author(){
                               <h2><?php esc_html_e("About Me", "cubewp-framework"); ?></h2>
                           </div>
                           <div class="cwp-auther-sidebar-headings-content">
-                              <p><?php echo $author_description ?></p>
+                              <p><?php echo wp_kses_post($author_description); ?></p>
                           </div>
                       </div>
                     <?php }
                     $author_custom_fields = isset($cwpOptions['author_custom_fields']) ? $cwpOptions['author_custom_fields'] : '';
                     if($author_custom_fields=='1'){
-                      echo cwp_author_custom_fields($author_id);
+                      echo /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped */ cwp_author_custom_fields($author_id);
                     }
                     ?>
                   </div>
@@ -77,18 +80,27 @@ function cubewp_author(){
                     unset( $post_types['page'] );
                     unset( $post_types['cwp_reviews'] );
                     $args = get_author_posts_args($post_types,$author_id);
-                    $page_num     =  isset($_GET['page_num']) ? $_GET['page_num'] : 1;
+                    /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
+                    $page_num     =  isset($_GET['page_num']) ? sanitize_text_field(wp_unslash($_GET['page_num'])) : 1;
                     $is_archive_page =  isset($args['is_archive']) ? $args['is_archive'] : '';
+                    $post_type    =  isset($args['post_type']) ? $args['post_type'] : '';
+                    $query = new CubeWp_Query($args);
+                    // Determine current page for "All" tab only when it's the active tab
+                    /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
+                    $page_num     =  ($active_tab === 'all') ? ( isset($_GET['page_num']) ? max(1, absint($_GET['page_num'])) : 1 ) : 1;
+                    // Build args with pagination for all selected post types
+                    $args = get_author_posts_args($post_types, $author_id, $page_num);
+                    $is_archive_page =  isset($args['archive']) ? $args['archive'] : 'false';
                     $post_type    =  isset($args['post_type']) ? $args['post_type'] : '';
                     $query = new CubeWp_Query($args);
                     $posts = $query->cubewp_post_query();
                     $keyind = 0;
-                    $active_class = $keyind == 0 ? 'cwp-active-tab' : '';
+                    $active_class = ($active_tab === 'all') ? 'cwp-active-tab' : '';
                     if($posts->have_posts()){
                     ?>
                     <div class="cwp-auther-post-tabs">
                         <ul class="cwp-tabs" role="tablist">
-                          <li class="cwp-author-allposts-tab cwp-active-tab">
+                          <li class="cwp-author-allposts-tab <?php echo esc_attr($active_tab === 'all' ? 'cwp-active-tab' : ''); ?>">
                             <a class="list-group-item" data-toggle="tab" href="#cwp-author-allposts"><?php esc_html_e("All My Posts", "cubewp-framework"); ?></a>
                           </li>
                           <?php if(!empty($author_post_types) && is_array($author_post_types)){
@@ -102,8 +114,8 @@ function cubewp_author(){
                               $post = $query->cubewp_post_query();
                               if($post->have_posts()){
                             ?>
-                            <li class="cwp-author-<?php esc_html_e($post_type)?>-tab <?php $active_class ?>">
-                              <a class="list-group-item" data-toggle="tab" href="#cwp-author-<?php esc_html_e($post_type)?>"><?php esc_html_e($post_type)?></a>
+                            <li class="cwp-author-<?php echo esc_html($post_type)?>-tab <?php echo esc_attr($active_tab === 'pt_' . $post_type ? 'cwp-active-tab' : ''); ?>">
+                              <a class="list-group-item" data-toggle="tab" href="#cwp-author-<?php echo esc_html($post_type)?>"><?php echo esc_html($post_type)?></a>
                             </li>
                           <?php }
                             }
@@ -111,37 +123,39 @@ function cubewp_author(){
                         </ul>
                     </div>
                     <div class="cwp-auther-post-content">
-                      <?php $active_class = $keyind == 0 ? 'cwp-active-tab-content' : ''; ?>
-                      <div class="cwp-tab-content cwp-active-tab-content" id="cwp-author-allposts">
+                      <?php $active_class = ($active_tab === 'all') ? 'cwp-active-tab-content' : ''; ?>
+                      <div class="cwp-tab-content <?php echo esc_attr($active_class); ?>" id="cwp-author-allposts">
                         <div class="cwp-row">
                             <?php
                               while ($posts->have_posts()) : $posts->the_post();
                               $post_id = get_the_id();
-                              echo CubeWp_frontend_grid_HTML($post_id, $col_class = 'cwp-col-12 cwp-col-md-4');
+                              echo /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped */ CubeWp_frontend_grid_HTML($post_id, $col_class = 'cwp-col-12 cwp-col-md-4');
                               endwhile;
-                              $pagination_args = get_pagination_args($posts,$page_num,$is_archive_page);
-                              echo apply_filters('cubewp_frontend_posts_pagination', '', $pagination_args);
+                              $pagination_args = get_pagination_args($posts, $page_num, $is_archive_page, '&tab=all');
+                              echo wp_kses(apply_filters('cubewp_frontend_posts_pagination', '', $pagination_args), cubewp_kses_allowed_svg());
                              ?>
                         </div>
                       </div>
                       <?php
                         if(!empty($author_post_types) && is_array($author_post_types)){
                         foreach ($author_post_types as $post_type) { ?>
-                          <div class="cwp-tab-content <?php $active_class ?>" id="cwp-author-<?php esc_html_e($post_type)?>">
+                          <div class="cwp-tab-content <?php echo esc_attr($active_tab === 'pt_' . $post_type ? 'cwp-active-tab-content' : ''); ?>" id="cwp-author-<?php echo esc_html($post_type)?>">
                             <div class="cwp-row">
                                 <?php
-                                  $args = get_author_posts_args($post_type,$author_id);
-                                  $page_num     =  isset($_GET['page_num']) ? $_GET['page_num'] : 1;
-                                  $is_archive_page =  isset($args['is_archive']) ? $args['is_archive'] : '';
+                                  $tab_key = 'pt_' . $post_type;
+                                  /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
+                                  $page_num     =  ($active_tab === $tab_key) ? ( isset($_GET['page_num']) ? max(1, absint($_GET['page_num'])) : 1 ) : 1;
+                                  $args = get_author_posts_args($post_type, $author_id, $page_num);
+                                  $is_archive_page =  isset($args['archive']) ? $args['archive'] : 'false';
                                   $post_type    =  isset($args['post_type']) ? $args['post_type'] : '';
                                   $query = new CubeWp_Query($args);
-                                  $posts = $query->cubewp_post_query();
-                                  while ($posts->have_posts()) : $posts->the_post();
+                                  $post_type_posts = $query->cubewp_post_query();
+                                  while ($post_type_posts->have_posts()) : $post_type_posts->the_post();
                                   $post_id = get_the_id();
-                                  echo CubeWp_frontend_grid_HTML($post_id, $col_class = 'cwp-col-12 cwp-col-md-4');
+                                  echo /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped */ CubeWp_frontend_grid_HTML($post_id, $col_class = 'cwp-col-12 cwp-col-md-4');
                                   endwhile;
-                                  $pagination_args = get_pagination_args($posts,$page_num,$is_archive_page);
-                                  echo apply_filters('cubewp_frontend_posts_pagination', '', $pagination_args);
+                                  $pagination_args = get_pagination_args($post_type_posts, $page_num, $is_archive_page, '&tab=' . $tab_key);
+                                  echo wp_kses(apply_filters('cubewp_frontend_posts_pagination', '', $pagination_args), cubewp_kses_allowed_svg());
                                  ?>
                             </div>
                           </div>
@@ -150,7 +164,7 @@ function cubewp_author(){
                     </div>
                   <?php }else{?>
                         <div class="cwp-empty-search">
-                          <img class="cwp-empty-search-img" src="<?php echo CWP_PLUGIN_URI?>cube/assets/frontend/images/no-result.png" alt="">
+                          <img class="cwp-empty-search-img" src="<?php echo esc_url(CWP_PLUGIN_URI.'cube/assets/frontend/images/no-result.png'); ?>" alt="<?php esc_html_e('No Posts Found','cubewp-framework'); ?>">
                           <h2><?php esc_html_e('No Posts Found','cubewp-framework')?></h2>
                           <p><?php esc_html_e('There are no posts associated with this author.','cubewp-framework') ?></p>
                         </div>
@@ -181,7 +195,7 @@ function cwp_author_banner($author_id,$author_name){
             <div class="cwp-row">
                 <div class="cwp-col-md-3">
                     <div class="cwp-auther-frontend-image">
-                        <img src="<?php echo get_avatar_url($author_id,array("size"=>360)); ?>" alt="<?php esc_html_e("Author", "cubewp-framework"); ?>" />
+                        <img src="<?php echo esc_url(get_avatar_url($author_id,array("size"=>360))); ?>" alt="<?php esc_html_e("Author", "cubewp-framework"); ?>" />
                     </div>
                     <?php
                     $edit_profile = isset($cwpOptions['author_edit_profile']) ? $cwpOptions['author_edit_profile'] : '';
@@ -195,7 +209,7 @@ function cwp_author_banner($author_id,$author_name){
                 </div>
                 <div class="cwp-col-md-4">
                     <div class="cwp-auther-name">
-                        <h2><?php esc_html_e($author_name); ?></h2>
+                        <h2><?php echo esc_html($author_name); ?></h2>
                     </div>
                     <div class="cwp-auther-joined-date">
                         <?php $author_registered=get_the_author_meta('user_registered');
@@ -205,7 +219,7 @@ function cwp_author_banner($author_id,$author_name){
                         <p><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-calendar" viewBox="0 0 16 16">
                             <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
                           </svg>
-                          <?php esc_html_e("joined", "cubewp-framework"); ?> <?php echo $author_registered ?>
+                          <?php esc_html_e("joined", "cubewp-framework"); ?> <?php echo esc_html($author_registered); ?>
                         </p>
                     </div>
                 </div>
@@ -213,7 +227,7 @@ function cwp_author_banner($author_id,$author_name){
                 $author_share = isset($cwpOptions['author_share_button']) ? $cwpOptions['author_share_button'] : '';
                 if($author_share=='1'){ ?>
                 <div class="cwp-col-md-5">
-                    <?php echo cwp_author_share($author_id,$author_name); ?>
+                    <?php echo wp_kses(cwp_author_share($author_id,$author_name), cubewp_kses_allowed_svg()); ?>
                 </div>
                 <?php } ?>
             </div>
@@ -253,7 +267,7 @@ function cwp_author_custom_fields($author_id) {
 			$author_custom_meta['container_class']='';
 			$author_custom_meta['class']='';
 			if (method_exists('CubeWp_Single_Page_Trait', 'field_' . $author_custom_meta['type'])) {
-				echo call_user_func('CubeWp_Single_Page_Trait::field_' . $author_custom_meta['type'], $author_custom_meta);
+				echo /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped */ call_user_func('CubeWp_Single_Page_Trait::field_' . $author_custom_meta['type'], $author_custom_meta);
 			}
 		}?>
 		</div>
@@ -294,23 +308,23 @@ function cwp_author_share($author_id,$author_name) {
 				<ul class="cwp-share-options">
 
 						<li style="background-color: #4099FF;">
-							<?php echo CubeWp_Single_Cpt::get_twitter_svg(esc_url($twitterURL)) ?>
+							<?php echo wp_kses(CubeWp_Single_Cpt::get_twitter_svg(esc_url($twitterURL)), cubewp_kses_allowed_svg()); ?>
 						</li>
 
 						<li style="background-color: #3b5998;">
-							<?php echo CubeWp_Single_Cpt::get_facebook_svg(esc_url($facebookURL)) ?>
+							<?php echo wp_kses(CubeWp_Single_Cpt::get_facebook_svg(esc_url($facebookURL)), cubewp_kses_allowed_svg()); ?>
 						</li>
 
 						<li style="background-color: #C92228;">
-							<?php echo CubeWp_Single_Cpt::get_pinterest_svg(esc_url($pinterest)) ?>
+							<?php echo wp_kses(CubeWp_Single_Cpt::get_pinterest_svg(esc_url($pinterest)), cubewp_kses_allowed_svg()); ?>
 						</li>
 
 						<li style="background-color: #0077B5;">
-							<?php echo CubeWp_Single_Cpt::get_linkedIn_svg(esc_url($linkedin)) ?>
+							<?php echo wp_kses(CubeWp_Single_Cpt::get_linkedIn_svg(esc_url($linkedin)), cubewp_kses_allowed_svg()); ?>
 						</li>
 
 						<li style="background-color: #fe6239;">
-							<?php echo CubeWp_Single_Cpt::get_reddit_svg(esc_url($reddit)) ?>
+							<?php echo wp_kses(CubeWp_Single_Cpt::get_reddit_svg(esc_url($reddit)), cubewp_kses_allowed_svg()); ?>
 						</li>
 				</ul>
 			</div>
@@ -329,13 +343,13 @@ function cwp_author_share($author_id,$author_name) {
  * @return array
  * @since  1.0.6
  */
-function get_author_posts_args($post_type,$author_id) {
+function get_author_posts_args($post_type,$author_id,$paged = 1) {
     $args = array(
               'post_type' => $post_type,
               'author' => $author_id,
               'post_status' => 'publish',
-              'is_archive' => 'false',
-              'page_num' => isset($_GET['page_num']) ? $_GET['page_num'] : 1,
+              'archive' => 'false',
+              'page_num' => max(1, absint($paged)),
               'posts_per_page' => '10',
           );
     return $args;
@@ -344,20 +358,22 @@ function get_author_posts_args($post_type,$author_id) {
 /**
  * Method get_pagination_args
  *
+ * @param WP_Query $posts
  * @param int $page_num
- * @param string $posts
- * @param bool $is_archive_page
+ * @param bool $archive_page
+ * @param string $extra_query
  *
  * @return array
  * @since  1.0.6
  */
-function get_pagination_args($posts,$page_num,$is_archive_page) {
+function get_pagination_args($posts,$page_num,$archive_page,$extra_query = '') {
     $args=array(
               'total_posts'    => $posts->found_posts,
               'posts_per_page' => '10',
               'page_num'       => $page_num,
-              'is_archive'     => $is_archive_page
+              'archive'        => $archive_page,
+              'query_string'   => $extra_query
           );
     return $args;
 }
-echo cubewp_author();
+echo /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped */ cubewp_author();

@@ -55,23 +55,28 @@ class CubeWp_Add_Ons
 		$wp_version = $GLOBALS['wp_version'];
 
 		if (version_compare($wp_version, '5.8', '<'))
-			$message[] = __('This CubeWP Add-on requires WordPress 4.0 or higher. Version detected:', 'cubewp-frontend') . ' ' . $wp_version;
+			$message[] = __('This CubeWP Add-on requires WordPress 4.0 or higher. Version detected:', 'cubewp-framework') . ' ' . $wp_version;
 
 		// PHP check
 		$php_version = phpversion();
 		if (version_compare($php_version, '5.3', '<'))
-			$message[] = __('This CubeWP Add-on requires PHP 5.3 or higher. Version detected: ', 'cubewp-frontend') . ' ' . $php_version;
+			$message[] = __('This CubeWP Add-on requires PHP 5.3 or higher. Version detected: ', 'cubewp-framework') . ' ' . $php_version;
 
 		// SQL check
 		$sql_version = $wpdb->db_version();
 		if (version_compare($sql_version, '5.0', '<'))
-			$message[] = __('This CubeWP Add-on requires SQL 5.0 or higher. Version detected: ', 'cubewp-frontend') . ' ' . $sql_version;
+			$message[] = __('This CubeWP Add-on requires SQL 5.0 or higher. Version detected: ', 'cubewp-framework') . ' ' . $sql_version;
 
 		// Not empty $message means there are issues
 		if (! empty($message)) {
 
 			$error_message = implode("\n", $message);
-			die(__('Sorry but your WordPress installation does not reach the minimum requirements for running this add-on. The following errors were given:', 'cubewp-frontend') . "\n" . $error_message);
+			wp_die(
+				esc_html__(
+					'Sorry but your WordPress installation does not reach the minimum requirements for running this add-on. The following errors were given:',
+					'cubewp-framework'
+				) . "\n" . esc_html( $error_message )
+			);
 		}
 
 		return $this->add_on_management($plugin);
@@ -113,7 +118,7 @@ class CubeWp_Add_Ons
 						// If plugin is free
 						if ($license_type == 'free') {
 							CWP()->update_cubewp_options($slug . '_key', $key);
-							unlink($file);
+							wp_delete_file($file);
 							return;
 						}
 
@@ -129,31 +134,31 @@ class CubeWp_Add_Ons
 						$response = wp_remote_post($this->route, array('timeout' => 15, 'sslverify' => false, 'body' => $api_params));
 						// make sure the response came back okay
 						if (is_wp_error($response)) {
-							die($file_is_not_valid);
+							wp_die( esc_html( $file_is_not_valid ) );
 						}
 						// decode the license data
 						$response_data = json_decode(wp_remote_retrieve_body($response));
 
 						if (isset($response_data->license)) {
 							if ('valid' != $response_data->license) {
-								die($lic_is_not_valid);
+								wp_die( esc_html( $lic_is_not_valid ) );
 							} else {
 								CWP()->update_cubewp_options($slug, $response_data);
 								CWP()->update_cubewp_options($slug . '_key', $key);
 								CWP()->update_cubewp_options($slug . '-status', $response_data->license);
 							}
 						} else {
-							die($lic_is_not_valid);
+							wp_die( esc_html( $lic_is_not_valid ) );
 						}
-						unlink($file);
+						wp_delete_file($file);
 					} else {
 						//file not good
-						die($need_fresh_file);
+						wp_die( esc_html( $need_fresh_file ) );
 					}
 				}
 			} else {
 				//Plugin not good
-				die($not_our_plugin);
+				wp_die( esc_html( $not_our_plugin ) );
 			}
 		}
 	}
@@ -310,7 +315,7 @@ class CubeWp_Add_Ons
 					if (file_exists($file)) {
 						$key = file_get_contents($file);
 						CWP()->update_cubewp_options($slug . '_key', $key);
-						unlink($file);
+						wp_delete_file($file);
 						return;
 					} else {
 						$key = isset($add_ons[$plugin]['key']) ? $add_ons[$plugin]['key'] : '';

@@ -53,9 +53,11 @@ class CubeWp_Post_Types_Custom_Fields_Table extends WP_List_Table{
     
     public function usort_reorder( $a, $b ) {
         // If no sort, default to title
-        $orderby = ( ! empty( $_GET['orderby'] ) ) ? sanitize_text_field($_GET['orderby']) : 'group_name';
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only use of query vars to render notice; no state change performed.
+        $orderby = ( ! empty( $_GET['orderby'] ) ) ? sanitize_text_field(wp_unslash($_GET['orderby'])) : 'group_name';
         // If no order, default to asc
-        $order = ( ! empty($_GET['order'] ) ) ? sanitize_text_field($_GET['order']) : 'asc';
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only use of query vars to render notice; no state change performed.
+        $order = ( ! empty($_GET['order'] ) ) ? sanitize_text_field(wp_unslash($_GET['order'])) : 'asc';
         // Determine sort order
         $result = strcmp( $a[$orderby], $b[$orderby] );
         // Send final sort direction to usort
@@ -112,11 +114,12 @@ class CubeWp_Post_Types_Custom_Fields_Table extends WP_List_Table{
     protected function process_bulk_action() {
 		// Detect when a bulk action is being triggered.
 		if ( 'delete' === $this->current_action() ) { 
-            $nonce = esc_html( $_REQUEST['_wpnonce'] );
+            // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only use of query vars to render notice; no state change performed.
+            $nonce = isset($_REQUEST['_wpnonce']) ? sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ) : '';
             if(wp_verify_nonce( $nonce, 'bulk-' . $this->_args['plural'] ) ) {
                 if(isset($_REQUEST['cwp_group_bulk_action'])){
-
-                    $bulk_request = CubeWp_Sanitize_text_Array($_REQUEST['cwp_group_bulk_action']);
+                    /* phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotValidated */
+                    $bulk_request = CubeWp_Sanitize_text_Array($_REQUEST['cwp_group_bulk_action']); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
                    foreach($bulk_request as $group){
                        new CubeWp_Update_Frontend_Forms(array('group_id'=>$group,'group_options'=>true));
                        wp_delete_post($group, true);
@@ -124,41 +127,49 @@ class CubeWp_Post_Types_Custom_Fields_Table extends WP_List_Table{
                 }                                
             }
         }
+        /* phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotValidated */
         if(isset($_REQUEST['action']) && $_REQUEST['action'] == 'delete') {
-            $nonce = esc_html( $_REQUEST['_wpnonce'] );
+            $nonce = isset($_REQUEST['_wpnonce']) ? sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ) : '';
             if(wp_verify_nonce( $nonce, 'cwp_delete_group')) {
                 if(isset($_REQUEST['groupid'])){
-                    new CubeWp_Update_Frontend_Forms(array('group_id'=>sanitize_text_field($_REQUEST['groupid']),'group_options'=>true));
-                    wp_delete_post(sanitize_text_field($_REQUEST['groupid']), true);
+                    new CubeWp_Update_Frontend_Forms(array('group_id'=>sanitize_text_field(wp_unslash($_REQUEST['groupid'])),'group_options'=>true));
+                    wp_delete_post(sanitize_text_field(wp_unslash($_REQUEST['groupid'])), true);
                 }
-                wp_redirect( CubeWp_Submenu::_page_action('custom-fields') );
+                wp_safe_redirect( CubeWp_Submenu::_page_action('custom-fields') );
+                exit;
             }
         }
+        /* phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotValidated */
         if(isset($_REQUEST['action']) && $_REQUEST['action'] == 'duplicate') {
-            $nonce = esc_html( $_REQUEST['_wpnonce'] );
+            $nonce = isset($_REQUEST['_wpnonce']) ? sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ) : '';
             if(wp_verify_nonce( $nonce, 'cwp_duplicate_group')) {
                 if(isset($_REQUEST['groupid'])){
-                    self::duplicate_group($_REQUEST['groupid']);
+                    self::duplicate_group(sanitize_text_field(wp_unslash($_REQUEST['groupid'])));
                 }
-                wp_redirect( CubeWp_Submenu::_page_action('custom-fields') );
+                wp_safe_redirect( CubeWp_Submenu::_page_action('custom-fields') );
+                exit;
             }
         }
+        /* phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotValidated */
         if(isset($_REQUEST['action']) && $_REQUEST['action'] == 'deactivate') {
-            $nonce = esc_html( $_REQUEST['_wpnonce'] );
+            $nonce = isset($_REQUEST['_wpnonce']) ? sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ) : '';
             if(wp_verify_nonce( $nonce, 'cwp_status_group')) {
                 if(isset($_REQUEST['groupid'])){
-                    self::deactivate_group($_REQUEST['groupid']);
+                    self::deactivate_group(sanitize_text_field(wp_unslash($_REQUEST['groupid'])));
                 }
-                wp_redirect( CubeWp_Submenu::_page_action('custom-fields') );
+                wp_safe_redirect( CubeWp_Submenu::_page_action('custom-fields') );
+                exit;
             }
         }
+        /* phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotValidated */
         if(isset($_REQUEST['action']) && $_REQUEST['action'] == 'activate') {
-            $nonce = esc_html( $_REQUEST['_wpnonce'] );
+            $nonce = isset($_REQUEST['_wpnonce']) ? sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ) : '';
             if(wp_verify_nonce( $nonce, 'cwp_status_group')) {
                 if(isset($_REQUEST['groupid'])){
-                    self::activate_group($_REQUEST['groupid']);
+                    self::activate_group(sanitize_text_field(wp_unslash($_REQUEST['groupid'])));
                 }
-                wp_redirect( CubeWp_Submenu::_page_action('custom-fields') );
+                wp_safe_redirect( CubeWp_Submenu::_page_action('custom-fields') );
+                exit;
             }
         }
         

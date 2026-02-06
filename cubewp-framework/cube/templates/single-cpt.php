@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
 /**
  * The template for displaying all cubewp post type's single posts
  *
@@ -20,12 +21,12 @@ if (CubeWp_Theme_Builder::is_cubewp_theme_builder_active('single')) {
     ?>
         <div class="cwp-cpt-single-container-outer">
             <div class="cwp-container">
-                 <?php echo $single->get_post_featured_image(); ?>
+                 <?php echo wp_kses_post($single->get_post_featured_image()); ?>
                 <div class="cwp-row cwp-cpt-single-content">
                     <div class="cwp-col-12 cwp-col-lg-8">
                         <div class="cwp-single-title-container cwp-row">
                           <div class="cwp-col-12 cwp-col-lg-8">
-                            <h1 class="cwp-single-title"><?php echo get_the_title(get_the_ID()); ?></h1>
+                            <h1 class="cwp-single-title"><?php echo esc_html(get_the_title(get_the_ID())); ?></h1>
                           </div>
                             <div class="cwp-col-12 cwp-col-lg-4">
                                 <div class="cwp-single-quick-actions">

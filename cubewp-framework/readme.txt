@@ -1,11 +1,11 @@
-=== CubeWP - All-in-One Dynamic Content Framework ===
+=== CubeWP Framework ===
 Contributors: cubewp1211, teamcubewp
-Donate link: NA
+Donate link: https://cubewp.com/
 Tags: custom fields, custom post types, custom taxonomies, acf, metabox
 Requires at least: 5.0
 Requires PHP: 7.4
-Tested up to: 6.8
-Stable tag: 1.1.27
+Tested up to: 6.9
+Stable tag: 1.1.29
 License: GPLv2 or later
 
 CubeWP is an end-to-end dynamic content framework for WordPress to help you shrink time and cut cost of development up to 90%.
@@ -375,6 +375,36 @@ To getting started with the plugin, please go to [Documentation](https://support
 
 
 == Changelog ==
+
+= 1.1.29 2026-01-08
+
+- ENHANCED: CubeWP dynamic tags extended to support Business Hours, Taxonomy Text, Google Address, Number, Text, Post Term, and Title tags for greater design flexibility.
+- FIXED: Resolved control conflict warning caused by duplicate control name cwp_click_target_remove_css_transform_x.
+- FIXED: Corrected issues where File, Image, and Gallery fields were not properly selecting items.
+- IMPROVED: Added advanced styling controls for Search Fields in the CubeWP Search Elementor Widget.
+- ADDED: New Elementor Archive Grid/List Switcher Widget for CubeWP Archive Posts.
+- ENHANCED: Advanced styling options introduced for the CubeWP Archive Map Widget.
+- ADDED: New Elementor CubeWP Search Filter Builder Widget for creating custom search filters.
+- ADDED: CubeWP Posts Widget now supports displaying Nearby Posts and Related Posts options.
+- ADDED: Introduced a keyword suggestions option for the keyword search field, configurable from CubeWP settings.
+
+= 1.1.28 2025-12-15
+
+- ADDED: Option to create and manage Post Cards directly from the Theme Builder, allowing full visual editing with Elementor for a seamless and flexible design experience.
+- ADDED: New dynamic tags — Post Excerpt, Post URL, and Post Date — for greater flexibility when building content with Elementor.
+- ADDED: Line Limit option in Post Title dynamic tag for multiline truncation with ellipsis.
+- ADDED: Term Cards support in CubeWP Theme Builder with Elementor editing, enhanced Taxonomy Widget to select Term Card styles, and added slider option with advanced styling controls.
+- ADDED: Dynamic term tags for CubeWP taxonomy fields, including default tags such as Term Name, Term URL, and Term Count.
+- FIXED: CubeWP Search Widget overrides the CubeWP Search Shortcode output even if not using the CubeWP Search Elementor widget.
+- FIXED: Custom search filter field values now pass correctly to frontend arguments.
+- SECURITY: Restricted CubeWP Search AJAX to allowed post types and published (public) posts only.
+- ADDED: Option to select Header and Footer for specific page in CubeWP Theme Builder.
+- FIXED: Pagination issue on Author Page.
+- ADDED: Option in CubeWP Settings to enbale cache for Header,Footer built with CubeWP Theme Builder.
+- ADDED: Option to cache the CubeWP Post Cards.
+- FIXED: Compatibility with WordPress 6.9.
+- SECURITY: Strengthened plugin security with nonce and capability checks, hardened input sanitization and output escaping, standardized translations and JSON handling, improved safe redirects.
+- FIXED: Few Warnings and Notices
 
 = 1.1.27 2025-09-01
 

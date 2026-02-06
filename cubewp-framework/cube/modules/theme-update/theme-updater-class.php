@@ -37,8 +37,9 @@ class EDD_Theme_Updater {
 		$this->remote_api_url = $remote_api_url;
 		$this->response_key = $this->theme_slug . '-update-response';
 		$this->strings = array(
-			'update-notice' => __( "Updating this theme will lose any customizations you have made. 'Cancel' to stop, 'OK' to update.", 'edd-theme-updater' ),
-			'update-available' => __('<strong>%1$s %2$s</strong> is available. <a href="%3$s" class="thickbox" title="%4s">Check out what\'s new</a> or <a href="%5$s"%6$s>update now</a>.', 'edd-theme-updater' )
+			'update-notice' => __( "Updating this theme will lose any customizations you have made. 'Cancel' to stop, 'OK' to update.", 'cubewp-framework' ),
+			/* translators: 1: theme name, 2: version, 3: changelog URL, 4: modal title, 5: update URL, 6: extra attributes (e.g., onclick). */
+			'update-available' => __('<strong>%1$s %2$s</strong> is available. <a href="%3$s" class="thickbox" title="%4$s">Check out what\'s new</a> or <a href="%5$s"%6$s>update now</a>.', 'cubewp-framework' )
 		);
 
 		add_filter( 'site_transient_update_themes', array( &$this, 'theme_update_transient' ) );
@@ -71,18 +72,17 @@ class EDD_Theme_Updater {
 		if ( version_compare( $this->version, $api_response->new_version, '<' ) ) {
 
 			echo '<div id="update-nag">';
-			printf(
-				$strings['update-available'],
-				$theme->get( 'Name' ),
-				$api_response->new_version,
-				'#TB_inline?width=640&amp;inlineId=' . $this->theme_slug . '_changelog',
-				$theme->get( 'Name' ),
-				$update_url,
-				$update_onclick
-			);
+			$name           = esc_html( $theme->get( 'Name' ) );
+			$version        = esc_html( $api_response->new_version );
+			$changelog_id   = $this->theme_slug . '_changelog';
+			$changelog_url  = esc_url( '#TB_inline?width=640&inlineId=' . $changelog_id );
+			$title_attr     = esc_attr( $theme->get( 'Name' ) );
+			$update_href    = esc_url( $update_url );
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $strings['update-available'] is a controlled template; individual args are escaped.
+			printf( $strings['update-available'], $name, $version, $changelog_url, $title_attr, $update_href, $update_onclick );
 			echo '</div>';
-			echo '<div id="' . $this->theme_slug . '_' . 'changelog" style="display:none;">';
-			echo wpautop( $api_response->sections['changelog'] );
+			echo '<div id="' . esc_attr( $this->theme_slug . '_' . 'changelog' ) . '" style="display:none;">';
+			echo wp_kses_post( wpautop( $api_response->sections['changelog'] ) );
 			echo '</div>';
 		}
 	}

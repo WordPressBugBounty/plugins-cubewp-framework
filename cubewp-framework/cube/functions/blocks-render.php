@@ -20,7 +20,7 @@ function cubewp_render_blocks($block_content, $block, $wp_block) {
                 $src = $matches[1];
 
                 // Parse the URL
-                $parsedUrl = parse_url($src);
+                $parsedUrl = wp_parse_url($src);
 
                 // Check if the URL has query strings
                 if (isset($parsedUrl['query'])) {
@@ -92,7 +92,7 @@ function cubewp_render_blocks($block_content, $block, $wp_block) {
                 $src = $matches[1];
 
                 // Parse the URL
-                $parsedUrl = parse_url($src);
+                $parsedUrl = wp_parse_url($src);
 
                 // Check if the URL has query strings
                 if (isset($parsedUrl['query'])) {

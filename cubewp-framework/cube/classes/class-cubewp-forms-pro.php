@@ -31,14 +31,14 @@ class CubeWp_Forms_Pro {
 		$page_header="CubeWP Forms";
 		$background_image_src = CWP_PLUGIN_URI.'cube/assets/admin/images/forms-templates.png';
 		echo'<div id="cubewp-title-bar">
-			<h1>'.$page_header.'</h1>
+			<h1>'.esc_html($page_header).'</h1>
 		</div>
 		<div class="cubewp-subscription-frame forms-templates" style="background:#f0f0f1 0% 0% no-repeat padding-box;">
-			<img class="cubewp-subscription-frame-bg" src="'.$background_image_src.'" alt="">
+			<img class="cubewp-subscription-frame-bg" src="'.esc_url($background_image_src).'" alt="">
 			<div class="cubewp-subscription-main">
 				<div class="cubewp-subscription-form">
 					<div class="cube-subscription-header forms-templates">
-						<img class="subscription-header-super" src="'.CWP_PLUGIN_URI.'cube/assets/admin/images/forms.svg" alt="image">
+						<img class="subscription-header-super" src="'.esc_url(CWP_PLUGIN_URI.'cube/assets/admin/images/forms.svg').'" alt="image">
 					</div>
 					<div class="cubewp-subscription-contant forms-templates">
 						<div class="cubewp-subscription-logo">

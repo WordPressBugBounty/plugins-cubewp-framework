@@ -20,6 +20,7 @@ class CubeWp_Tag_Text extends \Elementor\Core\DynamicTags\Tag {
 	public function get_categories() {
 		return [ 
                 \Elementor\Modules\DynamicTags\Module::TEXT_CATEGORY,
+				\Elementor\Modules\DynamicTags\Module::URL_CATEGORY,
                ];
 	}
 
@@ -46,7 +47,7 @@ class CubeWp_Tag_Text extends \Elementor\Core\DynamicTags\Tag {
 			return;
 		}
         $value = get_field_value( $field );
-		echo cubewp_core_data($value);
+		echo esc_html(cubewp_core_data($value));
 	}
     
 

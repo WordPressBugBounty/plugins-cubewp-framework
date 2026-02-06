@@ -527,7 +527,7 @@ class CubeWp_Elementor_Nav_Menu_Widget extends Widget_Base
 				'global' => [
 					'default' => Global_Typography::TYPOGRAPHY_PRIMARY,
 				],
-				'exclude' => ['line_height'],
+				'exclude' => ['line_height'],// phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_exclude
 				'selector' => '{{WRAPPER}} .elementor-cubewp-nav-menu--dropdown .elementor-cubewp-item, {{WRAPPER}} .elementor-cubewp-nav-menu--dropdown  .elementor-sub-item , {{WRAPPER}} .elementor-cubewp-nav-menu--dropdown  .elementor-cubewp-sub-item',
 				'separator' => 'before',
 			]
@@ -560,7 +560,7 @@ class CubeWp_Elementor_Nav_Menu_Widget extends Widget_Base
 			Group_Control_Box_Shadow::get_type(),
 			[
 				'name' => 'dropdown_box_shadow',
-				'exclude' => [
+				'exclude' => [// phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_exclude
 					'box_shadow_position',
 				],
 				'selector' => '{{WRAPPER}} .elementor-cubewp-nav-menu--main .elementor-cubewp-nav-menu--dropdown, {{WRAPPER}} .elementor-cubewp-nav-menu__container.elementor-cubewp-nav-menu--dropdown',
@@ -982,7 +982,7 @@ class CubeWp_Elementor_Nav_Menu_Widget extends Widget_Base
 			]); 
 ?>
 
-			<nav <?php $this->print_render_attribute_string('main-menu'); ?> data-icons='<?php echo Icons_Manager::render_icon($settings['submenu_icon']); ?>'>
+			<nav <?php $this->print_render_attribute_string('main-menu'); ?> data-icons='<?php /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped */ echo Icons_Manager::render_icon($settings['submenu_icon']); ?>'>
 				<?php
 
 				// PHPCS - escaped by WordPress with "wp_nav_menu"
@@ -1003,8 +1003,9 @@ class CubeWp_Elementor_Nav_Menu_Widget extends Widget_Base
 		if ('dropdown'  == $settings['layout_type']) :
 			$this->render_menu_toggle($settings);
 		?>
-			<nav class="elementor-cubewp-nav-menu--dropdown  elementor-cubewp-nav-menu__container" aria-hidden="true" data-icons='<?php echo Icons_Manager::render_icon($settings['submenu_icon']); ?>'>
+			<nav class="elementor-cubewp-nav-menu--dropdown  elementor-cubewp-nav-menu__container" aria-hidden="true" data-icons='<?php /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped */ echo Icons_Manager::render_icon($settings['submenu_icon']); ?>'>
 				<?php
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				echo $menu_html;
 				?>
 			</nav>
@@ -1014,7 +1015,7 @@ class CubeWp_Elementor_Nav_Menu_Widget extends Widget_Base
 		?>
 		<div class="cubewp-offcanvas-menus">
 			<div class="offcanvas-header">
-				<a href="<?php echo  site_url();  ?>"> <img src="<?php echo esc_url($off_canvas_logo['url']);  ?>" alt="logo"></a>
+				<a href="<?php echo esc_url(site_url());  ?>"> <img src="<?php echo esc_url($off_canvas_logo['url']);  ?>" alt="logo"></a>
 				<button class="cubewp-menu-closed"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
 						<path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z" />
 					</svg></button>
@@ -1022,6 +1023,7 @@ class CubeWp_Elementor_Nav_Menu_Widget extends Widget_Base
 			<div class="offcanvas-body">
 				<nav class="menu-offcanvas elementor-cubewp-nav-menu__container" aria-hidden="true">
 					<?php
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 					echo $menu_html;
 					?>
 				</nav>

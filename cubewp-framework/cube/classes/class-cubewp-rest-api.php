@@ -143,9 +143,7 @@ class CubeWp_Rest_API extends WP_REST_Controller
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array($this, 'get_cubewp_posts'),
-					'permission_callback' => function () {
-						return true;
-					},
+					'permission_callback' => array($this, 'get_posts_permission_check'),
 					'args'                => $this->get_render_params(),
 				),
 			)
@@ -158,9 +156,7 @@ class CubeWp_Rest_API extends WP_REST_Controller
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array($this, 'get_cubewp_posts_object'),
-					'permission_callback' => function () {
-						return true;
-					},
+					'permission_callback' => array($this, 'get_posts_permission_check'),
 					'args'                => $this->get_render_params(),
 				),
 			)
@@ -205,6 +201,19 @@ class CubeWp_Rest_API extends WP_REST_Controller
 	public function get_permission_check($request)
 	{
 		return current_user_can('edit_posts');
+	}
+
+	/**
+	 * Checks if a given request has permission to access posts via query endpoints.
+	 * Allows public read access but respects WordPress post visibility rules.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error True if the request has read access, WP_Error object otherwise.
+	 */
+	public function get_posts_permission_check($request)
+	{
+		// Allow public read access (posts will be filtered for visibility)
+		return true;
 	}
 
 	/**
@@ -259,12 +268,26 @@ class CubeWp_Rest_API extends WP_REST_Controller
 			$query  = new CubeWp_Query($cwp_query);
 			$posts  = $query->cubewp_post_query();
 			if ($posts->have_posts()) {
+				// Filter posts for visibility and security
+				$filtered_posts = array();
+				foreach ($posts->posts as $post) {
+					// Check if user can read this post
+					if (! $this->can_user_read_post($post)) {
+						continue;
+					}
+					
+					// Remove sensitive fields
+					$safe_post = $this->sanitize_post_for_response($post);
+					if ($safe_post) {
+						$filtered_posts[] = $safe_post;
+					}
+				}
+				
 				$data = array(
-					'total_posts'    => $posts->found_posts,
-					'paged' => $posts->query['paged'],
+					'total_posts'    => count($filtered_posts),
+					'paged' => isset($posts->query['paged']) ? $posts->query['paged'] : 1,
 					'max_num_pages' => $posts->max_num_pages,
-					'posts' => $posts->posts,
-
+					'posts' => $filtered_posts,
 				);
 				return $data;
 			} else {
@@ -285,6 +308,13 @@ class CubeWp_Rest_API extends WP_REST_Controller
 				while ($posts->have_posts()) {
 					$posts->the_post();
 					$post_id = get_the_ID();
+					$post = get_post($post_id);
+					
+					// Check if user can read this post
+					if (! $this->can_user_read_post($post)) {
+						continue;
+					}
+					
 					$return[$post_id]['ID'] = $post_id;
 					$return[$post_id]['title'] = get_the_title();
 					if (has_post_thumbnail()) {
@@ -305,23 +335,15 @@ class CubeWp_Rest_API extends WP_REST_Controller
 						}
 					}
 					$return[$post_id]['taxonomies'] = isset($post_terms) && ! empty($post_terms) ? array_filter($post_terms) : array();
-					$post_meta = get_post_meta($post_id);
+					
+					// Get and filter post meta - only expose safe/public meta
+					$post_meta = $this->get_safe_post_meta($post_id);
 
-					// Iterate over each meta value
-					foreach ($post_meta as $key => $values) {
-						foreach ($values as $index => $value) {
-							// Check if the value is serialized
-							if (is_serialized($value)) {
-								$return[$post_id]['post_meta'][$key] = maybe_unserialize($value);
-							} else {
-								$return[$post_id]['post_meta'][$key] = $value;
-							}
-						}
-					}
+					$return[$post_id]['post_meta'] = $post_meta;
 				}
 				$data = array(
-					'total_posts'    => $posts->found_posts,
-					'paged' => $posts->query['paged'],
+					'total_posts'    => count($return),
+					'paged' => isset($posts->query['paged']) ? $posts->query['paged'] : 1,
 					'max_num_pages' => $posts->max_num_pages,
 					'posts' => $return,
 
@@ -817,6 +839,137 @@ class CubeWp_Rest_API extends WP_REST_Controller
 		}
 
 		return array_unique($field_names); // Remove duplicates
+	}
+
+	/**
+	 * Check if the current user can read a specific post.
+	 * Respects WordPress post visibility rules including password protection.
+	 *
+	 * @param WP_Post|object|int $post Post object or post ID.
+	 * @return bool True if user can read the post, false otherwise.
+	 */
+	private function can_user_read_post($post)
+	{
+		if (is_numeric($post)) {
+			$post = get_post($post);
+		}
+		
+		if (! $post || ! is_object($post)) {
+			return false;
+		}
+		
+		// Check post status
+		if ($post->post_status !== 'publish') {
+			// Only allow non-published posts if user has edit permission
+			if (! current_user_can('edit_post', $post->ID)) {
+				return false;
+			}
+		}
+		
+		// Check password protection - password-protected posts should not be exposed via public API
+		if (! empty($post->post_password)) {
+			// Only allow if user has edit permission (admin/author)
+			if (! current_user_can('edit_post', $post->ID)) {
+				// For REST API, we don't have cookie-based password verification
+				// So we exclude password-protected posts from public API responses
+				return false;
+			}
+		}
+		
+		// Check if post type is publicly queryable
+		$post_type = get_post_type_object($post->post_type);
+		if (! $post_type) {
+			return false;
+		}
+		
+		if (! $post_type->publicly_queryable) {
+			// Only allow if user can read this post type
+			if (! current_user_can($post_type->cap->read_post, $post->ID)) {
+				return false;
+			}
+		}
+		
+		return true;
+	}
+
+	/**
+	 * Sanitize post object for API response by removing sensitive fields.
+	 *
+	 * @param WP_Post|object $post Post object.
+	 * @return array|false Sanitized post array or false if post should be excluded.
+	 */
+	private function sanitize_post_for_response($post)
+	{
+		if (is_object($post)) {
+			$post_array = (array) $post;
+		} else {
+			$post_array = $post;
+		}
+		
+		// Remove sensitive fields
+		unset($post_array['post_password']);
+		
+		// If post is password protected and user doesn't have edit permission, hide content
+		if (! empty($post_array['post_password']) && ! current_user_can('edit_post', $post_array['ID'])) {
+			// Don't expose password-protected content
+			$post_array['post_content'] = '';
+			$post_array['post_excerpt'] = '';
+		}
+		
+		return $post_array;
+	}
+
+	/**
+	 * Get safe post meta that can be exposed via API.
+	 * Filters out private meta keys (starting with _) and sensitive data.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return array Filtered post meta array.
+	 */
+	private function get_safe_post_meta($post_id)
+	{
+		$all_meta = get_post_meta($post_id);
+		$safe_meta = array();
+		
+		// Get list of CubeWP custom fields that should be exposed
+		$cubewp_fields = array();
+		if (class_exists('CubeWp_Single_Cpt')) {
+			$cubewp_fields = CubeWp_Single_Cpt::cubewp_post_metas($post_id, true);
+			if (is_array($cubewp_fields)) {
+				$cubewp_fields = array_keys($cubewp_fields);
+			}
+		}
+		
+		foreach ($all_meta as $key => $values) {
+			// Skip private meta keys (starting with _) unless they're registered CubeWP fields
+			if (strpos($key, '_') === 0 && ! in_array($key, $cubewp_fields, true)) {
+				continue;
+			}
+			
+			// Skip sensitive WordPress internal meta
+			$sensitive_keys = array(
+				'_edit_lock',
+				'_edit_last',
+				'_wp_old_slug',
+				'_wp_old_date',
+			);
+			if (in_array($key, $sensitive_keys, true)) {
+				continue;
+			}
+			
+			// Process meta values - get_post_meta returns array of values
+			if (is_array($values) && ! empty($values)) {
+				$value = $values[0]; // Get first value
+				// Check if the value is serialized
+				if (is_serialized($value)) {
+					$safe_meta[$key] = maybe_unserialize($value);
+				} else {
+					$safe_meta[$key] = $value;
+				}
+			}
+		}
+		
+		return $safe_meta;
 	}
 
 	public static function init()

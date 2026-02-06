@@ -111,14 +111,14 @@ jQuery(document).ready(function () {
     // Check if Bootstrap's tab event is missing
     var bootstrapMissing = typeof bootstrap === 'undefined' || typeof bootstrap.Tab === 'undefined';
     if (bootstrapMissing) {
-        $('#cubewp_searchTab .tabber-btn').on('click', function (e) {
+        jQuery('#cubewp_searchTab .tabber-btn').on('click', function (e) {
             e.preventDefault();
-            var $this = $(this);
+            var $this = jQuery(this);
             var target = $this.attr('data-bs-target');
-            $('#cubewp_searchTab .tabber-btn').removeClass('active').attr('aria-selected', 'false');
+            jQuery('#cubewp_searchTab .tabber-btn').removeClass('active').attr('aria-selected', 'false');
             $this.addClass('active').attr('aria-selected', 'true');
-            $('.tab-content .tab-pane').removeClass('show active');
-            $(target).addClass('show active');
+            jQuery('.tab-content .tab-pane').removeClass('show active');
+            jQuery(target).addClass('show active');
         });
     }
 });

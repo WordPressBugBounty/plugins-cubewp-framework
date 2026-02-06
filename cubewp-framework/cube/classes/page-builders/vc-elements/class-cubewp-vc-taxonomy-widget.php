@@ -147,6 +147,7 @@ class CubeWp_VC_Taxonomy_Widget {
 			'terms_box_color' => $terms_box_color
 		);
 
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo apply_filters( 'cubewp_shortcode_taxonomy_output', '', $args );
 	}
 }

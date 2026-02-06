@@ -89,7 +89,7 @@ class CubeWp_Elementor_Archive_Posts_Widget extends Widget_Base
             $this->add_control('posttype', array(
                 'type'        => Controls_Manager::SELECT2,
                 //'multiple'    => true,
-                'label'       => esc_html__('Select Post Types', 'cubewp-classifiad'),
+                'label'       => esc_html__('Select Post Types', 'cubewp-framework'),
                 'options'     => $post_types,
                 'default'     => array('post'),
                 'label_block' => true,
@@ -105,7 +105,8 @@ class CubeWp_Elementor_Archive_Posts_Widget extends Widget_Base
         if (!empty(cubewp_post_card_styles($post_type))) {
             $this->add_control($post_type . '_card_style', array(
                 'type'        => Controls_Manager::SELECT,
-                'label'       => esc_html__('Card Style for ' . self::get_post_type_name_by_slug($post_type), 'cubewp-framework'),
+                /* translators: %s: post type singular name. */
+                'label'       => sprintf( esc_html__( 'Card Style for %s', 'cubewp-framework' ), self::get_post_type_name_by_slug($post_type) ),
                 'options'     => cubewp_post_card_styles($post_type),
                 'default'     => 'default_style',
                 'condition'   => array(
@@ -198,14 +199,14 @@ class CubeWp_Elementor_Archive_Posts_Widget extends Widget_Base
 
         echo CubeWp_Frontend_Search_Filter::cwp_filter_results();
         echo '<form name="cwp-search-filters" class="cwp-search-filters" method="post">';
-        echo CubeWp_Frontend_Search_Filter::filter_hidden_fields($type, $page_num, $card_style);
+        echo CubeWp_Frontend_Search_Filter::filter_hidden_fields( $type, $page_num, $card_style );
         echo CubeWp_Frontend_Search_Filter::get_hidden_field_if_tax();
         $count = 1;
         if ($promotional_card && !empty($promotional_card_list) && is_array($promotional_card_list)) {
             foreach ($promotional_card_list as $_promotional_card) {
-                echo '<input type="hidden" class="cubewp-promotional-card" name="cubewp_promotional_card_option-'.$count.'" value="' . esc_attr($_promotional_card['cubewp_promotional_card_option']) . '" />';
-                echo '<input type="hidden" class="cubewp-promotional-card" name="cubewp_promotional_card_position-'.$count.'" value="' . esc_attr($_promotional_card['cubewp_promotional_card_position']) . '" />';
-                echo '<input type="hidden" class="cubewp-promotional-card" name="cubewp_promotional_card_width-'.$count.'" value="' . esc_attr($_promotional_card['cubewp_promotional_card_width']['size']) .esc_attr($_promotional_card['cubewp_promotional_card_width']['unit']). '" />';
+                echo '<input type="hidden" class="cubewp-promotional-card" name="cubewp_promotional_card_option-'.esc_attr($count).'" value="' . esc_attr($_promotional_card['cubewp_promotional_card_option']) . '" />';
+                echo '<input type="hidden" class="cubewp-promotional-card" name="cubewp_promotional_card_position-'.esc_attr($count).'" value="' . esc_attr($_promotional_card['cubewp_promotional_card_position']) . '" />';
+                echo '<input type="hidden" class="cubewp-promotional-card" name="cubewp_promotional_card_width-'.esc_attr($count).'" value="' . esc_attr($_promotional_card['cubewp_promotional_card_width']['size']) .esc_attr($_promotional_card['cubewp_promotional_card_width']['unit']). '" />';
                 $count++;
             }
         }

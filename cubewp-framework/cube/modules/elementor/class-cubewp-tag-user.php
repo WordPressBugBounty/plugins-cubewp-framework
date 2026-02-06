@@ -75,7 +75,7 @@ class CubeWp_Tag_User extends Data_Tag {
 		}
 
 		if ( $content_type == 'full' ) {
-			return get_user_details( $value );
+			return cubewp_get_user_details( $value );
 		}else {
 			if ( is_array( $value ) ) {
 				foreach ( $value as $val ) {

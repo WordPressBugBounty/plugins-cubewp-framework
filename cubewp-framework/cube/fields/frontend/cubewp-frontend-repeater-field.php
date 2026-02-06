@@ -99,7 +99,7 @@ class CubeWp_Frontend_Repeater_Field extends CubeWp_Frontend {
                                             foreach($args['sub_fields'] as $sub_field){
                                                 $sub_field['custom_name']  =  'cwp_user_register[custom_fields]['. $args['name'] .'][' . $sub_field['name'] . '][]';
                                                 $sub_field['value']        =  isset($args['value'][$i][$sub_field['name']]) ? $args['value'][$i][$sub_field['name']] : '';
-                                                $sub_field['id']           =  'cwp_'.rand(123456789, 1111111111);
+                                                $sub_field['id']           =  'cwp_'.wp_rand(123456789, 1111111111);
                                                 if($sub_field['type'] == 'google_address' ){
                                                     $sub_field['custom_name_lat'] =   'cwp_user_register[custom_fields]['.$args['name'].'][' . $sub_field['name'].'_lat' . '][]';
                                                     $sub_field['custom_name_lng'] =   'cwp_user_register[custom_fields]['.$args['name'].'][' . $sub_field['name'].'_lng' . '][]';
@@ -216,7 +216,7 @@ class CubeWp_Frontend_Repeater_Field extends CubeWp_Frontend {
                                             foreach($args['sub_fields'] as $sub_field){
                                                 $sub_field['custom_name']  =  'cwp_user_form[cwp_meta]['. $args['name'] .'][' . $sub_field['name'] . '][]';
                                                 $sub_field['value']        =  isset($args['value'][$i][$sub_field['name']]) ? $args['value'][$i][$sub_field['name']] : '';
-                                                $sub_field['id']           =  'cwp_'.rand(123456789, 1111111111);
+                                                $sub_field['id']           =  'cwp_'.wp_rand(123456789, 1111111111);
                                                 if($sub_field['type'] == 'google_address' ){
                                                     $sub_field['custom_name_lat'] =   'cwp_user_form[cwp_meta]['.$args['name'].'][' . $sub_field['name'].'_lat' . '][]';
                                                     $sub_field['custom_name_lng'] =   'cwp_user_form[cwp_meta]['.$args['name'].'][' . $sub_field['name'].'_lng' . '][]';
@@ -335,7 +335,7 @@ class CubeWp_Frontend_Repeater_Field extends CubeWp_Frontend {
                                             foreach($args['sub_fields'] as $sub_field){
                                                 $sub_field['custom_name']  =  'cwp_user_profile[custom_fields]['. $args['name'] .'][' . $sub_field['name'] . '][]';
                                                 $sub_field['value']        =  isset($args['value'][$i][$sub_field['name']]) ? $args['value'][$i][$sub_field['name']] : '';
-                                                $sub_field['id']           =  'cwp_'.rand(123456789, 1111111111);
+                                                $sub_field['id']           =  'cwp_'.wp_rand(123456789, 1111111111);
                                                 if($sub_field['type'] == 'google_address' ){
                                                     $sub_field['custom_name_lat'] =   'cwp_user_profile[custom_fields]['.$args['name'].'][' . $sub_field['name'].'_lat' . '][]';
                                                     $sub_field['custom_name_lng'] =   'cwp_user_profile[custom_fields]['.$args['name'].'][' . $sub_field['name'].'_lng' . '][]';
