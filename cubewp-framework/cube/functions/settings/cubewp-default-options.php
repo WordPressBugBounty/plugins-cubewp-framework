@@ -49,6 +49,13 @@ $settings['general-settings'] = array(
 			'desc'    => __('Enable this option if you wish to delete post attachments along with the post when you delete it from the trash.', 'cubewp-framework'),
 			'default' => '0',
 		),
+		array(
+            'id'      => 'default_featured_image',
+            'type'    => 'media',
+            'title'   => __('Default Featured Image', 'cubewp-framework'),
+            'default' => '',
+            'desc'    => __('Upload a default featured image to display when a post has no featured image set. Used in Elementor dynamic tags and builders.', 'cubewp-framework'),
+        ),
 	)
 );
 // Add "Keywords Suggestions" tab/section separately from General
@@ -103,6 +110,54 @@ foreach ($cubewp_post_types as $cwp_pt_slug => $cwp_pt_label) {
 			'cubewp-framework'
 		),
 	);
+	$settings['keywords_suggestions']['fields'][] = array(
+		'id'       => 'keywords_suggestions_default_taxonomy_' . esc_attr($cwp_pt_slug),
+		'type'     => 'select',
+		'multi'    => false,
+		'title'    => sprintf(
+			__('Default Taxonomy for Empty Keyword (%s)', 'cubewp-framework'),
+			$label
+		),
+		'options'  => $taxonomy_options,
+		'default'  => '',
+		'required' => array(
+			array(
+				'enable_keywords_suggestions_' . esc_attr($cwp_pt_slug),
+				'equals',
+				1
+			),
+		),
+		'desc'     => __(
+			'When keyword field is empty, suggestions will come from this taxonomy only (10 default terms).',
+			'cubewp-framework'
+		),
+	);
+	//icon term meta key for taxonomy
+	if(is_array($taxonomy_options) && !empty($taxonomy_options)) {
+		foreach($taxonomy_options as $taxonomy_slug => $taxonomy_label) {
+			$settings['keywords_suggestions']['fields'][] = array(
+				'id'       => 'keywords_suggestions_icon_' . esc_attr($taxonomy_slug),
+				'type'     => 'text',
+				'title'    => sprintf(
+					__('Icon Term Meta key for %s', 'cubewp-framework'),
+					$taxonomy_label
+				),
+				'default'  => 'term_image',
+				'required' => array(
+					array(
+						'enable_keywords_suggestions_' . esc_attr($cwp_pt_slug),
+						'equals',
+						1
+					),
+					array(
+						'keywords_suggestions_taxonomy_' . esc_attr($cwp_pt_slug),
+						'contains',
+						$taxonomy_slug
+					),
+				),
+			);
+		}
+	}
 }
 $settings['search_filters'] = array(
 	'title'  => __('Search & Filters', 'cubewp-framework'),
@@ -159,9 +214,60 @@ $settings['search_filters'] = array(
 			'required' => array(
 				array('google_address_radius', 'equals', '1')
 			)
-		)
+		),
+		array(
+            'id'      => 'google_address_city_location',
+            'type'    => 'switch',
+            'title'   => __('Enable City Location Mode', 'cubewp-framework'),
+            'default' => '0',
+            'desc'    => __('When enabled, the Google Address field will show city names only in suggestions instead of full addresses. Applies to submission forms, search filters, and admin.', 'cubewp-framework'),
+        ),
+        array(
+            'id'      => 'google_address_country_code',
+            'type'    => 'text',
+            'title'   => __('Country Code for Google Address', 'cubewp-framework'),
+            'default' => '',
+            'required' => array(
+                array('google_address_city_location', 'equals', '1')
+            ),
+            'desc'    => __('Optional. Enter ISO 3166-1 Alpha-2 country code (e.g., us, gb) to restrict suggestions to cities from that country. Use comma for multiple: us,ca,gb. Leave empty for worldwide. See <a href="https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes" target="_blank" rel="noopener">list of country codes</a>.', 'cubewp-framework'),
+            'tag'     => 'ISO_3166_country_code', // Tag to indicate what codes to use (see https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes)
+        ),
+        array(
+            'id'      => 'google_address_use_terms',
+            'type'    => 'switch',
+            'title'   => __('Use Terms for Google Location', 'cubewp-framework'),
+            'default' => '0',
+            'required' => array(
+                array('google_address_city_location', 'equals', '1')
+            ),
+            'desc'    => __('When enabled, searching by city (e.g., US) will filter results by matching taxonomy term instead of geographic proximity. Select a taxonomy for each post type below.', 'cubewp-framework'),
+        )
 	)
 );
+
+// Add per-post-type taxonomy select for Google Address terms (taxonomies related to each post type)
+$cubewp_pt_for_location = function_exists( 'CWP_all_post_types' ) ? CWP_all_post_types( 'settings' ) : array();
+foreach ( $cubewp_pt_for_location as $cwp_pt_slug => $cwp_pt_label ) {
+    $post_type_obj   = get_post_type_object( $cwp_pt_slug );
+    $pt_label        = isset( $post_type_obj->labels->singular_name ) ? $post_type_obj->labels->singular_name : $cwp_pt_label;
+    $taxonomies      = get_object_taxonomies( $cwp_pt_slug, 'objects' );
+    $taxonomy_opts   = array( '' => __( 'Select Taxonomy', 'cubewp-framework' ) );
+    foreach ( $taxonomies as $tax_slug => $tax_obj ) {
+        $taxonomy_opts[ $tax_slug ] = $tax_obj->labels->singular_name . ' (' . $tax_slug . ')';
+    }
+    $settings['search_filters']['fields'][] = array(
+        'id'       => 'google_address_taxonomy_' . esc_attr( $cwp_pt_slug ),
+        'type'     => 'select',
+        'title'    => sprintf( __( 'Taxonomy for %s', 'cubewp-framework' ), $pt_label ),
+        'options'  => $taxonomy_opts,
+        'default'  => '',
+        'desc'     => sprintf( __( 'Select taxonomy for location terms when searching %s. When user searches "US", results filter by term "US" in this taxonomy.', 'cubewp-framework' ), $pt_label ),
+        'required' => array(
+            array( 'google_address_use_terms', 'equals', '1' )
+        )
+        );
+}
 
 $settings['map']    = array(
 	'title'  => __('Map', 'cubewp-framework'),
@@ -468,7 +574,7 @@ $settings['author_settings'] = array(
 		),
 	)
 );
-
+ 
 $settings['cubewp-theme-builder'] = array(
 	'title'  => __('Theme Builder', 'cubewp-framework'),
 	'id'     => 'cubewp-theme-builder',
@@ -489,6 +595,16 @@ $settings['cubewp-theme-builder'] = array(
 			'desc'    => __('Cache the rendered header and footer templates generated by the theme builder to improve load times.', 'cubewp-framework'),
 		),
 		array(
+			'id'       => 'cwp_tb_cache_ttl',
+			'type'     => 'text',
+			'title'    => __('Header & Footer Cache Duration (Hours)', 'cubewp-framework'),
+			'desc'     => __('Set how long the header and footer cache should be stored in hours. Default is 12 hours. Cache is also cleared when Elementor clears its cache or when you save a header/footer template.', 'cubewp-framework'),
+			'default'  => '12',
+			'required' => array(
+				array('cwp_tb_enable_cache', 'equals', '1')
+			)
+		),
+		array(
 			'id'      => 'cwp_posts_enable_cache',
 			'type'    => 'switch',
 			'title'   => __('Enable Posts Cache', 'cubewp-framework'),
@@ -505,8 +621,25 @@ $settings['cubewp-theme-builder'] = array(
 				array('cwp_posts_enable_cache', 'equals', '1')
 			)
 		),
+		array(
+			'id'      => 'cwp_taxonomy_enable_cache',
+			'type'    => 'switch',
+			'title'   => __('Enable Taxonomy Cache', 'cubewp-framework'),
+			'default' => '1',
+			'desc'    => __('Enable caching for taxonomy terms output to improve performance. Cache type is automatically detected based on server capabilities (Object Cache when available, SQL Cache otherwise).', 'cubewp-framework'),
+		),
+		array(
+			'id'       => 'cwp_taxonomy_cache_ttl',
+			'type'     => 'text',
+			'title'    => __('Taxonomy Cache Duration (Hours)', 'cubewp-framework'),
+			'desc'     => __('Set how long the taxonomy cache should be stored in hours. Default is 12 hours.', 'cubewp-framework'),
+			'default'  => '12',
+			'required' => array(
+				array('cwp_taxonomy_enable_cache', 'equals', '1')
+			)
+		),
 	)
-);
+	);
 
 $settings['cubewp-css-js'] = array(
 	'title'  => __('CSS & JS', 'cubewp-framework'),
@@ -529,4 +662,103 @@ $settings['cubewp-css-js'] = array(
 		),
 	)
 );
+
+
+
+if (! function_exists('cubewp_settings_get_field_types_and_ids')) {
+	/**
+	 * Build a map of settings field types and their field IDs.
+	 *
+	 * @param array $settings CubeWP settings array (sections => fields).
+	 *
+	 * @return array
+	 */
+	function cubewp_settings_get_field_types_and_ids($settings = array())
+	{
+		$result = array();
+		if (empty($settings) || ! is_array($settings)) {
+			return $result;
+		}
+
+		foreach ($settings as $section) {
+			if (! is_array($section) || empty($section['fields']) || ! is_array($section['fields'])) {
+				continue;
+			}
+
+			foreach ($section['fields'] as $field) {
+				if (! is_array($field)) {
+					continue;
+				}
+
+				$field_type = isset($field['type']) ? (string) $field['type'] : '';
+				$field_id   = isset($field['id']) ? (string) $field['id'] : '';
+
+				if ($field_type === '' || $field_id === '') {
+					continue;
+				}
+
+				if (! isset($result[$field_type])) {
+					$result[$field_type] = array();
+				}
+				$result[$field_type][] = array('id' => $field_id, 'title' => isset($field['title']) ? $field['title'] : '');
+			}
+		}
+
+		return $result;
+	}
+}
+
+if (! function_exists('cubewp_add_custom_typography_fonts')) {
+	/**
+	 * Add missing Google fonts for typography field.
+	 *
+	 * @param array $fonts Existing Google fonts.
+	 * @return array
+	 */
+	function cubewp_add_custom_typography_fonts($fonts = array())
+	{
+		if (! is_array($fonts)) {
+			$fonts = array();
+		}
+
+		$fonts['Lexend Deca'] = array(
+			'variants' => array(
+				array('id' => '100', 'name' => 'Thin 100'),
+				array('id' => '200', 'name' => 'Extra-Light 200'),
+				array('id' => '300', 'name' => 'Light 300'),
+				array('id' => '400', 'name' => 'Regular 400'),
+				array('id' => '500', 'name' => 'Medium 500'),
+				array('id' => '600', 'name' => 'Semi-Bold 600'),
+				array('id' => '700', 'name' => 'Bold 700'),
+				array('id' => '800', 'name' => 'Extra-Bold 800'),
+				array('id' => '900', 'name' => 'Black 900'),
+			),
+			'subsets'  => array(
+				array('id' => 'latin', 'name' => 'Latin'),
+				array('id' => 'latin-ext', 'name' => 'Latin Extended'),
+				array('id' => 'vietnamese', 'name' => 'Vietnamese'),
+			),
+		);
+
+		$fonts['Space Grotesk'] = array(
+			'variants' => array(
+				array('id' => '300', 'name' => 'Light 300'),
+				array('id' => '400', 'name' => 'Regular 400'),
+				array('id' => '500', 'name' => 'Medium 500'),
+				array('id' => '600', 'name' => 'Semi-Bold 600'),
+				array('id' => '700', 'name' => 'Bold 700'),
+			),
+			'subsets'  => array(
+				array('id' => 'latin', 'name' => 'Latin'),
+				array('id' => 'latin-ext', 'name' => 'Latin Extended'),
+				array('id' => 'vietnamese', 'name' => 'Vietnamese'),
+			),
+		);
+
+		return $fonts;
+	}
+}
+add_filter('cubewp/settings/google_fonts', 'cubewp_add_custom_typography_fonts', 20);
+
 return $settings;
+

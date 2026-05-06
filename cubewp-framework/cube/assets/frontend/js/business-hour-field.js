@@ -5,14 +5,15 @@ jQuery(document).on('click', 'button.cwp-add-new-business-hour', function (event
     var $this = jQuery(this);
     var field_name = $this.data('name');
     var field_id = $this.data('id');
+    var $fieldContainer = $this.closest('.cwp-field-business_hours');
     // HTML for the remove icon
     var remove = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5ZM11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H2.506a.58.58 0 0 0-.01 0H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1h-.995a.59.59 0 0 0-.01 0H11Zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5h9.916Zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47ZM8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5Z"></path></svg>',
         error = !1,
         fullday = '',
         fullhoursclass = '';
-    var $dash = '~';
+    var $dash = ' - ';
     // Get selected weekday
-    var weekday = jQuery('[name="' + field_name + '_day"]').val();
+    var weekday = $fieldContainer.find('[name="' + field_name + '_day"]').val();
     // Check if a weekday is selected
     if (weekday === "") {
 
@@ -41,8 +42,8 @@ jQuery(document).on('click', 'button.cwp-add-new-business-hour', function (event
         $dash = ""
     } else {
         // Get selected open and close times
-        var open_time = jQuery('[name="' + field_name + '_open_time"]').val();
-        var close_time = jQuery('[name="' + field_name + '_close_time"]').val();
+        var open_time = $fieldContainer.find('[name="' + field_name + '_open_time"]').val();
+        var close_time = $fieldContainer.find('[name="' + field_name + '_close_time"]').val();
         // Convert times to AM/PM format
         $start_time = convertTimeToAMPM(open_time);
         $end_time = convertTimeToAMPM(close_time);
@@ -72,23 +73,22 @@ jQuery(document).on('click', 'button.cwp-add-new-business-hour', function (event
         } 
         
     }
-    var weakdayClass = '.'+weekday+'-'+field_name,
-        weekdayAdded = jQuery(weakdayClass),
-        WDclose_time = jQuery('.'+weekday+'-close').val();
-    if(weekdayAdded.hasClass(weekday)){
-        const Ctime = timeStringToSeconds(WDclose_time);
-        if(temp_open_time <= Ctime){
+    var weakdayClass = '.' + weekday + '-' + field_name,
+        weekdayAdded = $fieldContainer.find(weakdayClass),
+        WDclose_time = $fieldContainer.find('.' + weekday + '-close').last().val();
 
-            if ( typeof cwp_notification_ui == 'function' ) {
-                cwp_notification_ui('error','Your 2nd Slot Open Time Should be More Than 1st Slot Closing Time.');
-            }else{
-                alert("Your 2nd Slot Open Time Should be More Than 1st Slot Closing Time.");
-            }
-            
-            error = !0
-            return;
+    // Allow only one slot per day.
+    if (weekdayAdded.hasClass(weekday)) {
+        if ( typeof cwp_notification_ui == 'function' ) {
+            cwp_notification_ui('error', 'Sorry, you have already added this day.');
+        } else {
+            alert('Sorry, you have already added this day.');
         }
+        error = !0;
+        return;
     }
+
+    // Multiple slots for same day are intentionally blocked above.
     if (error != !0) {
         var business_hoursDisplay = $this.closest('.cwp-field-business_hours').find('.yb-business-hours-display'),
             emptyTimingsInput = business_hoursDisplay.find('.cwp-empty-business-hours');
@@ -107,25 +107,21 @@ jQuery(document).on('click', 'button.cwp-add-new-business-hour', function (event
             remove: remove,
             open_time: open_time,
             close_time: close_time,
-            day_name: weekday,
+            day_name: formatBusinessDayLabel(weekday),
         };
-        if(weekdayAdded.hasClass(weekday)){
-            args['day_name'] = '';
-            $this.closest('.cwp-field-business_hours').find('.yb-business-hours-display').children(weakdayClass).append(BusinessHourHTML(args));
-        }else{
-            $this.closest('.cwp-field-business_hours').find('.yb-business-hours-display').append(
-                `<div class='business-hours ${weekday} ${weekday}-${field_name} ${fullhoursclass}'>
-                    ${BusinessHourHTML(args)}
-                </div>`
-                );
-        }
+        $this.closest('.cwp-field-business_hours').find('.yb-business-hours-display').append(
+            `<div class='business-hours ${weekday} ${weekday}-${field_name} ${fullhoursclass}'>
+                ${BusinessHourHTML(args)}
+            </div>`
+            );
                 
         // Reset select and input fields
-        jQuery('[name="' + field_name + '_day"]').prop('selectedIndex', 0);  // Reset the weekday dropdown
-        jQuery('[name="' + field_name + '_open_time"]').val(''); // Clear the open time input field
-        jQuery('#' + field_id + '_open_time').val(''); // Clear the hidden open time input field
-        jQuery('[name="' + field_name + '_close_time"]').val(''); // Clear the close time input field
-        jQuery('#' + field_id + '_close_time').val(''); // Clear the hidden close time input field
+        var nextWeekday = getNextBusinessWeekday(weekday);
+        $fieldContainer.find('[name="' + field_name + '_day"]').val(nextWeekday).trigger('change');
+        $fieldContainer.find('[name="' + field_name + '_open_time"]').val('09:00');
+        $fieldContainer.find('#' + field_id + '_open_time').val('09:00');
+        $fieldContainer.find('[name="' + field_name + '_close_time"]').val('17:00');
+        $fieldContainer.find('#' + field_id + '_close_time').val('17:00');
         $this.closest('.cwp-field-business_hours').find('.yb_fulldayopen').prop('checked', false); // Uncheck the full day open checkbox
     }
 });
@@ -197,8 +193,51 @@ jQuery(document).on('click', 'a.remove-business-hours', function (event) {
 });
 
 function timeStringToSeconds(timeString) {
-    const [hours, minutes, seconds] = timeString.split(':').map(Number);
-    return hours * 3600 + minutes * 60 + (seconds || 0);
+    if (!timeString) {
+        return NaN;
+    }
+
+    var raw = String(timeString).trim();
+    if (!raw) {
+        return NaN;
+    }
+
+    if (raw === '24-hours-open') {
+        return 86400;
+    }
+
+    // Supports:
+    // - 24h: "17:00", "17:00:00"
+    // - 12h: "07:00 AM", "07:00:00 PM", "4:30 pm"
+    var match = raw.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp][Mm])?$/);
+    if (!match) {
+        return NaN;
+    }
+
+    var hours = parseInt(match[1], 10);
+    var minutes = parseInt(match[2], 10);
+    var seconds = match[3] ? parseInt(match[3], 10) : 0;
+    var meridiem = match[4] ? match[4].toLowerCase() : '';
+
+    if (meridiem) {
+        if (hours === 12) {
+            hours = 0;
+        }
+        if (meridiem === 'pm') {
+            hours += 12;
+        }
+    }
+
+    return hours * 3600 + minutes * 60 + seconds;
+}
+
+function getNextBusinessWeekday(currentWeekday) {
+    var weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    var index = weekdays.indexOf((currentWeekday || '').toLowerCase());
+    if (index === -1) {
+        return 'monday';
+    }
+    return weekdays[(index + 1) % weekdays.length];
 }
 
 function BusinessHourHTML(object){
@@ -240,12 +279,61 @@ function BusinessHourHTML(object){
 }
 // Function to convert time to AM/PM format
 function convertTimeToAMPM(timeString) {
-    var timeComponents = timeString.split(":");
-    var hours = parseInt(timeComponents[0]);
-    var minutes = parseInt(timeComponents[1]);
-    var period = hours >= 12 ? "pm" : "am";
+    if (!timeString) {
+        return '';
+    }
+
+    var raw = String(timeString).trim();
+    if (raw === '24-hours-open') {
+        return '';
+    }
+
+    if (/[AaPp][Mm]$/.test(raw)) {
+        // Already in 12h format (e.g. 07:00:00 AM), normalize to hh:mm AM/PM.
+        var twelveHourMatch = raw.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*([AaPp][Mm])$/);
+        if (twelveHourMatch) {
+            var h = parseInt(twelveHourMatch[1], 10);
+            var m = twelveHourMatch[2];
+            var ap = twelveHourMatch[3].toUpperCase();
+            var paddedHour = (h < 10 ? '0' : '') + h;
+            return paddedHour + ':' + m + ' ' + ap;
+        }
+    }
+
+    var timeComponents = raw.split(":");
+    var hours = parseInt(timeComponents[0], 10);
+    var minutes = parseInt(timeComponents[1], 10);
+    var period = hours >= 12 ? "PM" : "AM";
     hours = hours % 12;
     hours = hours ? hours : 12;
-    var formattedTime = hours + ":" + (minutes < 10 ? "0" + minutes : minutes) + " " + period;
+    var formattedHour = hours < 10 ? "0" + hours : String(hours);
+    var formattedTime = formattedHour + ":" + (minutes < 10 ? "0" + minutes : minutes) + " " + period;
     return formattedTime;
 }
+
+function formatBusinessDayLabel(dayValue) {
+    if (!dayValue) {
+        return '';
+    }
+    var day = String(dayValue).toLowerCase();
+    return day.charAt(0).toUpperCase() + day.slice(1);
+}
+
+jQuery(function () {
+    jQuery('.cwp-field-business_hours').each(function () {
+        var $fieldContainer = jQuery(this);
+        var $day = $fieldContainer.find('.business-days');
+        var $open = $fieldContainer.find('.business-open-time');
+        var $close = $fieldContainer.find('.business-close-time');
+
+        if ($day.length && !$day.val()) {
+            $day.val('monday').trigger('change');
+        }
+        if ($open.length && !$open.val()) {
+            $open.val('09:00');
+        }
+        if ($close.length && !$close.val()) {
+            $close.val('17:00');
+        }
+    });
+});

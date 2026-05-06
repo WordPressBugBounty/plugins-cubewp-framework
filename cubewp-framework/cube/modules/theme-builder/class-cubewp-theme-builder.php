@@ -1,4 +1,5 @@
 <?php
+
 /**
  * CubeWp Theme builder for display dynamic templates
  *
@@ -37,6 +38,16 @@ class CubeWp_Theme_Builder
      */
     const RENDER_TRANSIENT_PREFIX = 'cubewp_tb_render_';
 
+    /**
+     * Post meta: theme builder template is for mobile only (active/publish still required).
+     */
+    const META_TEMPLATE_MOBILE_VIEW = 'template_mobile_view';
+
+    /**
+     * Legacy mobile flag (still read for queries; removed when saving a template).
+     */
+    const META_TEMPLATE_MOBILE_VIEW_LEGACY = 'template_app_view';
+
     public function __construct()
     {
         add_action('cubewp_theme_builder', array($this, 'display_cubewp_tb_admin_page'));
@@ -45,6 +56,9 @@ class CubeWp_Theme_Builder
         add_action('save_post_cubewp-tb', array(__CLASS__, 'flush_template_cache'), 10, 1);
         add_action('delete_post', array(__CLASS__, 'maybe_flush_deleted_template_cache'), 10, 1);
         add_action('update_option_cwpOptions', array(__CLASS__, 'maybe_flush_cache_on_settings_change'), 10, 3);
+        add_action('elementor/document/before_save', array(__CLASS__, 'flush_header_footer_on_elementor_save'), 10, 2);
+        add_action('elementor/document/after_save', array(__CLASS__, 'flush_header_footer_on_elementor_save'), 10, 2);
+        add_action('elementor/core/files/clear_cache', array(__CLASS__, 'flush_header_footer_cache_on_elementor_clear'), 10);
     }
 
     /**
@@ -195,6 +209,7 @@ class CubeWp_Theme_Builder
                                     ?>
                                     <option value="mega-menu">Mega Menu</option>
                                     <option value="404">Error 404</option>
+                                    <option value="no-results">No Results Output</option>
                                     <?php
                                     $custom_options = apply_filters('cubewp/theme_builder/options/register', array());
                                     if (!empty($custom_options) && is_array($custom_options)) {
@@ -217,6 +232,13 @@ class CubeWp_Theme_Builder
                                 <select name="template_location" id="template_location" required>
                                 </select>
                             </div>
+                            <div class="cubewp-form-fileds cwp-tb-mobile-view-field" id="cwp_tb_mobile_view_wrap" style="display:none;">
+                                <label for="template_mobile_view">
+                                    <input type="checkbox" name="template_mobile_view" id="template_mobile_view" value="1">
+                                    <?php esc_html_e('Mobile view template', 'cubewp-framework'); ?>
+                                </label>
+                                <p class="description"><?php esc_html_e('When this template is active (published), phones use it for this location; deactivate it to fall back to the standard template. Desktop always uses templates without this option.', 'cubewp-framework'); ?></p>
+                            </div>
                             <div class="form-fileds-buttons">
                                 <button type="button" name="submit" value="save" class="button button-primary cwp-save-template"><?php esc_html_e('Save', 'cubewp-framework'); ?></button>
                                 <button type="button" name="submit" value="save-edit" class="button button-primary cwp-save-template"><?php esc_html_e('Save & Edit', 'cubewp-framework'); ?></button>
@@ -238,7 +260,7 @@ class CubeWp_Theme_Builder
     public static function cubewp_theme_builder_template()
     {
         // Check nonce
-        if(!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'cubewp-admin-nonce')){
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'cubewp-admin-nonce')) {
             wp_send_json_error(['message' => 'Invalid nonce']);
             return;
         }
@@ -250,7 +272,7 @@ class CubeWp_Theme_Builder
         }
 
         // Check if data is set
-        
+
         if (!isset($_POST['data'])) {
             wp_send_json_error(['message' => 'No data received']);
             return;
@@ -262,6 +284,8 @@ class CubeWp_Theme_Builder
         $template_type = sanitize_text_field($form_data['template_type']);
         $template_name = sanitize_text_field($form_data['template_name']);
         $template_location = sanitize_text_field($form_data['template_location']);
+        $is_mobile_template = ( ! empty($form_data['template_mobile_view']) || ! empty($form_data['template_app_view']) )
+            && self::template_type_supports_mobile_view($template_type);
 
         // Check if fields are empty
         if (empty($template_type)) {
@@ -289,11 +313,12 @@ class CubeWp_Theme_Builder
             ));
         }
 
-        // Query for existing posts with the same name and location
+        // Query for existing posts with the same type, location, and mobile / standard bucket.
         $args = array(
             'post_type' => 'cubewp-tb',
             'post_status' => 'publish',
             'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+                'relation' => 'AND',
                 array(
                     'key' => 'template_type',
                     'value' => $template_type,
@@ -303,10 +328,18 @@ class CubeWp_Theme_Builder
                     'key' => 'template_location',
                     'value' => $template_location,
                     'compare' => '='
-                )
+                ),
             ),
             'fields' => 'ids'
         );
+
+        if (self::template_type_supports_mobile_view($template_type)) {
+            if ($is_mobile_template) {
+                $args['meta_query'][] = self::meta_clause_is_mobile_template();
+            } else {
+                $args['meta_query'][] = self::meta_clause_is_not_mobile_only_template();
+            }
+        }
 
         $existing_posts = new WP_Query($args);
 
@@ -314,8 +347,17 @@ class CubeWp_Theme_Builder
         if ($existing_posts->have_posts()) {
             // Bulk load meta cache to prevent N+1 queries
             update_meta_cache('post', $existing_posts->posts);
-            // Deactivate other published templates of these types at this location
-            $singleActiveTypes = ['mega-menu', 'cubewp_post_promotional_card', 'postcard', 'termcard'];
+            // Deactivate other published templates of these types at this location (same mobile / standard bucket when applicable).
+            $singleActiveTypes = array(
+                'mega-menu',
+                'cubewp_post_promotional_card',
+                'postcard',
+                'termcard',
+                'single',
+                'archive',
+                'header',
+                'footer',
+            );
             if (in_array($template_type, $singleActiveTypes, true)) {
                 foreach ($existing_posts->posts as $existing_post_id) {
                     if ((int) $existing_post_id === (int) $post_id) {
@@ -344,6 +386,19 @@ class CubeWp_Theme_Builder
         if ($post_id) {
             update_post_meta($post_id, 'template_type', $template_type);
             update_post_meta($post_id, 'template_location', $template_location);
+
+            if (self::template_type_supports_mobile_view($template_type)) {
+                if ($is_mobile_template) {
+                    update_post_meta($post_id, self::META_TEMPLATE_MOBILE_VIEW, '1');
+                    delete_post_meta($post_id, self::META_TEMPLATE_MOBILE_VIEW_LEGACY);
+                } else {
+                    delete_post_meta($post_id, self::META_TEMPLATE_MOBILE_VIEW);
+                    delete_post_meta($post_id, self::META_TEMPLATE_MOBILE_VIEW_LEGACY);
+                }
+            } else {
+                delete_post_meta($post_id, self::META_TEMPLATE_MOBILE_VIEW);
+                delete_post_meta($post_id, self::META_TEMPLATE_MOBILE_VIEW_LEGACY);
+            }
 
             $response = '';
             if (isset($_POST['template_action']) && sanitize_text_field(wp_unslash($_POST['template_action'])) === 'save-edit') {
@@ -381,12 +436,12 @@ class CubeWp_Theme_Builder
         global $post;
 
         $template_post_id = false;
-        
+
         // Specific page override for header templates
         if (($type === 'header' || $type === 'footer') && is_page()) {
             $page_id = get_queried_object_id();
             if ($page_id) {
-                $template_post_id = self::get_template_post_id_by_location('single_page_' . $page_id, $type);
+                $template_post_id = self::get_template_post_id_for_context('single_page_' . $page_id, $type);
                 if ($template_post_id) {
                     return self::set_template_cache($type, (int) $template_post_id);
                 }
@@ -399,101 +454,265 @@ class CubeWp_Theme_Builder
         }
 
         if ($type == '404' && is_404()) {
-            $template_post_id = self::get_template_post_id_by_location('all', $type);
+            $template_post_id = self::get_template_post_id_for_context('all', $type);
             return self::set_template_cache($type, $template_post_id ? (int) $template_post_id : false);
         }
 
         if ($type == 'archive' && is_post_type_archive('product')) {
-            $template_post_id = self::get_template_post_id_by_location('all', 'shop');
+            $template_post_id = self::get_template_post_id_for_context('all', 'shop');
             return self::set_template_cache($type, $template_post_id ? (int) $template_post_id : false);
         }
 
         if (is_singular() && !is_front_page()) {
             // Single Post Page
             $post_type = get_post_type($post);
-            $template_post_id = self::get_template_post_id_by_location('single_' . $post_type, $type);
+            $template_post_id = self::get_template_post_id_for_context('single_' . $post_type, $type);
 
             // If no specific template found, look for 'single_all'
             if (!$template_post_id) {
-                $template_post_id = self::get_template_post_id_by_location('single_all', $type);
+                $template_post_id = self::get_template_post_id_for_context('single_all', $type);
             }
         } elseif (is_front_page()) {
             // For Front page
-            $template_post_id = self::get_template_post_id_by_location('home', $type);
+            $template_post_id = self::get_template_post_id_for_context('home', $type);
         } elseif (is_home()) {
             // For Front page
-            $template_post_id = self::get_template_post_id_by_location('blog', $type);
-        } elseif (is_archive()) {
-
+            $template_post_id = self::get_template_post_id_for_context('blog', $type);
+        } elseif (is_archive() || is_search()) {
             // Archive Page
             if (is_author()) {
-                $template_post_id = self::get_template_post_id_by_location('archive_author', $type);
+                $template_post_id = self::get_template_post_id_for_context('archive_author', $type);
             } elseif (is_search()) {
-                $get_postType = get_post_type();
-                if (!isset($get_postType) && empty($get_postType)) {
+                $get_postType = '';
+                $query_post_type = get_query_var('post_type');
+                if (is_string($query_post_type) && $query_post_type !== '') {
+                    $get_postType = $query_post_type;
+                } elseif (is_array($query_post_type) && !empty($query_post_type[0])) {
+                    $get_postType = (string) $query_post_type[0];
+                }
+                if ($get_postType === '') {
                     /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
                     if (isset($_GET['post_type'])) {
                         /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
-                        $get_postType = sanitize_text_field(wp_unslash($_GET['post_type']));
+                        $post_type_from_get = wp_unslash($_GET['post_type']);
+                        if (is_array($post_type_from_get)) {
+                            $post_type_from_get = reset($post_type_from_get);
+                        }
+                        $get_postType = sanitize_text_field((string) $post_type_from_get);
                     }
                 }
-                $template_post_id = self::get_template_post_id_by_location('archive_search_' .  $get_postType, $type);
+                if ($get_postType !== '') {
+                    $template_post_id = self::get_template_post_id_for_context('archive_search_' . $get_postType, $type);
+                }
                 // If no specific template found, look for 'single_all'
                 if (!$template_post_id) {
-                    $template_post_id = self::get_template_post_id_by_location('archive_search', $type);
+                    $template_post_id = self::get_template_post_id_for_context('archive_search', $type);
                 }
             } else {
                 $taxonomy = get_queried_object();
-
                 if (!empty($taxonomy->taxonomy)) {
-
-                    $template_post_id = self::get_template_post_id_by_location('archive_' . $taxonomy->taxonomy, $type);
+                    $template_post_id = self::get_template_post_id_for_context('archive_' . $taxonomy->taxonomy, $type);
                 } elseif (is_post_type_archive()) {
-
-                    $template_post_id = self::get_template_post_id_by_location('archive_' . get_post_type(), $type);
+                    $template_post_id = self::get_template_post_id_for_context('archive_' . get_post_type(), $type);
                 }
             }
-
             if (!$template_post_id) {
                 // Default to archive_all
-                $template_post_id = self::get_template_post_id_by_location('archive_all', $type);
+                $template_post_id = self::get_template_post_id_for_context('archive_all', $type);
             }
         }
         if (!$template_post_id) {
             // Default to Entire Site
-            $template_post_id = self::get_template_post_id_by_location('entire_site', $type);
+            $template_post_id = self::get_template_post_id_for_context('entire_site', $type);
         }
 
         return self::set_template_cache($type, $template_post_id ? (int) $template_post_id : false);
     }
 
     /**
-     * Method get_template_post_id_by_location
+     * Whether a cubewp-tb post is flagged as mobile-only (current or legacy meta).
      *
-     * @param $location $location 
-     * @param $type $type 
+     * @param int $post_id Post ID.
      *
-     * @return void
+     * @return bool
      */
-    public static function get_template_post_id_by_location($location, $type)
+    public static function is_mobile_theme_template($post_id)
     {
-        $args = array(
-            'post_type' => 'cubewp-tb',
-            'post_status' => 'publish',
-            'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-                'relation' => 'AND', // Ensure that both conditions are met
+        $post_id = (int) $post_id;
+        if ($post_id <= 0) {
+            return false;
+        }
+
+        return get_post_meta($post_id, self::META_TEMPLATE_MOBILE_VIEW, true) === '1'
+            || get_post_meta($post_id, self::META_TEMPLATE_MOBILE_VIEW_LEGACY, true) === '1';
+    }
+
+    /**
+     * Meta query fragment: mobile-only template (publish still required separately).
+     *
+     * @return array
+     */
+    protected static function meta_clause_is_mobile_template()
+    {
+        return array(
+            'relation' => 'OR',
+            array(
+                'key'     => self::META_TEMPLATE_MOBILE_VIEW,
+                'value'   => '1',
+                'compare' => '=',
+            ),
+            array(
+                'key'     => self::META_TEMPLATE_MOBILE_VIEW_LEGACY,
+                'value'   => '1',
+                'compare' => '=',
+            ),
+        );
+    }
+
+    /**
+     * Meta query fragment: not a mobile-only template.
+     *
+     * @return array
+     */
+    protected static function meta_clause_is_not_mobile_only_template()
+    {
+        return array(
+            'relation' => 'AND',
+            array(
+                'relation' => 'OR',
                 array(
-                    'key' => 'template_location',
-                    'value' => $location,
-                    'compare' => '='
+                    'key'     => self::META_TEMPLATE_MOBILE_VIEW,
+                    'compare' => 'NOT EXISTS',
                 ),
                 array(
-                    'key' => 'template_type',
-                    'value' => $type,
-                    'compare' => '='
-                )
+                    'key'     => self::META_TEMPLATE_MOBILE_VIEW,
+                    'value'   => '1',
+                    'compare' => '!=',
+                ),
             ),
-            'fields' => 'ids'
+            array(
+                'relation' => 'OR',
+                array(
+                    'key'     => self::META_TEMPLATE_MOBILE_VIEW_LEGACY,
+                    'compare' => 'NOT EXISTS',
+                ),
+                array(
+                    'key'     => self::META_TEMPLATE_MOBILE_VIEW_LEGACY,
+                    'value'   => '1',
+                    'compare' => '!=',
+                ),
+            ),
+        );
+    }
+
+    /**
+     * Template types that support a separate mobile template (post meta template_mobile_view).
+     *
+     * @param string $template_type Template type slug.
+     *
+     * @return bool
+     */
+    public static function template_type_supports_mobile_view($template_type)
+    {
+        $types = array('single', 'archive', 'header', 'footer');
+
+        /**
+         * Template types that may use mobile-only layouts.
+         *
+         * @param string[] $types
+         */
+        $types = apply_filters('cubewp/theme_builder/mobile_view_template_types', $types);
+
+        return in_array($template_type, $types, true);
+    }
+
+    /**
+     * @param string $template_type Template type slug.
+     * @return bool
+     * @deprecated 1.0.0 Use template_type_supports_mobile_view().
+     */
+    public static function template_type_supports_app_view($template_type)
+    {
+        return self::template_type_supports_mobile_view($template_type);
+    }
+
+    /**
+     * Use mobile-template resolution for this HTTP request (wp_is_mobile(); inactive templates never match).
+     *
+     * @return bool
+     */
+    protected static function is_mobile_template_request_context()
+    {
+        if (! function_exists('wp_is_mobile') || ! wp_is_mobile()) {
+            return false;
+        }
+
+        /**
+         * Override mobile detection for theme builder template choice.
+         *
+         * @param bool $use_mobile_templates Whether to prefer mobile-only templates when published.
+         */
+        return (bool) apply_filters('cubewp/theme_builder/use_mobile_template_context', true);
+    }
+
+    /**
+     * Resolve template for location: on mobile, prefer active mobile-only template, else standard.
+     *
+     * @param string $location template_location meta value.
+     * @param string $type     template_type meta value.
+     *
+     * @return int|false
+     */
+    protected static function get_template_post_id_for_context($location, $type)
+    {
+        if (self::template_type_supports_mobile_view($type) && self::is_mobile_template_request_context()) {
+            $mobile_id = self::get_template_post_id_by_location($location, $type, 'mobile');
+            if ($mobile_id) {
+                return $mobile_id;
+            }
+        }
+
+        return self::get_template_post_id_by_location($location, $type, 'default');
+    }
+
+    /**
+     * Method get_template_post_id_by_location
+     *
+     * @param string $location Display location key.
+     * @param string $type     Template type (single, archive, header, etc.).
+     * @param string $scope    'default' = not mobile-only; 'mobile' = mobile-only meta.
+     *
+     * @return int|false
+     */
+    public static function get_template_post_id_by_location($location, $type, $scope = 'default')
+    {
+        $meta_query = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+            'relation' => 'AND',
+            array(
+                'key'     => 'template_location',
+                'value'   => $location,
+                'compare' => '=',
+            ),
+            array(
+                'key'     => 'template_type',
+                'value'   => $type,
+                'compare' => '=',
+            ),
+        );
+
+        if (self::template_type_supports_mobile_view($type)) {
+            if ('mobile' === $scope) {
+                $meta_query[] = self::meta_clause_is_mobile_template();
+            } else {
+                $meta_query[] = self::meta_clause_is_not_mobile_only_template();
+            }
+        }
+
+        $args = array(
+            'post_type'      => 'cubewp-tb',
+            'post_status'    => 'publish',
+            'meta_query'     => $meta_query,
+            'fields'         => 'ids',
         );
 
         $query = new WP_Query($args);
@@ -569,15 +788,17 @@ class CubeWp_Theme_Builder
      *
      * @return void
      */
+    
     public static function do_cubewp_theme_builder($template = '', $static_template_id = 0, $return = false)
-    { 
+    {
         if (empty($template)) return;
- 
+
         $template_id = $static_template_id > 0 ? $static_template_id : self::get_current_template_post_id($template);
 
-  
-      
+
+
         if (! empty($template_id) && ! is_array($template_id)) {
+            $elementor_frontend_builder = self::get_elementor_frontend();
             $should_bypass_cache       = self::should_bypass_render_cache($template_id);
             $allow_persistent_caching  = self::is_cache_enabled() && in_array($template, array('header', 'footer'), true);
 
@@ -586,13 +807,18 @@ class CubeWp_Theme_Builder
 
             if ($allow_persistent_caching && !$should_bypass_cache) {
                 $cached_content = self::get_cached_render($cache_key, $cache_group);
-               
-              
-                if (false !== $cached_content && null !== $cached_content) {
+
+                if (false !== $cached_content && null !== $cached_content && $elementor_frontend_builder) {
+                    // Run Elementor render to trigger widget script/style enqueues, then output cached HTML.
+                    // Cached HTML alone would skip widget enqueues, breaking layouts that depend on them.
+                    ob_start();
+                    $elementor_frontend_builder->get_builder_content_for_display($template_id, true);
+                    ob_end_clean();
+
                     if ($return === true) {
                         return $cached_content;
                     }
-                    echo /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped */$cached_content;
+                    echo /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped */ $cached_content;
                     return;
                 }
             }
@@ -602,26 +828,8 @@ class CubeWp_Theme_Builder
                 if ($return === true) {
                     return $content;
                 }
-                echo /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped */$content;
+                echo /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped */ $content;
                 return;
-            }
-
-            $elementor_frontend_builder = null;
-
-            if (class_exists('\Elementor\Plugin')) {
-                $plugin_instance = \Elementor\Plugin::$instance;
-                if ($plugin_instance && isset($plugin_instance->frontend)) {
-                    $elementor_frontend_builder = $plugin_instance->frontend;
-                }
-            }
-
-            if (!$elementor_frontend_builder && class_exists('\Elementor\Frontend')) {
-                static $standalone_frontend = null;
-                if (!$standalone_frontend) {
-                    $standalone_frontend = new \Elementor\Frontend();
-                    $standalone_frontend->init();
-                }
-                $elementor_frontend_builder = $standalone_frontend;
             }
 
             if ($elementor_frontend_builder) {
@@ -635,7 +843,7 @@ class CubeWp_Theme_Builder
                 if ($return === true) {
                     return $content;
                 } else {
-                    echo /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped */$content;
+                    echo /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped */ $content;
                 }
             }
         }
@@ -773,6 +981,41 @@ class CubeWp_Theme_Builder
     }
 
     /**
+     * Flush header/footer cache when an Elementor document (header/footer template) is saved.
+     * Ensures our cache is invalidated when user edits and saves in Elementor.
+     *
+     * @param \Elementor\Core\Base\Document $document
+     * @param array                         $data
+     *
+     * @return void
+     */
+    public static function flush_header_footer_on_elementor_save($document, $data = array())
+    {
+        if (!$document || !method_exists($document, 'get_main_id')) {
+            return;
+        }
+        $post_id = $document->get_main_id();
+        if (!$post_id || get_post_type($post_id) !== 'cubewp-tb') {
+            return;
+        }
+        $template_type = get_post_meta($post_id, 'template_type', true);
+        if (in_array($template_type, array('header', 'footer'), true)) {
+            self::flush_template_cache($post_id);
+        }
+    }
+
+    /**
+     * Flush all header and footer caches when Elementor clears its CSS/cache.
+     * Ensures our cached HTML is rebuilt with fresh Elementor CSS.
+     *
+     * @return void
+     */
+    public static function flush_header_footer_cache_on_elementor_clear()
+    {
+        self::flush_header_footer_cache();
+    }
+
+    /**
      * Persist template cache values.
      *
      * @param string                $type
@@ -784,6 +1027,30 @@ class CubeWp_Theme_Builder
     {
         self::$template_cache[$type] = $value;
         return self::$template_cache[$type];
+    }
+
+    /**
+     * Get the Elementor frontend instance for rendering content.
+     *
+     * @return \Elementor\Frontend|null
+     */
+    protected static function get_elementor_frontend()
+    {
+        if (class_exists('\Elementor\Plugin')) {
+            $plugin_instance = \Elementor\Plugin::$instance;
+            if ($plugin_instance && isset($plugin_instance->frontend)) {
+                return $plugin_instance->frontend;
+            }
+        }
+        if (class_exists('\Elementor\Frontend')) {
+            static $standalone_frontend = null;
+            if ($standalone_frontend === null) {
+                $standalone_frontend = new \Elementor\Frontend();
+                $standalone_frontend->init();
+            }
+            return $standalone_frontend;
+        }
+        return null;
     }
 
     /**
@@ -838,18 +1105,28 @@ class CubeWp_Theme_Builder
     }
 
     /**
-     * Compute cache TTL for rendered template.
+     * Compute cache TTL for rendered template (header/footer use settings, others default 1 hour).
      *
      * @param int $template_id
      *
-     * @return int
+     * @return int TTL in seconds
      */
     protected static function get_render_cache_ttl($template_id)
     {
+        $ttl = HOUR_IN_SECONDS;
+        $template_type = get_post_meta($template_id, 'template_type', true);
+        if (in_array($template_type, array('header', 'footer'), true)) {
+            $cwp_options = get_option('cwpOptions', array());
+            $ttl_hours = isset($cwp_options['cwp_tb_cache_ttl']) ? max(1, (int) $cwp_options['cwp_tb_cache_ttl']) : 12;
+            $ttl = $ttl_hours * HOUR_IN_SECONDS;
+        }
         /**
          * Filter the cache TTL for theme builder rendered output.
+         *
+         * @param int $ttl         TTL in seconds
+         * @param int $template_id Template post ID
          */
-        return (int) apply_filters('cubewp/theme_builder/cache_ttl', HOUR_IN_SECONDS, $template_id);
+        return (int) apply_filters('cubewp/theme_builder/cache_ttl', $ttl, $template_id);
     }
 
     /**
@@ -882,7 +1159,6 @@ class CubeWp_Theme_Builder
                 self::flush_template_cache($post_id);
             }
         }
-
     }
 
     /**
@@ -900,23 +1176,23 @@ class CubeWp_Theme_Builder
 
         // Verify object cache is actually functional by testing it
         static $cache_available = null;
-        
+
         if ($cache_available === null) {
             $test_key = 'cubewp_tb_cache_test_' . time();
             $test_value = 'test_' . wp_rand(1000, 9999);
             $test_group = 'cubewp_theme_builder';
-            
+
             // Try to set and get a test value
             $set_result = wp_cache_set($test_key, $test_value, $test_group, 60);
             $get_result = wp_cache_get($test_key, $test_group);
-            
+
             // Clean up test value
             wp_cache_delete($test_key, $test_group);
-            
+
             // Object cache is available if set succeeded and get returned the same value
             $cache_available = ($set_result !== false && $get_result === $test_value);
         }
-        
+
         return $cache_available;
     }
 

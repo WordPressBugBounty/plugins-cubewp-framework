@@ -24,7 +24,7 @@ final class CubeWp_Load
      *
      * @var string
      */
-    public static $CubeWp_version = '1.1.29';
+    public static $CubeWp_version = '1.1.30';
 
     /**
      * Wordpress required version.
@@ -125,11 +125,15 @@ final class CubeWp_Load
         add_action('elementor/dynamic_tags/register', array('CubeWp_Admin', 'register_elementor_tags'), 10);
 
         add_action('cubewp_loaded', array('CubeWp_Shortcodes', 'init'));
+        add_action('cubewp_loaded', array('CubeWp_Addons_Admin', 'init'), 9);
         // Frontend Page Builders
         add_action('cubewp_loaded', array('CubeWp_Elementor', 'init'));
         add_action('cubewp_loaded', array('CubeWp_Vc_Elements', 'init'));
         add_action('cubewp_loaded', array('CubeWp_Relationships', 'init'));
         require_once(CUBEWP_FILES . 'modules/theme-update/theme-updater.php');
+        // Google Address City and Terms Modules
+        add_action('cubewp_loaded', array('CubeWp_Google_Address_City_Module', 'init'), 12);
+        add_action('cubewp_loaded', array('CubeWp_Google_Address_Terms_Module', 'init'), 12);
         if (self::is_request('admin')) {
             new CubeWp_Ping();
         }

@@ -92,9 +92,15 @@ class CubeWp_Theme_Builder_Table extends WP_List_Table
         $status = get_post_status($item['ID']) == 'inactive' ? '<span class="post-state inactive"> Inactive </span>' : '';
         $status = empty($status) ? '<span class="post-state"> Active </span>' : $status;
 
-        $title = '<strong>' . ucfirst($item['name']) . '</strong> ' . $status;
+        $mobile_badge = '';
+        if (! empty($item['mobile_view'])) {
+            $mobile_badge = ' <span class="post-state">' . esc_html__('Mobile view', 'cubewp-framework') . '</span>';
+        }
+
+        $title = '<strong>' . ucfirst($item['name']) . '</strong> ' . $status . $mobile_badge;
+        $tmobile = ! empty($item['mobile_view']) ? '1' : '0';
         $actions = [
-            'edit' => '<a href="#" data-tid="' . $item['ID'] . '" data-tlocation="' . $item['location'] . '" data-ttype="' . $item['type'] . '" data-tname="' . $item['name'] . '" class="ctb-add-new-template ctb-edit-template">Edit</a>',
+            'edit' => '<a href="#" data-tid="' . esc_attr($item['ID']) . '" data-tlocation="' . esc_attr($item['location']) . '" data-ttype="' . esc_attr($item['type']) . '" data-tname="' . esc_attr($item['name']) . '" data-tmobileview="' . esc_attr($tmobile) . '" class="ctb-add-new-template ctb-edit-template">Edit</a>',
         ];
         $actions['delete'] = sprintf('<a href="%s">' . esc_html__('Delete', 'cubewp-framework') . '</a>', CubeWp_Submenu::_page_action('cubewp-theme-builder', 'delete', '&template_id=' . absint($item['ID']), '&_wpnonce=' . wp_create_nonce('cwp_delete_group')));
 
@@ -385,6 +391,7 @@ class CubeWp_Theme_Builder_Table extends WP_List_Table
                 $data['type']  = $type;
                 $data['location']  = $tem_location;
                 $data['location_display']  = self::convert_to_capitalized_words($tem_location);
+                $data['mobile_view'] = class_exists('CubeWp_Theme_Builder') && CubeWp_Theme_Builder::is_mobile_theme_template($post);
 
                 if ($type == 'single') {
                     $post_type_slug = self::get_post_type_slug($tem_location);

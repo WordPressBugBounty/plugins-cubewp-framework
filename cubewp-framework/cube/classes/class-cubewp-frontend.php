@@ -235,8 +235,10 @@ class CubeWp_Frontend {
             $required_class = ' is-required';
         }
         
-        $select2 =  self::cwp_frontend_field_select2($args['select2_ui']);
-        $classes = "cwp-field-container cwp-field-{$args['type']} form-group {$args['container_class']} {$args['field_size']} {$required_class} {$conditionalClass} {$select2}";
+        $select2 = isset($args['select2_ui']) && $args['select2_ui'] ? self::cwp_frontend_field_select2($args['select2_ui']) : '';
+        $field_size = isset($args['field_size']) ? $args['field_size'] : '';
+        $classes = "cwp-field-container cwp-field-{$args['type']} form-group {$args['container_class']} {$field_size} {$required_class} {$conditionalClass} {$select2}";
+   
         return '<div class="'.$classes.'" '. $container_attr .'>';
 
     }

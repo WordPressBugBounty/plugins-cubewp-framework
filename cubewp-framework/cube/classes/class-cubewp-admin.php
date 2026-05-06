@@ -223,20 +223,22 @@ class CubeWp_Admin {
             return null;
         }
         $modules = array(
-            'custom-fields'     => 'modules/',
-            'theme-builder'     => 'modules/',
-            'post-types'        => 'modules/',
-            'users'             => 'modules/',
-            'search'            => 'modules/',
-            'settings'          => 'modules/',
-            'taxonomies'        => 'modules/',
-            'list-tables'       => 'modules/',
-            'elementor'         => 'modules/',
-            'elementor/taxonomy'=> 'modules/',
-            'recaptcha'         => 'modules/',
-            'builder'           => 'modules/',
-            'widgets'           => 'includes/',
-            'shortcodes'        => 'includes/',
+            'custom-fields'      => 'modules/',
+            'theme-builder'      => 'modules/',
+            'post-types'         => 'modules/',
+            'users'              => 'modules/',
+            'search'             => 'modules/',
+            'settings'           => 'modules/',
+            'taxonomies'         => 'modules/',
+            'list-tables'        => 'modules/',
+            'elementor'          => 'modules/',
+            'elementor/taxonomy' => 'modules/',
+            'elementor/user'     => 'modules/',
+            'recaptcha'          => 'modules/',
+            'builder'            => 'modules/',
+            'google-address-city'=> 'modules/',
+            'widgets'            => 'includes/',
+            'shortcodes'         => 'includes/',
         );
         foreach($modules as $module=>$path){
             $file_name = $path.$module.'/class-' .str_replace('_', '-', strtolower($className)).'.php';
@@ -326,10 +328,12 @@ class CubeWp_Admin {
             "post_author" => esc_html__("Post Author", "cubewp-framework"),
             "post_info" => esc_html__("Post Info", "cubewp-framework"),
             "post_term" => esc_html__("Post Term", "cubewp-framework"),
+            "post_count" => esc_html__("Post Count", "cubewp-framework"),
             "post_share" => esc_html__("Post Share Button", "cubewp-framework"),
             "post_save" => esc_html__("Post Save Button", "cubewp-framework"),
             "post_url" => esc_html__("Post URL", "cubewp-framework"),
             "post_date" => esc_html__("Post Date", "cubewp-framework"),
+            "nearby_post_distance" => esc_html__("Nearby Post Distance", "cubewp-framework"),
             "custom_fields" => esc_html__("CubeWP Custom Fields", "cubewp-framework")
         );
         foreach ( $single_tags as $tag => $label ) {
@@ -361,6 +365,34 @@ class CubeWp_Admin {
             if(class_exists($tag)){
                 $module->register( new $tag() );
             }
+        }
+
+        $module->register_group( 'cubewp-user-data', [
+            'title' => esc_html__( 'CubeWP User Data', 'cubewp-framework' ),
+        ] );
+        $user_tags = array(
+            "user_name" => esc_html__("User Name", "cubewp-framework"),
+            "user_email" => esc_html__("User Email", "cubewp-framework"),
+            "user_url" => esc_html__("User URL", "cubewp-framework"),
+            "user_biographical_info" => esc_html__("User Biographical Info", "cubewp-framework"),
+            "user_role" => esc_html__("User Role", "cubewp-framework"),
+            "user_avatar" => esc_html__("User Avatar", "cubewp-framework"),
+            "user_registered" => esc_html__("User Registered", "cubewp-framework"),
+            "user_statistics" => esc_html__("User Statistics", "cubewp-framework"),
+        );
+        
+        foreach ( $user_tags as $tag => $label ) {
+            $tag = 'CubeWp_Tag_'.ucfirst($tag);
+            if(class_exists($tag)){
+                $module->register( new $tag() );
+            }
+        }
+
+        $module->register_group( 'cubewp-settings-fields', [
+            'title' => esc_html__( 'CubeWP Settings', 'cubewp-framework' ),
+        ] );
+        if (class_exists('CubeWp_Tag_Cwp_Settings')) {
+            $module->register( new CubeWp_Tag_Cwp_Settings() );
         }
     }
 
@@ -667,12 +699,13 @@ class CubeWp_Admin {
      */
     public static function cwp_field_wrap_start( $args = array() ) {
 
-        if($args['wrap'] != true ) return;
+        if( !isset($args['wrap']) || $args['wrap'] != true ) return;
         $tooltip = isset($args['tooltip']) && !empty($args['tooltip']) ? $args['tooltip'] : '';
         $output = self::cwp_tr_start($args);
-        if(isset($args['label']) && $args['label'] != ''){
+        if (isset($args['label']) && $args['label'] != '') {
             $output .= self::cwp_th_start();
-                $output .= self::cwp_label( $args['id'], $args['label'], $args['required'], $tooltip );
+                $required = isset($args['required']) ? $args['required'] : false;
+                $output .= self::cwp_label( $args['id'], $args['label'], $required, $tooltip );
             $output .= self::cwp_th_end();
         }
         $output .= self::cwp_td_start();
@@ -743,7 +776,7 @@ class CubeWp_Admin {
         $settings[]	=	array(
             'id'        => 'cubewp-theme-builder', // Expected to be overridden if dashboard is enabled.
             'parent'    => 'cube_wp_dashboard',
-            'title'     => esc_html__('Theme Builder', 'cubewp-framework').'<span class="new-feature-tag"></span>',
+            'title'     => esc_html__('Theme Builder', 'cubewp-framework'),
             'callback'  => 'cubewp-theme-builder',
             'position'     => 5
         );

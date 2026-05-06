@@ -29,6 +29,8 @@ class CubeWp_Frontend_Templates {
         
         if (CWP()->is_request('frontend')) {
 
+            add_action('wp_enqueue_scripts', array($this, 'enqueue_active_theme_builder_elementor_css'), 20);
+
             // CubeWP theme builder All single
             if (!is_singular( 'product' ) ) {
                 add_filter('single_template', array($this, 'cubewp_single_template'), 99,3);
@@ -306,6 +308,38 @@ class CubeWp_Frontend_Templates {
         require CWP_PLUGIN_PATH . 'cube/templates/404.php';
 
         exit;
+    }
+
+    /**
+     * Enqueue Elementor CSS for active CubeWP theme builder templates early.
+     *
+     * @return void
+     */
+    public function enqueue_active_theme_builder_elementor_css() {
+        if (is_admin() || !class_exists('\Elementor\Plugin')) {
+            return;
+        }
+        $template_types = array('header', 'footer', 'single', 'archive', '404');
+        $template_ids   = array();
+        foreach ($template_types as $type) {
+            $id = CubeWp_Theme_Builder::get_current_template_post_id($type);
+            if (!empty($id) && !is_array($id)) {
+                $template_ids[] = (int) $id;
+            }
+        }
+        if (empty($template_ids)) {
+            return;
+        }
+        $template_ids = array_values(array_unique($template_ids));
+        foreach ($template_ids as $template_id) {
+            // Core Elementor CSS file enqueue for template document.
+            if (class_exists('\Elementor\Core\Files\CSS\Post')) {
+                $post_css = new \Elementor\Core\Files\CSS\Post($template_id);
+                if (method_exists($post_css, 'enqueue')) {
+                    $post_css->enqueue();
+                }
+            }
+        }
     }
 
     /**

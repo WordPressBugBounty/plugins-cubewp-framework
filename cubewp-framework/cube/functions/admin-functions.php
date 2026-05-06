@@ -1483,6 +1483,7 @@ if (! function_exists("get_field_value")) {
 			return;
 		}
 		$single = CubeWp_frontend::single();
+
 		if (cubewp_is_elementor_editing() && cubewp_check_if_elementor_active() && !cubewp_check_if_elementor_active(true) && empty($postID)) {
 			$postID = cubewp_get_elementor_preview_post_id();
 			if (empty($postID)) {
@@ -1492,18 +1493,93 @@ if (! function_exists("get_field_value")) {
 		if (! $postID) {
 			$postID = get_the_ID();
 		}
-		if ($postID != 0 && !CubeWp_Frontend::is_cubewp_single()) {
+	
+		if ($postID != 0 && CubeWp_Frontend::is_cubewp_single()) {
 			CubeWp_Single_Cpt::$post_id = $postID;
 		}
 		if (! is_array($field)) {
 			$field = get_field_options($field);
+		}
+ 
+		$field_type = isset($field["type"]) ? $field["type"] : "";
+		$meta_key   = isset($field["name"]) ? $field["name"] : "";
+		if ($field_type == 'taxonomy') {
+			$field_type = 'terms';
+		}
+		$value = CubeWp_Single_Cpt::get_single_meta_value($meta_key, $field_type ,$postID);
+		if ($field_type == 'date_picker') {
+			$value = wp_date(get_option('date_format'), $value);
+		}
+		if ($field_type == 'time_picker') {
+			$value = wp_date(get_option('time_format'), $value);
+		}
+		if ($field_type == 'date_time_picker') {
+			$value = wp_date(get_option('date_format') . ' ' . get_option('time_format'), $value);
+		}
+		if ($render == true) {
+			if ($field_type == 'repeating_field') {
+				$field['value'] = $value;
+				$value = call_user_func('CubeWp_Single_Page_Trait::field_' . $field_type, $field);
+			}
+			if ($field_type == 'terms') {
+				$value = render_taxonomy_value($value);
+			}
+			if ($field_type == 'post') {
+				$value = render_post_value($value);
+			}
+			if ($field_type == 'user') {
+				$value = render_user_value($value);
+			}
+			if ($field_type == 'image' || $field_type == 'gallery') {
+				$value = render_media_value($value);
+			}
+			if ($field_type == 'file') {
+				$value = render_file_value($value);
+			}
+			if ($field_type == 'google_address') {
+				$value = render_map_value($value, $field);
+			}
+		}
+
+		return $value;
+	}
+}
+
+
+/**
+ * Method get_user_field_value
+ *
+ * @param string $field
+ *
+ * @return array/string
+ * @since  1.0.0
+ */
+if (! function_exists("get_user_field_value")) {
+	function get_user_field_value($field = '', $render = false, $userID = 0)
+	{
+		if (empty($field)) {
+			return;
+		}
+		// $single = CubeWp_frontend::single();
+		// if (cubewp_is_elementor_editing() && cubewp_check_if_elementor_active() && !cubewp_check_if_elementor_active(true) && empty($postID)) {
+		// 	$postID = cubewp_get_elementor_tag_user_id();
+		// 	if (empty($postID)) {
+		// 		return esc_html__("Please select preview post from the settings below and reload.", "cubewp-framework");
+		// 	}
+		// }
+		if (! $userID) {
+			$userID = cubewp_get_elementor_tag_user_id();
+		}
+
+		if (! is_array($field)) {
+			$field = get_user_field_options($field);
 		}
 		$field_type = isset($field["type"]) ? $field["type"] : "";
 		$meta_key   = isset($field["name"]) ? $field["name"] : "";
 		if ($field_type == 'taxonomy') {
 			$field_type = 'terms';
 		}
-		$value = CubeWp_Single_Cpt::get_single_meta_value($meta_key, $field_type);
+		$value = get_user_meta($userID, $meta_key, true);
 		if ($field_type == 'date_picker') {
 			$value = wp_date(get_option('date_format'), $value);
 		}
@@ -1591,14 +1667,15 @@ if (! function_exists("render_map_value")) {
  * @return array Post IDs
  * @since  1.1.29
  */
-if ( ! function_exists('cubewp_get_nearby_post_ids') ) {
-    function cubewp_get_nearby_post_ids( $lat_meta_key = '', $lng_meta_key = '', $lat = '', $lng = '', $units = 'mi', $proximity = 50, $additional_query_args = array() ) {
-        global $wpdb;
-        
-        $earth_radius = $units == 'mi' ? 3959 : 6371;
-        
-        // Base SQL query
-        $sql = "
+if (! function_exists('cubewp_get_nearby_post_ids')) {
+	function cubewp_get_nearby_post_ids($lat_meta_key = '', $lng_meta_key = '', $lat = '', $lng = '', $units = 'mi', $proximity = 50, $additional_query_args = array())
+	{
+		global $wpdb;
+
+		$earth_radius = $units == 'mi' ? 3959 : 6371;
+
+		// Base SQL query
+		$sql = "
         SELECT $wpdb->posts.ID,
         ( %s * IFNULL( acos(
             cos( radians(%s) ) *
@@ -1612,24 +1689,86 @@ if ( ! function_exists('cubewp_get_nearby_post_ids') ) {
         INNER JOIN $wpdb->postmeta AS latitude ON $wpdb->posts.ID = latitude.post_id
         INNER JOIN $wpdb->postmeta AS longitude ON $wpdb->posts.ID = longitude.post_id";
 
-        $sql .= " WHERE 1=1
+		$sql .= " WHERE 1=1
             AND ($wpdb->posts.post_status = 'publish' )
             AND latitude.meta_key = %s
             AND longitude.meta_key = %s";
 
-        // Finalize SQL query
-        $sql .= "
+		// Finalize SQL query
+		$sql .= "
         HAVING distance < %s
         ORDER BY distance ASC";
-        // Prepare the SQL query
-        $sql = $wpdb->prepare( $sql, $earth_radius, $lat, $lng, $lat, $lat_meta_key, $lng_meta_key, $proximity );
+		// Prepare the SQL query
+		$sql = $wpdb->prepare($sql, $earth_radius, $lat, $lng, $lat, $lat_meta_key, $lng_meta_key, $proximity);
 
-        // Execute the query and get the post IDs
-        $post_ids = (array) $wpdb->get_col( $sql ); // Get only post IDs
-        if ( empty( $post_ids ) ) { return; }
+		// Execute the query and get the post IDs
+		$post_ids = (array) $wpdb->get_col($sql); // Get only post IDs
+		if (empty($post_ids)) {
+			return;
+		}
 
-        return $post_ids;
-    }
+		return $post_ids;
+	}
+}
+
+/**
+ * Get latitude and longitude from a post's google address field.
+ *
+ * @param int    $post_id         Post ID.
+ * @param string $address_field_key Meta key of the google_address field (without _lat/_lng).
+ * @return array{lat: float|null, lng: float|null} Lat/lng or nulls if not found.
+ * @since  1.1.29
+ */
+if (! function_exists('cubewp_get_post_address_lat_lng')) {
+	function cubewp_get_post_address_lat_lng($post_id, $address_field_key)
+	{
+		$lat = get_post_meta($post_id, $address_field_key . '_lat', true);
+		$lng = get_post_meta($post_id, $address_field_key . '_lng', true);
+		if (empty($lat) || empty($lng)) {
+			$address_meta = get_post_meta($post_id, $address_field_key, true);
+			if (is_array($address_meta)) {
+				$lat = isset($address_meta['latitude']) ? $address_meta['latitude'] : (isset($address_meta['lat']) ? $address_meta['lat'] : null);
+				$lng = isset($address_meta['longitude']) ? $address_meta['longitude'] : (isset($address_meta['lng']) ? $address_meta['lng'] : null);
+			}
+		}
+		return array(
+			'lat' => $lat !== '' && $lat !== null ? floatval($lat) : null,
+			'lng' => $lng !== '' && $lng !== null ? floatval($lng) : null,
+		);
+	}
+}
+
+/**
+ * Get distance between two posts using the same google_address field (Haversine).
+ *
+ * @param int    $from_post_id    Source/reference post ID.
+ * @param int    $to_post_id      Target post ID (e.g. current post in a loop).
+ * @param string $address_field_key Meta key of the google_address field.
+ * @param string $unit            'km' or 'miles' / 'mi'.
+ * @return float|null Distance in the given unit, or null if coordinates missing.
+ * @since  1.1.29
+ */
+if (! function_exists('cubewp_get_distance_between_posts')) {
+	function cubewp_get_distance_between_posts($from_post_id, $to_post_id, $address_field_key, $unit = 'km')
+	{
+		$from = cubewp_get_post_address_lat_lng($from_post_id, $address_field_key);
+		$to   = cubewp_get_post_address_lat_lng($to_post_id, $address_field_key);
+		if ($from['lat'] === null || $from['lng'] === null || $to['lat'] === null || $to['lng'] === null) {
+			return null;
+		}
+		$earth_radius = ($unit === 'mi' || $unit === 'miles') ? 3959 : 6371;
+		$lat1 = deg2rad($from['lat']);
+		$lat2 = deg2rad($to['lat']);
+		$lng1 = deg2rad($from['lng']);
+		$lng2 = deg2rad($to['lng']);
+		$distance = $earth_radius * acos(
+			min(1, max(
+				-1,
+				cos($lat1) * cos($lat2) * cos($lng2 - $lng1) + sin($lat1) * sin($lat2)
+			))
+		);
+		return round($distance, 2);
+	}
 }
 
 if (! function_exists("render_taxonomy_value")) {
@@ -1848,16 +1987,103 @@ if (! function_exists("cubewp_is_elementor_editing")) {
 	}
 }
 
+
 if (! function_exists("cubewp_get_elementor_preview_post_id")) {
-	function cubewp_get_elementor_preview_post_id()
+	function cubewp_get_elementor_preview_post_id($post_type = '')
 	{
+
+
 		$post_id = '';
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only use of query vars to render notice; no state change performed.
-		if (isset($_GET['tb_demo_id']) && $_GET['tb_demo_id'] !== '') {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only use of query vars to render notice; no state change performed.
-			$post_id = absint(wp_unslash($_GET['tb_demo_id']));
+		if (!empty($post_type)) {
+			$args = array(
+				'post_type'      => $post_type,
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'post_status'    => 'publish',
+			);
+			$posts = get_posts($args);
+			if (! empty($posts)) {
+				return $posts[0]; // Return the first post ID
+			}
 		}
+
+		// Elementor editor
+		if (did_action('elementor/loaded') && \Elementor\Plugin::$instance->editor->is_edit_mode()) {
+			$post_id = \Elementor\Plugin::$instance->editor->get_post_id();
+		}
+
+		if (empty($post_id)) {
+			$post_id = isset($_GET['post']) ? $_GET['post'] : get_the_ID();
+		}
+	
+		$template_type = get_post_meta($post_id, 'template_type', true);
+		$template_location = get_post_meta($post_id, 'template_location', true);
+		if (get_post_type($post_id) == 'cubewp-tb' && in_array($template_type, array('single', 'archive', 'postcard'))) {
+
+			if ($template_type == 'postcard' || $template_type == 'single') {
+
+				if($template_type == 'single'){
+                    global $post;
+                    if(isset($post->post_type) && $post->post_type !== 'cubewp-tb'){
+                        return (int) $post->ID;
+                    }
+                } 
+				$preview_post_id      = get_post_meta($post_id, 'preview_post_id', true);
+				if ($preview_post_id) {
+					return (int) $preview_post_id;
+				}
+			}
+			$associated_post_type = $template_location ? str_replace($template_type . '_', '', $template_location) : '';
+			if ($associated_post_type == 'all') {
+				$associated_post_type = 'post';
+			}
+			$args = array(
+				'post_type'      => $associated_post_type,
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'post_status'    => 'publish',
+			);
+			$posts = get_posts($args);
+			if (! empty($posts)) {
+				return $posts[0]; // Return the first post ID
+			}
+		}
+		$post_id = get_the_ID();
 		return apply_filters('cubewp_elementor_preview_post_id', $post_id);
+	}
+}
+
+
+if (! function_exists('cubewp_get_elementor_tag_user_id')) {
+	function cubewp_get_elementor_tag_user_id()
+	{
+
+		$user_id = 0;
+
+		// If it's an author archive page
+		if (is_author()) {
+			$author = get_queried_object();
+
+			if ($author && isset($author->ID)) {
+				$user_id = (int) $author->ID;
+			}
+		} elseif (is_single()) {
+			// If it's a single post/page, get the post author
+			$post = get_post();
+
+			if ($post && isset($post->post_author)) {
+				$user_id = (int) $post->post_author;
+			}
+		} else {
+			// Fallback to current logged-in user
+			$current_user_id = get_current_user_id();
+
+			if ($current_user_id) {
+				$user_id = (int) $current_user_id;
+			}
+		}
+
+		return apply_filters('cubewp_elementor_tag_user_id', $user_id);
 	}
 }
 
@@ -2179,6 +2405,54 @@ if (! function_exists("cwp_get_users_by_role")) {
 }
 
 /**
+ * Method get_user_fields_by_type
+ *
+ * @param array $allowed_types
+ *
+ * @return array
+ * @since  1.1.30
+ */
+if (! function_exists("get_user_fields_by_type")) {
+	function get_user_fields_by_type(array $allowed_types)
+	{
+		$_data = array();
+		$args = array(
+			'numberposts' => -1,
+			'fields'      => 'ids',
+			'post_type'   => 'cwp_user_fields'
+		);
+
+		$allGroups = get_posts($args);
+		if (isset($allGroups) && !empty($allGroups)) {
+			foreach ($allGroups as $group) {
+				// First, get the fields assigned to this group
+				$fields_json = get_post_meta($group, '_cwp_group_fields', true);
+				$fields_of_specific_group = json_decode($fields_json, true);
+
+				// If decode failed, try manual parsing
+				if ($fields_of_specific_group === null) {
+					$fields_string = trim($fields_json, '[]" ');
+					$fields_of_specific_group = array_map('trim', explode(',', str_replace('"', '', $fields_string)));
+				}
+				// Process each field in the group
+				foreach ($fields_of_specific_group as $field_name) {
+					// Get the field options from CubeWp
+					$options = get_user_field_options($field_name);
+					if (isset($options['type'])) {
+						if (in_array($options['type'], $allowed_types)) {
+							$title = isset($options['label']) ? $options['label'] : $field_name;
+							$_data[$field_name] = $title;
+						}
+					}
+				}
+			}
+		}
+
+		return $_data;
+	}
+}
+
+/**
  * Method cubewp_get_template_part
  *
  * @param string $slug
@@ -2346,6 +2620,35 @@ if (! function_exists("cwp_get_user_fields_by_group_id")) {
 		$fields_of_specific_group = get_post_meta($GroupID, '_cwp_group_fields', true);
 
 		return json_decode($fields_of_specific_group, true);
+	}
+}
+
+/**
+ * Method get_user_fields_by_user_role
+ *
+ * @param string $user_role
+ *
+ * @return array
+ * @since  1.1.30
+ */
+if (! function_exists("get_user_fields_by_user_role")) {
+	function get_user_fields_by_user_role($user_role)
+	{
+		$_data = array();
+
+		$allGroups = cwp_get_groups_by_user_role($user_role);
+		if (!empty($allGroups)) {
+			foreach ($allGroups as $group) {
+				$group_fields     = cwp_get_user_fields_by_group_id($group);
+				foreach ($group_fields as $group_field) {
+					$options = get_user_field_options($group_field);
+					if (isset($options['type'])) {
+						$_data[$group_field] = $options['label'];
+					}
+				}
+			}
+		}
+		return $_data;
 	}
 }
 
@@ -3452,57 +3755,83 @@ if (!function_exists('cubewp_promotional_card_output')) {
  *
  * @return void
  */
+ /**
+ * Register Elementor controls for CubeWP templates
+ */
 if (!function_exists('cubewp_register_postcard_page_controls')) {
-	function cubewp_register_postcard_page_controls($element)
-	{
-		if (! $element instanceof \Elementor\Core\DocumentTypes\PageBase || ! $element::get_property('has_elements')) {
+
+	function cubewp_register_postcard_page_controls($element) {
+
+		if (!$element instanceof \Elementor\Core\DocumentTypes\PageBase || !$element::get_property('has_elements')) {
 			return;
 		}
 
-		$post_id = get_the_ID();
+		$post_id       = get_the_ID();
+		$post_type     = get_post_type($post_id);
 		$template_type = get_post_meta($post_id, 'template_type', true);
 
-		if (get_post_type($post_id) == 'cubewp-tb' && $template_type == 'postcard') {
-			$template_location = get_post_meta($post_id, 'template_location', true);
+		if ($post_type !== 'cubewp-tb') {
+			return;
+		}
+
+		$template_location = get_post_meta($post_id, 'template_location', true);
+
+		/**
+		 * Helper: Fetch posts for preview dropdown
+		 */
+		$get_posts_for_preview = function ($post_type) {
+
+			if (!$post_type) {
+				return [];
+			}
+
+			$options = get_posts([
+				'post_type'      => $post_type,
+				'posts_per_page' => 10,
+				'orderby'        => 'date',
+				'order'          => 'DESC',
+				'fields'         => 'ids',
+			]);
+
+			$posts = [];
+
+			if (!empty($options)) {
+				foreach ($options as $id) {
+					$posts[$id] = get_the_title($id);
+				}
+			}
+
+			return $posts;
+		};
+
+		/**
+		 * POSTCARD TEMPLATE
+		 */
+		if ($template_type === 'postcard') {
+
 			$associated_post_type = $template_location ? str_replace('postcard_', '', $template_location) : '';
 			$preview_post_id      = get_post_meta($post_id, 'preview_post_id', true);
 			$primary_post_card    = get_post_meta($post_id, 'primary_post_card', true);
-			$posts = array();
-			if ($associated_post_type) {
-				$args = array(
-					'post_type'      => $associated_post_type,
-					'posts_per_page' => 10,
-					'orderby'        => 'date',
-					'order'          => 'DESC',
-					'fields'         => 'ids'
-				);
 
-				// Fetch the posts
-				$options = get_posts($args);
+			$posts = $get_posts_for_preview($associated_post_type);
 
-				if (is_array($options) && !empty($options)) {
-					foreach ($options as $option) {
-						$posts[$option] = get_the_title($option);
-					}
-				}
-			}
 			$element->start_controls_section(
 				'postcard_section',
 				[
 					'label' => __('Post Card Settings', 'cubewp-framework'),
-					'tab' => \Elementor\Controls_Manager::TAB_SETTINGS,
+					'tab'   => \Elementor\Controls_Manager::TAB_SETTINGS,
 				]
 			);
 
 			$element->add_control(
 				'preview_post_id',
 				[
-					'label' => __('Select Post for Preview', 'cubewp-framework'),
-					'type' => \Elementor\Controls_Manager::SELECT2,
-					'options' => $posts,
-					'description' => __('Select a post to preview the postcard template. This selection will not affect the actual posts displayed on the front end.', 'cubewp-framework'),
-					'default' => $preview_post_id ? $preview_post_id : '',
-					'render_type' => 'ui',
+					'label'              => __('Select Post for Preview', 'cubewp-framework'),
+					'type'               => \Elementor\Controls_Manager::SELECT2,
+					'options'            => $posts,
+					'description'        => __('Select a post to preview the postcard template. This will not affect front-end posts.', 'cubewp-framework'),
+					'default'            => $preview_post_id ?: '',
+					'render_type'        => 'ui',
 					'frontend_available' => true,
 				]
 			);
@@ -3515,31 +3844,70 @@ if (!function_exists('cubewp_register_postcard_page_controls')) {
 					'label_on'     => __('Yes', 'cubewp-framework'),
 					'label_off'    => __('No', 'cubewp-framework'),
 					'return_value' => 'yes',
-					'default'      => $primary_post_card ? $primary_post_card : 'no',
-					'description'  => __('Enable this option to make this postcard the primary template for the associated post type.', 'cubewp-framework'),
+					'default'      => $primary_post_card ?: 'no',
+					'description'  => __('Enable to make this postcard the primary template.', 'cubewp-framework'),
 				]
 			);
 
 			$element->add_control(
 				'default_col_class',
 				[
-					'label'        => __('Default Coloumn Class', 'cubewp-framework'),
-					'type'         => \Elementor\Controls_Manager::TEXT,
-					'default'      => 'cwp-col-12 cwp-col-md-6 cwp-col-lg-4',
-					'description'  => __('Add custom CSS classes to the post card container for additional styling.', 'cubewp-framework'),
+					'label'       => __('Default Column Class', 'cubewp-framework'),
+					'type'        => \Elementor\Controls_Manager::TEXT,
+					'default'     => 'cwp-col-12 cwp-col-md-6 cwp-col-lg-4',
+					'description' => __('Add custom CSS classes to the post card container.', 'cubewp-framework'),
 				]
 			);
 
 			$element->end_controls_section();
 		}
 
-		if (get_post_type($post_id) == 'cubewp-tb' && $template_type == 'termcard') {
-			$template_location   = get_post_meta($post_id, 'template_location', true);
+		/**
+		 * SINGLE TEMPLATE
+		 */
+		elseif ($template_type === 'single') {
+
+			$associated_post_type = $template_location ? str_replace('single_', '', $template_location) : '';
+			$preview_post_id      = get_post_meta($post_id, 'preview_post_id', true);
+
+			$posts = $get_posts_for_preview($associated_post_type);
+
+			$element->start_controls_section(
+				'single_section',
+				[
+					'label' => __('CubeWP Single Settings', 'cubewp-framework'),
+					'tab'   => \Elementor\Controls_Manager::TAB_SETTINGS,
+				]
+			);
+
+			$element->add_control(
+				'preview_post_id',
+				[
+					'label'              => __('Select Post for Preview', 'cubewp-framework'),
+					'type'               => \Elementor\Controls_Manager::SELECT2,
+					'options'            => $posts,
+					'description'        => __('Select a post to preview the single template.', 'cubewp-framework'),
+					'default'            => $preview_post_id ?: '',
+					'render_type'        => 'ui',
+					'frontend_available' => true,
+				]
+			);
+
+			$element->end_controls_section();
+		}
+
+		/**
+		 * TERM CARD TEMPLATE
+		 */
+		elseif ($template_type === 'termcard') {
+
 			$associated_taxonomy = $template_location ? str_replace('termcard_', '', $template_location) : '';
-			$preview_term_slug     = get_post_meta($post_id, 'preview_term_slug', true);
+			$preview_term_slug   = get_post_meta($post_id, 'preview_term_slug', true);
 
 			$terms = [];
+
 			if ($associated_taxonomy) {
+
 				$options = get_terms([
 					'taxonomy'   => $associated_taxonomy,
 					'hide_empty' => false,
@@ -3581,6 +3949,7 @@ if (!function_exists('cubewp_register_postcard_page_controls')) {
 			$element->end_controls_section();
 		}
 	}
+
 	add_action('elementor/documents/register_controls', 'cubewp_register_postcard_page_controls');
 }
 
@@ -4173,57 +4542,57 @@ if (!function_exists('cubewp_add_common_hover_controls')) {
 
 
 if (!function_exists('cubewp_register_click_controls')) {
-    function cubewp_register_click_controls($element, $args, $element_type)
-    {
-        $template_type = cubewp_get_template_type();
-        if (!in_array($template_type, ['postcard', 'termcard'])) {
-            return;
-        }
-        $label_prefix = ($template_type === 'postcard') ? 'CubeWP Post Card Click' : 'CubeWP Term Card Click Effects';
-        $section_id = ($template_type === 'postcard')
-            ? "cwp_postcard_click_section"
-            : "cwp_termcard_click_section";
-        $element->start_controls_section(
-            $section_id,
-            [
-                'label' => esc_html__($label_prefix, 'cubewp-framework'), // phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
-                'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
-            ]
-        );
-        cubewp_add_common_click_controls($element);
-        $element->end_controls_section();
-        $element->start_controls_section(
-            'cwp_view_switcher_section',
-            [
-                'label' => esc_html__('CubeWP View Switcher', 'cubewp-framework'), // phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
-                'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
-            ]
-        );
-        $element->add_control(
-            'cwp_view_switcher_enable',
-            [
-                'label' => __('Enable View Switcher', 'cubewp-framework'),
-                'type' => \Elementor\Controls_Manager::SWITCHER,
-                'default' => 'no',
-                'frontend_available' => true,
-            ]
-        );
-        $element->add_control(
-            'cwp_view_switcher_trigger_type',
-            [
-                'label' => __('Trigger Type', 'cubewp-framework'),
-                'type' => \Elementor\Controls_Manager::SELECT,
-                'options' => [
-                    'list' => __('List View', 'cubewp-framework'),
-                    'grid' => __('Grid View', 'cubewp-framework'),
-                ],
-                'default' => 'grid',
-                'condition' => ['cwp_view_switcher_enable' => 'yes'],
-                'frontend_available' => true,
-            ]   
-        );
-        $element->end_controls_section();
-    }
+	function cubewp_register_click_controls($element, $args, $element_type)
+	{
+		$template_type = cubewp_get_template_type();
+		if (!in_array($template_type, ['postcard', 'termcard'])) {
+			return;
+		}
+		$label_prefix = ($template_type === 'postcard') ? 'CubeWP Post Card Popup Options' : 'CubeWP Term Card Click Effects';
+		$section_id = ($template_type === 'postcard')
+			? "cwp_postcard_click_section"
+			: "cwp_termcard_click_section";
+		$element->start_controls_section(
+			$section_id,
+			[
+				'label' => esc_html__($label_prefix, 'cubewp-framework'), // phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
+				'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
+			]
+		);
+		cubewp_add_common_click_controls($element);
+		$element->end_controls_section();
+		$element->start_controls_section(
+			'cwp_view_switcher_section',
+			[
+				'label' => esc_html__('CubeWP View Switcher', 'cubewp-framework'), // phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
+				'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
+			]
+		);
+		$element->add_control(
+			'cwp_view_switcher_enable',
+			[
+				'label' => __('Enable View Switcher', 'cubewp-framework'),
+				'type' => \Elementor\Controls_Manager::SWITCHER,
+				'default' => 'no',
+				'frontend_available' => true,
+			]
+		);
+		$element->add_control(
+			'cwp_view_switcher_trigger_type',
+			[
+				'label' => __('Trigger Type', 'cubewp-framework'),
+				'type' => \Elementor\Controls_Manager::SELECT,
+				'options' => [
+					'list' => __('List View', 'cubewp-framework'),
+					'grid' => __('Grid View', 'cubewp-framework'),
+				],
+				'default' => 'grid',
+				'condition' => ['cwp_view_switcher_enable' => 'yes'],
+				'frontend_available' => true,
+			]
+		);
+		$element->end_controls_section();
+	}
 }
 
 if (!function_exists('cubewp_add_common_click_controls')) {
@@ -4235,6 +4604,7 @@ if (!function_exists('cubewp_add_common_click_controls')) {
 				'label' => __('Enable Click Effects', 'cubewp-framework'),
 				'type' => \Elementor\Controls_Manager::SWITCHER,
 				'default' => 'no',
+				'frontend_available' => true,
 			]
 		);
 
@@ -4265,21 +4635,25 @@ if (!function_exists('cubewp_add_common_click_controls')) {
 			[
 				'label' => __('Trigger', 'cubewp-framework'),
 				'type' => \Elementor\Controls_Manager::SELECT,
-				'default' => 'parent',
+				'default' => '',
 				'options' => [
-					'Parent' => __('Parent', 'cubewp-framework'),
-					'Current' => __('Current', 'cubewp-framework'),
+					'Current' => __('Current Element Hide on Click', 'cubewp-framework'),
 					'custom' => __('Custom', 'cubewp-framework'),
 				],
 				'condition' => ['cwp_click_enable' => 'yes'],
 				'frontend_available' => true,
+				'description' => sprintf(
+					'%s<br><span class="elementor-control-description">%s</span>',
+					__('Choose which target to trigger on click.', 'cubewp-framework'),
+					__('When enabled, selecting "Current Element" will hide this section when clicked. If you use "Custom", you can set a custom class to specify the trigger; the action will be performed based on where that class is used.', 'cubewp-framework')
+				),
 			]
 		);
 
 		$element->add_control(
 			'cwp_click_target_apply_class',
 			[
-				'label' => __('Apply', 'cubewp-framework'),
+				'label' => __('Show Class', 'cubewp-framework'),
 				'type' => \Elementor\Controls_Manager::TEXT,
 				'placeholder' => 'class-name',
 				'description' => __('Class name to apply on click.', 'cubewp-framework'),
@@ -4288,81 +4662,55 @@ if (!function_exists('cubewp_add_common_click_controls')) {
 			]
 		);
 
+		// Legacy IDs kept for existing templates / data; defaults: apply = show, remove = hide.
 		$element->add_control(
 			'cwp_click_target_apply_css_controls',
 			[
-				'label' => __('Apply CSS Controls', 'cubewp-framework'),
-				'type' => \Elementor\Controls_Manager::SELECT,
-				'options' => [
-					'default' => __('Default', 'cubewp-framework'),
-					'show' => __('Show', 'cubewp-framework'),
-					'hide' => __('Hide', 'cubewp-framework'),
-					'transform' => __('Transform', 'cubewp-framework'),
-				],
-				'default' => 'default',
+				'type' => \Elementor\Controls_Manager::HIDDEN,
+				'default' => 'show',
 				'condition' => ['cwp_click_enable' => 'yes'],
+			]
+		);
+		$element->add_control(
+			'cwp_click_legacy_slider_gate',
+			[
+				'type' => \Elementor\Controls_Manager::HIDDEN,
+				'default' => '',
 			]
 		);
 		$element->add_control(
 			'cwp_click_target_apply_css_transform',
 			[
-				'label' => __('Transform Y', 'cubewp-framework'),
 				'type' => \Elementor\Controls_Manager::SLIDER,
 				'size_units' => ['px'],
 				'range' => ['px' => ['min' => 0, 'max' => 1000, 'step' => 1]],
-				'default' => ['size' => 300],
-				'condition' => ['cwp_click_enable' => 'yes', 'cwp_click_target_apply_css_controls' => 'transform'],
+				'default' => ['size' => 0, 'unit' => 'px'],
+				'condition' => ['cwp_click_enable' => 'yes', 'cwp_click_legacy_slider_gate' => 'yes'],
 				'frontend_available' => true,
 			]
 		);
 		$element->add_control(
 			'cwp_click_target_apply_css_transform_x',
 			[
-				'label' => __('Transform X', 'cubewp-framework'),
 				'type' => \Elementor\Controls_Manager::SLIDER,
 				'size_units' => ['px'],
 				'range' => ['px' => ['min' => 0, 'max' => 1000, 'step' => 1]],
-				'default' => ['size' => 300],
-				'condition' => ['cwp_click_enable' => 'yes', 'cwp_click_target_apply_css_controls' => 'transform'],
+				'default' => ['size' => 0, 'unit' => 'px'],
+				'condition' => ['cwp_click_enable' => 'yes', 'cwp_click_legacy_slider_gate' => 'yes'],
 				'frontend_available' => true,
 			]
 		);
 		$element->add_control(
 			'cwp_click_target_apply_css_transition',
 			[
-				'label' => __('Transition', 'cubewp-framework'),
 				'type' => \Elementor\Controls_Manager::SLIDER,
 				'size_units' => ['ms'],
 				'range' => ['ms' => ['min' => 0, 'max' => 1000, 'step' => 1]],
-				'default' => ['size' => 300],
-				'condition' => ['cwp_click_enable' => 'yes'],
+				'default' => ['size' => 300, 'unit' => 'ms'],
+				'condition' => ['cwp_click_enable' => 'yes', 'cwp_click_legacy_slider_gate' => 'yes'],
 				'frontend_available' => true,
 			]
 		);
-
-
-
-		$element->add_control(
-			'cwp_click_target_remove_heading',
-			[
-				'label' => __('Remove Parent Target', 'cubewp-framework'),
-				'type' => \Elementor\Controls_Manager::HEADING,
-				'condition' => [
-					'cwp_click_enable' => 'yes',
-				],
-			]
-		);
-
-		$element->add_control(
-			'cwp_click_target_remove_divider',
-			[
-				'type' => \Elementor\Controls_Manager::DIVIDER,
-				'condition' => [
-					'cwp_click_enable' => 'yes',
-				],
-			]
-		);
-
 
 		$element->add_control(
 			'cwp_click_target_remove_class',
@@ -4379,52 +4727,42 @@ if (!function_exists('cubewp_add_common_click_controls')) {
 		$element->add_control(
 			'cwp_click_target_remove_css_controls',
 			[
-				'label' => __('Default CSS Controls', 'cubewp-framework'),
-				'type' => \Elementor\Controls_Manager::SELECT,
-				'options' => [
-					'default' => __('Default', 'cubewp-framework'),
-					'show' => __('Show', 'cubewp-framework'),
-					'hide' => __('Hide', 'cubewp-framework'),
-					'transform' => __('Transform', 'cubewp-framework'),
-				],
-				'default' => 'default',
-				'condition' => ['cwp_click_enable' => 'yes', 'cwp_click_apply' => 'custom'],
+				'type' => \Elementor\Controls_Manager::HIDDEN,
+				'default' => 'hide',
+				'condition' => ['cwp_click_enable' => 'yes'],
 				'frontend_available' => true,
 			]
 		);
 		$element->add_control(
 			'cwp_click_target_remove_css_transform',
 			[
-				'label' => __('Transform Y', 'cubewp-framework'),
 				'type' => \Elementor\Controls_Manager::SLIDER,
 				'size_units' => ['px'],
 				'range' => ['px' => ['min' => 0, 'max' => 1000, 'step' => 1]],
-				'default' => ['size' => 300],
-				'condition' => ['cwp_click_enable' => 'yes', 'cwp_click_apply' => 'custom', 'cwp_click_target_remove_css_controls' => 'transform'],
+				'default' => ['size' => 0, 'unit' => 'px'],
+				'condition' => ['cwp_click_enable' => 'yes', 'cwp_click_apply' => 'custom', 'cwp_click_legacy_slider_gate' => 'yes'],
 				'frontend_available' => true,
 			]
 		);
 		$element->add_control(
 			'cwp_click_target_remove_css_transform_x',
 			[
-				'label' => __('Transform X', 'cubewp-framework'),
 				'type' => \Elementor\Controls_Manager::SLIDER,
 				'size_units' => ['px'],
 				'range' => ['px' => ['min' => 0, 'max' => 1000, 'step' => 1]],
-				'default' => ['size' => 300],
-				'condition' => ['cwp_click_enable' => 'yes', 'cwp_click_apply' => 'custom', 'cwp_click_target_remove_css_controls' => 'transform'],
+				'default' => ['size' => 0, 'unit' => 'px'],
+				'condition' => ['cwp_click_enable' => 'yes', 'cwp_click_apply' => 'custom', 'cwp_click_legacy_slider_gate' => 'yes'],
 				'frontend_available' => true,
 			]
 		);
 		$element->add_control(
 			'cwp_click_target_remove_css_transition',
 			[
-				'label' => __('Transition', 'cubewp-framework'),
 				'type' => \Elementor\Controls_Manager::SLIDER,
 				'size_units' => ['ms'],
 				'range' => ['ms' => ['min' => 0, 'max' => 1000, 'step' => 1]],
-				'default' => ['size' => 300],
-				'condition' => ['cwp_click_enable' => 'yes', 'cwp_click_apply' => 'custom'],
+				'default' => ['size' => 300, 'unit' => 'ms'],
+				'condition' => ['cwp_click_enable' => 'yes', 'cwp_click_apply' => 'custom', 'cwp_click_legacy_slider_gate' => 'yes'],
 				'frontend_available' => true,
 			]
 		);
@@ -4483,26 +4821,31 @@ if (!function_exists('cubewp_woo_elementor_before_render')) {
 		$visibility = $display['cwp_hover_visibility'] ?? 'default';
 
 		$css = [];
-		if (isset($display['cwp_view_switcher_enable']) && $display['cwp_view_switcher_enable'] === 'yes') {
-            $visibility_list = $display['cwp_view_switcher_trigger_type'] === 'list' ? ' cubewp-view-list' : ' cubewp-view-grid';
-            $attr = ['class' => 'cwp-hover-element cubewp-view-switcher ' . $visibility_list];
-        }else{
-            $attr = ['class' => 'cwp-hover-element'];
-        }
+		$css2 = [];
+		if (isset($display['cwp_view_switcher_enable']) && $display['cwp_view_switcher_enable'] === 'yes') { 
+			$visibility_list = (isset($display['cwp_view_switcher_trigger_type']) && $display['cwp_view_switcher_trigger_type'] === 'list') 
+				? ' cubewp-view-list' 
+				: ' cubewp-view-grid';
+		
+			$attr = ['class' => 'cwp-hover-element cubewp-view-switcher ' . $visibility_list];
+		} else {
+			$attr = ['class' => 'cwp-hover-element'];
+		}
 
 		if (!($direction === 'none' && $visibility === 'default')) {
-			$css[] = "--cwp-hover-distance: {$distance}px";
-			$css[] = "--cwp-hover-duration: {$duration}s";
+			$css2[] = "--cwp-hover-distance: {$distance}px";
+			$css2[] = "--cwp-hover-duration: {$duration}s";
 
 			$attr['data-cwp-direction']  = $direction;
 			$attr['data-cwp-visibility'] = $visibility;
+			
 		}
 		if ($element->get_name() === 'button') {
 			if (!empty($display['cwp_hover_button_bg_color'])) {
-				$css[] = "--cwp-hover-bg: {$display['cwp_hover_button_bg_color']}";
+				$css2[] = "--cwp-hover-bg: {$display['cwp_hover_button_bg_color']}";
 			}
 			if (!empty($display['cwp_hover_button_icon_color'])) {
-				$css[] = "--cwp-hover-color: {$display['cwp_hover_button_icon_color']}";
+				$css2[] = "--cwp-hover-color: {$display['cwp_hover_button_icon_color']}";
 			}
 
 			if (!empty($display['cwp_hover_button_bg_color']) || !empty($display['cwp_hover_button_icon_color'])) {
@@ -4513,78 +4856,110 @@ if (!function_exists('cubewp_woo_elementor_before_render')) {
 		 * Click data attributes
 		 */
 		$click_enabled = !empty($display['cwp_click_enable']) && $display['cwp_click_enable'] === 'yes';
+		$click_apply = !empty($display['cwp_click_apply']) && $display['cwp_click_apply'] === 'custom';
 		if ($click_enabled) {
 			$attr['class'] .= ' cwp-click-element ';
 			$attr['data-cwp-click-enabled'] = 'true';
 
-			$target_mode_raw = $display['cwp_click_apply'] ?? 'parent';
+			$target_mode_raw = $display['cwp_click_apply'] ?? '';
 			$target_mode = strtolower($target_mode_raw);
-			if (!in_array($target_mode, ['parent', 'current', 'custom'], true)) {
-				$target_mode = 'parent';
-			}
+			 
 			$attr['data-cwp-target-mode'] = $target_mode;
 
 			$custom_target =  $display['cwp_click_target_class'] ?? '';
 			if (!empty($custom_target)) {
 				$attr['data-cwp-target-class'] = sanitize_key($custom_target);
 				$attr['class'] .= sanitize_key($custom_target);
-			}
-
+			} 
 			$apply_class  = $display['cwp_click_target_apply_class'] ?? '';
 			$remove_class = $display['cwp_click_target_remove_class'] ?? '';
 			$attr['data-cwp-apply-class']  = $apply_class ? sanitize_html_class($apply_class) : '';
-			$attr['data-cwp-remove-class'] = $remove_class ? sanitize_html_class($remove_class) : '';
-
-
-			// Build CSS strings based on controls
-			$build_css = function ($mode, $y, $x, $transition_ms) {
-				$mode = $mode ?: 'default';
-				$css = [];
-				if ($mode === 'show') {
-					$css[] = 'display:block';
-					$css[] = 'opacity:1';
-					$css[] = 'visibility:visible';
-				} elseif ($mode === 'hide') {
-					$css[] = 'display:none';
-					$css[] = 'opacity:0';
-					$css[] = 'visibility:hidden';
-				} elseif ($mode === 'transform') {
-					$tx = is_numeric($x) ? $x : 0;
-					$ty = is_numeric($y) ? $y : 0;
-					$css[] = "transform: translate({$tx}px, {$ty}px)";
-				}
-				$transition = is_numeric($transition_ms) ? max(0, $transition_ms) / 1000 : 0.3;
-				$css[] = "transition: all {$transition}s ease";
-				return implode('; ', array_filter($css));
-			};
-
-			$apply_css = $build_css(
-				$display['cwp_click_target_apply_css_controls'] ?? 'default',
-				$display['cwp_click_target_apply_css_transform']['size'] ?? 0,
-				$display['cwp_click_target_apply_css_transform_x']['size'] ?? 0,
-				$display['cwp_click_target_apply_css_transition']['size'] ?? 300
-			);
-
-			$remove_css = $build_css(
-				$display['cwp_click_target_remove_css_controls'] ?? 'default',
-				$display['cwp_click_target_remove_css_transform']['size'] ?? 0,
-				$display['cwp_click_target_remove_css_transform_x']['size'] ?? 0,
-				$display['cwp_click_target_remove_css_transition']['size'] ?? 300
-			);
-
-			$attr['data-cwp-apply-css']  = esc_attr($apply_css);
-			$attr['data-cwp-remove-css'] = esc_attr($remove_css);
-
+			$attr['data-cwp-remove-class'] = $remove_class ? sanitize_html_class($remove_class) : ''; 
+			if ($click_apply == 'custom') {
+				$apply_css = "display: block; opacity: 1; visibility: visible;";
+				$remove_css = "display: none; opacity: 0; visibility: hidden;";
+				$attr['data-cwp-apply-css']  = esc_attr($apply_css);
+				$attr['data-cwp-remove-css'] = esc_attr($remove_css);
+			}
+			if($target_mode == 'current') { 
+				$apply_css = "display: none; opacity: 0; visibility: hidden;";
+				$attr['data-cwp-apply-css']  = esc_attr($apply_css); 
+			}
 			// Add remove_css to style attribute as well
 			if (!empty($remove_css)) {
 				$css[] = $remove_css;
 			}
+			if ($click_apply == 'custom') {
+				$attr['style'] = implode('; ', $css);
+			}
+			
 		}
-
-		$attr['style'] = implode('; ', $css);
+		if (!empty($css2)) {
+			$attr['style'] = implode('; ', $css2);
+		}
 		$element->add_render_attribute('_wrapper', $attr);
 	}
 
 	add_action('elementor/frontend/widget/before_render', 'cubewp_woo_elementor_before_render', 30);
 	add_action('elementor/frontend/container/before_render', 'cubewp_woo_elementor_before_render', 30);
 }
+
+/**
+ * Method cubewp_get_filters_conditional_taxonomy_terms
+ *
+ * @return json
+ */
+if (!function_exists('cubewp_get_filters_conditional_taxonomy_terms')) {
+	function cubewp_get_filters_conditional_taxonomy_terms()
+	{
+		// Verify nonce
+		if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'cubewp_filters_conditional_nonce')) {
+			wp_send_json_error(array('message' => esc_html__('Security check failed.', 'cubewp-framework')));
+		}
+
+		$term_ids = isset($_POST['term_ids']) ? array_map('intval', $_POST['term_ids']) : array();
+		$term_meta_key = isset($_POST['term_meta_key']) ? sanitize_text_field($_POST['term_meta_key']) : '';
+		$taxonomy_name = isset($_POST['taxonomy_name']) ? sanitize_text_field($_POST['taxonomy_name']) : '';
+		$display_type = isset($_POST['display_type']) ? sanitize_text_field($_POST['display_type']) : '';
+
+		if (empty($term_ids) || empty($term_meta_key) || empty($taxonomy_name)) {
+			wp_send_json_error(array('message' => esc_html__('Invalid parameters.', 'cubewp-framework')));
+		}
+
+		$associated_term_ids = array();
+
+		// Get associated term IDs from term meta
+		foreach ($term_ids as $term_id) {
+			if ($term_id <= 0) {
+				continue;
+			}
+
+			// Get term meta value (should be an array of term IDs)
+			$term_meta_value = get_term_meta($term_id, $term_meta_key, true);
+
+			if (!empty($term_meta_value)) {
+				// Handle both array and comma-separated string
+				if (is_array($term_meta_value)) {
+					$associated_term_ids = array_merge($associated_term_ids, array_map('intval', $term_meta_value));
+				} else if (is_string($term_meta_value)) {
+					$terms_array = explode(',', $term_meta_value);
+					$associated_term_ids = array_merge($associated_term_ids, array_map('intval', $terms_array));
+				} else {
+					$associated_term_ids[] = intval($term_meta_value);
+				}
+			}
+		}
+
+		// Remove duplicates and empty values
+		$associated_term_ids = array_unique(array_filter($associated_term_ids));
+
+		if (!empty($associated_term_ids)) {
+			wp_send_json_success($associated_term_ids);
+		} else {
+			wp_send_json_success(array());
+		}
+	}
+	add_action('wp_ajax_cubewp_get_filters_conditional_taxonomy_terms', 'cubewp_get_filters_conditional_taxonomy_terms');
+	add_action('wp_ajax_nopriv_cubewp_get_filters_conditional_taxonomy_terms', 'cubewp_get_filters_conditional_taxonomy_terms');
+}
+

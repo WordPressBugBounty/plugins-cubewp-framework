@@ -71,6 +71,50 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		$this->add_post_type_controls();
 		$this->add_additional_controls();
 
+		// Step 1: Switcher to enable/disable author filter
+		$this->add_control(
+			'author_filter',
+			[
+				'label'        => esc_html__('Enable Author Filter', 'cubewp-framework'),
+				'type'         => Controls_Manager::SWITCHER,
+				'label_on'     => esc_html__('Yes', 'cubewp-framework'),
+				'label_off'    => esc_html__('No', 'cubewp-framework'),
+				'return_value' => 'yes',
+				'default'      => 'no',
+			]
+		);
+		$this->add_control(
+			'author_filter_type',
+			[
+				'label'       => esc_html__('Select Author', 'cubewp-framework'),
+				'type'        => Controls_Manager::SELECT,
+				'default'     => 'current_user',
+				'options'     => [
+					'current_user' => esc_html__('Currently Logged In', 'cubewp-framework'),
+					'dynamic'      => esc_html__('Dynamic Author', 'cubewp-framework'),
+					'custom'       => esc_html__('Custom Author ID', 'cubewp-framework'),
+				],
+				'condition'   => [
+					'author_filter' => 'yes',
+				],
+				'description' => esc_html__('Dynamic Author means: if on an author page, it will use the current author ID; if on a single post page, it will use the post author; otherwise, it falls back to the currently logged-in user.', 'cubewp-framework'),
+			]
+		);
+		$this->add_control(
+			'custom_author_id',
+			[
+				'label'       => esc_html__('Custom Author ID', 'cubewp-framework'),
+				'type'        => Controls_Manager::NUMBER,
+				'min'         => 1,
+				'step'        => 1,
+				'condition'   => [
+					'author_filter' => 'yes',
+					'author_filter_type'   => 'custom',
+				],
+				'description' => esc_html__('Enter the user ID of the author you want to display posts for.', 'cubewp-framework'),
+			]
+		);
+
 
 		$this->add_control('orderby', array(
 			'type'    => Controls_Manager::SELECT,
@@ -245,7 +289,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 				'OR'  => esc_html__('OR', 'cubewp-framework'),
 				'AND'  => esc_html__("AND", 'cubewp-framework'),
 			),
-			'default'   => 'or',
+			'default'   => 'OR',
 			'condition' => array(
 				'filter_by_meta'  => 'yes',
 			),
@@ -283,7 +327,8 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			'options'   => array(
 				'custom_value'  => esc_html__('Custom Value', 'cubewp-framework'),
 				'current_post_id'  => esc_html__('Current Post ID', 'cubewp-framework'),
-				'specific_user_id'  => esc_html__('Specific User ID', 'cubewp-framework'),
+				'current_user_id'  => esc_html__('Current User ID', 'cubewp-framework'),
+				'current_timestamp'  => esc_html__('Current Timestamp', 'cubewp-framework'),
 			),
 			'default'   => 'custom_value',
 			'condition' => array(
@@ -329,6 +374,16 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			),
 		));
 
+		$repeater->add_control('include_missing_meta', array(
+			'type'      => Controls_Manager::SWITCHER,
+			'label'     => esc_html__('Include if meta key is missing', 'cubewp-framework'),
+			'description' => esc_html__('If enabled, this condition will also match posts where the selected meta key does not exist (useful for optional end dates, optional numbers, etc.).', 'cubewp-framework'),
+			'default'   => 'no',
+			'condition' => array(
+				'meta_key!'  => '',
+			),
+		));
+
 		$this->add_control('filter_by_custom_fields', array(
 			'label'       => esc_html__('Add Conditions', 'cubewp-framework'),
 			'type'        => Controls_Manager::REPEATER,
@@ -342,7 +397,9 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		));
 		$this->end_controls_section();
 		$this->add_slider_controls();
+		$this->add_load_more_style_controls();
 		$this->add_promotional_card_controls();
+		$this->add_cubewp_posts_widget_title_controls();
 	}
 
 	private static function get_post_types()
@@ -385,7 +442,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			$this->add_control($post_type . '_card_style', array(
 				'type'        => Controls_Manager::SELECT,
 				/* translators: %s: post type singular name. */
-				'label'       => sprintf( esc_html__( 'Card Style for %s', 'cubewp-framework' ), self::get_post_type_name_by_slug($post_type) ),
+				'label'       => sprintf(esc_html__('Card Style for %s', 'cubewp-framework'), self::get_post_type_name_by_slug($post_type)),
 				'options'     => cubewp_post_card_styles($post_type),
 				'default'     => 'default_style',
 				'condition'   => array(
@@ -436,7 +493,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			$this->add_control('taxonomy-' . $post_type, array(
 				'type'      => Controls_Manager::SELECT2,
 				/* translators: %s: post type singular name. */
-				'label'     => sprintf( esc_html__( 'Select Terms for %s', 'cubewp-framework' ), self::get_post_type_name_by_slug($post_type) ),
+				'label'     => sprintf(esc_html__('Select Terms for %s', 'cubewp-framework'), self::get_post_type_name_by_slug($post_type)),
 				'description' => esc_html__('Leave empty if you want to display all posts.', 'cubewp-framework'),
 				'options'   => self::get_terms_by_post_type($post_type),
 				'multiple'  => true,
@@ -562,7 +619,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 
 		// Get google address fields for this post type
 		$google_address_fields = self::get_google_address_fields($post_type);
-		
+
 		if (!empty($google_address_fields)) {
 			$this->add_control('nearby_address_field_' . $post_type, array(
 				'type'        => Controls_Manager::SELECT,
@@ -712,7 +769,8 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 	{
 		if (is_array($args) && isset($args['query']) && !empty($args['query'])) {
 			$meta_query = array();
-			$meta_query['relation'] = $args['relation'];
+			$relation = isset($args['relation']) ? strtoupper((string) $args['relation']) : 'OR';
+			$meta_query['relation'] = in_array($relation, array('AND', 'OR'), true) ? $relation : 'OR';
 			$numeric_comparisons = ['=', '!=', '>', '>=', '<', '<=', 'BETWEEN', 'NOT BETWEEN'];
 			foreach ($args['query'] as $index => $query) {
 				// Determine the meta key
@@ -734,33 +792,56 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 				// Determine the meta value based on source
 				$meta_value = '';
 				$meta_value_source = isset($query['meta_value_source']) ? $query['meta_value_source'] : 'custom_value';
-				
+
 				if ($meta_value_source === 'current_post_id') {
 					// Get meta value from current post
-					$meta_value = get_the_ID();
+					$post_id = get_the_ID();
+                    if (cubewp_is_elementor_editing() ) {
+                        $post_id = cubewp_get_elementor_preview_post_id();
+                    }
+                    $meta_value = $post_id;
 				} elseif ($meta_value_source === 'current_user_id') {
 					// Get meta value from current user
-					$meta_value = get_current_user_id();
+					$meta_value = cubewp_get_elementor_tag_user_id();
+				} elseif ($meta_value_source === 'current_timestamp') {
+					// Get current timestamp (Unix timestamp)
+					$meta_value = current_time('timestamp');
 				} else {
 					// Use custom value
 					$meta_value = isset($query['meta_value']) ? $query['meta_value'] : '';
 				}
 
-				// Build meta query array
-				$meta_query[$index] = array(
-					'key'  => $meta_key,
-					'compare'   => isset($query['meta_compare']) ? $query['meta_compare'] : 'LIKE',
-				);
-
 				// Add value only if not EXISTS/NOT EXISTS (these don't need values)
 				$compare = isset($query['meta_compare']) ? $query['meta_compare'] : 'LIKE';
-				if (!in_array($compare, array('EXISTS', 'NOT EXISTS'))) {
-					$meta_query[$index]['value'] = $meta_value;
+				$include_missing_meta = isset($query['include_missing_meta']) && $query['include_missing_meta'] === 'yes';
+
+				$single_clause = array(
+					'key'     => $meta_key,
+					'compare' => $compare,
+				);
+
+				if (!in_array($compare, array('EXISTS', 'NOT EXISTS'), true)) {
+					$single_clause['value'] = $meta_value;
 				}
 
-				// Set numeric type for numeric comparisons
-				if (isset($query['meta_compare']) && in_array($query['meta_compare'], $numeric_comparisons)) {
-					$meta_query[$index]['type'] = 'NUMERIC';
+				// Set numeric type for numeric comparisons (timestamps, numbers, etc.)
+				if (in_array($compare, $numeric_comparisons, true)) {
+					$single_clause['type'] = 'NUMERIC';
+				}
+
+				// If meta is optional, include posts where key doesn't exist:
+				// ( key NOT EXISTS ) OR ( key compare value )
+				if ($include_missing_meta && !in_array($compare, array('EXISTS', 'NOT EXISTS'), true)) {
+					$meta_query[$index] = array(
+						'relation' => 'OR',
+						array(
+							'key'     => $meta_key,
+							'compare' => 'NOT EXISTS',
+						),
+						$single_clause,
+					);
+				} else {
+					$meta_query[$index] = $single_clause;
 				}
 			}
 			return $meta_query;
@@ -789,6 +870,9 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		$args = array(
 			'post_type'       => $settings['posttype'],
 			'taxonomy'        => array(),
+			'author_filter'   => isset($settings['author_filter']) ? $settings['author_filter'] : 'no',
+			'author_filter_type' => isset($settings['author_filter_type']) ? $settings['author_filter_type'] : 'current_user',
+			'custom_author_id' => isset($settings['custom_author_id']) ? $settings['custom_author_id'] : 0,
 			'orderby'         => $settings['orderby'],
 			'order'           => $settings['order'],
 			'number_of_posts' => $settings['number_of_posts'],
@@ -807,6 +891,9 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			'promotional_card' => $settings['cubewp_promotional_card'] === 'yes' ? true : false,
 			'promotional_cards' => $settings['cubewp_promotional_cards_list'],
 			'posts_by'        => $posts_by, // Pass posts_by to shortcode
+			'enable_title'    => isset($settings['enable_title']) ? $settings['enable_title'] : 'no',
+            'posts_title'     => isset($settings['posts_title']) ? $settings['posts_title'] : '',
+            'hide_no_results' => isset($settings['hide_no_results']) ? $settings['hide_no_results'] : 'no',
 		);
 
 		// Add slider parameters only if the slider is enabled
@@ -867,7 +954,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 					if (!empty($related_settings)) {
 						// Store related posts settings in args for shortcode to process
 						$args['related_posts_' . $post_type] = $related_settings;
-						
+
 						// Get source post ID
 						$source_post_option = isset($settings['related_source_post_' . $post_type]) ? $settings['related_source_post_' . $post_type] : 'current';
 						if ($source_post_option === 'specific') {
@@ -880,23 +967,23 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 				} elseif ($posts_by == 'nearby') {
 					// Handle nearby posts based on address field - using CubeWP's proximity SQL approach
 					$address_field = isset($settings['nearby_address_field_' . $post_type]) ? $settings['nearby_address_field_' . $post_type] : '';
-					
+
 					if (!empty($address_field)) {
 						// Get source post ID
 						$source_post_option = isset($settings['nearby_source_post_' . $post_type]) ? $settings['nearby_source_post_' . $post_type] : 'current';
 						$source_post_id = null;
-						
+
 						if ($source_post_option === 'specific') {
 							$source_post_id = isset($settings['nearby_source_post_id_' . $post_type]) ? intval($settings['nearby_source_post_id_' . $post_type]) : 0;
 						} else {
 							// Use current post
 							$source_post_id = get_the_ID();
 						}
-						
+
 						// Get address coordinates from source post
 						$lat = null;
 						$lng = null;
-						
+
 						if ($source_post_id && $source_post_id > 0) {
 							// Try to get from meta field directly
 							$lat = get_post_meta($source_post_id, $address_field . '_lat', true);
@@ -904,14 +991,14 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 							// If not found, try getting from address array
 							if (empty($lat) || empty($lng)) {
 								$address_meta = get_post_meta($source_post_id, $address_field, true);
-								
+
 								if (is_array($address_meta)) {
 									$lat = isset($address_meta['latitude']) ? $address_meta['latitude'] : (isset($address_meta['lat']) ? $address_meta['lat'] : null);
 									$lng = isset($address_meta['longitude']) ? $address_meta['longitude'] : (isset($address_meta['lng']) ? $address_meta['lng'] : null);
 								}
 							}
 						}
-						
+
 						// If we have coordinates, add parameters for nearby query
 						if (!empty($lat) && !empty($lng)) {
 							$args[$address_field] = 1; // Indicate this field should be used
@@ -923,10 +1010,10 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 							$default_radius = isset($settings['nearby_default_radius_' . $post_type]) ? floatval($settings['nearby_default_radius_' . $post_type]) : 10;
 							$max_radius = isset($settings['nearby_max_radius_' . $post_type]) ? floatval($settings['nearby_max_radius_' . $post_type]) : 100;
 							$radius_unit = isset($settings['nearby_radius_unit_' . $post_type]) ? $settings['nearby_radius_unit_' . $post_type] : 'km';
-							
+
 							// Check if range is provided (for dynamic radius)
 							$range = isset($settings[$address_field . '_range']) ? floatval($settings[$address_field . '_range']) : $default_radius;
-							
+
 							// Ensure range is within min/max bounds
 							if ($range < $min_radius) {
 								$range = $min_radius;
@@ -934,16 +1021,13 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 							if ($range > $max_radius) {
 								$range = $max_radius;
 							}
-							
+
 							$args[$address_field . '_range'] = $range;
 							$args['nearby_address_field'] = $address_field;
 							$args['nearby_radius_unit'] = $radius_unit;
 							$args['nearby_min_radius'] = $min_radius;
 							$args['nearby_max_radius'] = $max_radius;
-							
-							if ($source_post_option === 'specific' && $source_post_id > 0) {
-								$args['nearby_source_post_id'] = $source_post_id;
-							}
+							$args['nearby_source_post_id'] = $source_post_id;
 						}
 					}
 				}
@@ -961,7 +1045,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		}
 
 		if ($filter_by_meta == 'yes') {
-			$meta_query['query'] = isset($settings['filter_by_custom_fields']) ? $settings['filter_by_custom_fields'] : array();// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+			$meta_query['query'] = isset($settings['filter_by_custom_fields']) ? $settings['filter_by_custom_fields'] : array(); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 			$meta_query['relation'] = isset($settings['meta_relation']) ? $settings['meta_relation'] : 'OR';
 			$args['meta_query'] = self::_meta_query($meta_query); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 		}
@@ -2749,6 +2833,329 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			],
 		));
 
+		$this->end_controls_section();
+	}
+
+	private function add_cubewp_posts_widget_title_controls(){
+		// Add Title and Content Settings Section
+        $this->start_controls_section(
+            'cubewp_posts_title_section',
+            array(
+                'label' => esc_html__('Title & Content Settings', 'cubewp-framework'),
+                'tab'   => Controls_Manager::TAB_CONTENT,
+            )
+        );
+        
+        // Switcher to enable/disable title
+        $this->add_control(
+            'enable_title',
+            array(
+                'type'         => Controls_Manager::SWITCHER,
+                'label'        => esc_html__('Enable Title', 'cubewp-framework'),
+                'label_on'     => esc_html__('Yes', 'cubewp-framework'),
+                'label_off'    => esc_html__('No', 'cubewp-framework'),
+                'return_value' => 'yes',
+                'default'      => 'no',
+            )
+        );
+        
+        // Text field for title (shown when enabled)
+        $this->add_control(
+            'posts_title',
+            array(
+                'type'        => Controls_Manager::TEXT,
+                'label'       => esc_html__('Title', 'cubewp-framework'),
+                'default'     => '',
+                'placeholder' => esc_html__('Enter title here', 'cubewp-framework'),
+                'condition'   => array(
+                    'enable_title' => 'yes',
+                ),
+            )
+        );
+        
+        // Switcher to hide "no results found" template
+        $this->add_control(
+            'hide_no_results',
+            array(
+                'type'         => Controls_Manager::SWITCHER,
+                'label'        => esc_html__('Hide No Results Found Template', 'cubewp-framework'),
+                'label_on'     => esc_html__('Yes', 'cubewp-framework'),
+                'label_off'    => esc_html__('No', 'cubewp-framework'),
+                'return_value' => 'yes',
+                'default'      => 'no',
+                'description'  => esc_html__('When enabled, the "No Results Found" template will be hidden when there are no posts.', 'cubewp-framework'),
+            )
+        );
+        
+        $this->end_controls_section();
+        
+        // Add Title Style Section
+        $this->start_controls_section(
+            'cubewp_posts_title_style_section',
+            array(
+                'label'     => esc_html__('Title Style', 'cubewp-framework'),
+                'tab'       => Controls_Manager::TAB_STYLE,
+                'condition' => array(
+                    'enable_title' => 'yes',
+                ),
+            )
+        );
+        
+        // Title Typography
+        $this->add_group_control(
+            \Elementor\Group_Control_Typography::get_type(),
+            array(
+                'name'     => 'title_typography',
+                'label'    => esc_html__('Typography', 'cubewp-framework'),
+                'selector' => '{{WRAPPER}} .cubewp-posts-title',
+            )
+        );
+        
+        // Title Color
+        $this->add_control(
+            'title_color',
+            array(
+                'type'      => Controls_Manager::COLOR,
+                'label'     => esc_html__('Color', 'cubewp-framework'),
+                'selectors' => array(
+                    '{{WRAPPER}} .cubewp-posts-title' => 'color: {{VALUE}};',
+                ),
+            )
+        );
+        
+        // Title Text Align
+        $this->add_responsive_control(
+            'title_text_align',
+            array(
+                'type'      => Controls_Manager::CHOOSE,
+                'label'     => esc_html__('Text Align', 'cubewp-framework'),
+                'options'   => array(
+                    'left'   => array(
+                        'title' => esc_html__('Left', 'cubewp-framework'),
+                        'icon'  => 'eicon-text-align-left',
+                    ),
+                    'center' => array(
+                        'title' => esc_html__('Center', 'cubewp-framework'),
+                        'icon'  => 'eicon-text-align-center',
+                    ),
+                    'right'  => array(
+                        'title' => esc_html__('Right', 'cubewp-framework'),
+                        'icon'  => 'eicon-text-align-right',
+                    ),
+                ),
+                'default'   => 'left',
+                'selectors' => array(
+                    '{{WRAPPER}} .cubewp-posts-title' => 'text-align: {{VALUE}};',
+                ),
+            )
+        );
+        
+        // Title Margin
+        $this->add_responsive_control(
+            'title_margin',
+            array(
+                'type'       => Controls_Manager::DIMENSIONS,
+                'label'      => esc_html__('Margin', 'cubewp-framework'),
+                'size_units' => array('px', 'em', '%'),
+                'selectors'  => array(
+                    '{{WRAPPER}} .cubewp-posts-title' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ),
+            )
+        );
+        
+        $this->end_controls_section();
+	}
+
+	/**
+	 * Load More button and container style controls (visible when Number Of Posts = All and Load More = Yes).
+	 */
+	private function add_load_more_style_controls() {
+		$load_more_condition = array(
+			'number_of_posts' => '-1',
+			'load_more'       => 'yes',
+		);
+
+		// Load More Container
+		$this->start_controls_section(
+			'load_more_container_style',
+			array(
+				'label'     => esc_html__('Load More Container', 'cubewp-framework'),
+				'tab'       => Controls_Manager::TAB_STYLE,
+				'condition' => $load_more_condition,
+			)
+		);
+		$this->add_responsive_control(
+			'load_more_container_align',
+			array(
+				'label'     => esc_html__('Alignment', 'cubewp-framework'),
+				'type'      => Controls_Manager::CHOOSE,
+				'options'   => array(
+					'left'   => array(
+						'title' => esc_html__('Left', 'cubewp-framework'),
+						'icon'  => 'eicon-text-align-left',
+					),
+					'center' => array(
+						'title' => esc_html__('Center', 'cubewp-framework'),
+						'icon'  => 'eicon-text-align-center',
+					),
+					'right'  => array(
+						'title' => esc_html__('Right', 'cubewp-framework'),
+						'icon'  => 'eicon-text-align-right',
+					),
+				),
+				'default'   => 'center',
+				'selectors' => array(
+					'{{WRAPPER}} .cubewp-load-more-conatiner' => 'text-align: {{VALUE}};',
+				),
+			)
+		);
+		$this->add_responsive_control(
+			'load_more_container_padding',
+			array(
+				'label'      => esc_html__('Padding', 'cubewp-framework'),
+				'type'       => Controls_Manager::DIMENSIONS,
+				'size_units' => array('px', 'em', '%'),
+				'selectors'  => array(
+					'{{WRAPPER}} .cubewp-load-more-conatiner' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				),
+			)
+		);
+		$this->add_responsive_control(
+			'load_more_container_margin',
+			array(
+				'label'      => esc_html__('Margin', 'cubewp-framework'),
+				'type'       => Controls_Manager::DIMENSIONS,
+				'size_units' => array('px', 'em', '%'),
+				'selectors'  => array(
+					'{{WRAPPER}} .cubewp-load-more-conatiner' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				),
+			)
+		);
+		$this->add_control(
+			'load_more_container_background',
+			array(
+				'label'     => esc_html__('Background Color', 'cubewp-framework'),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array(
+					'{{WRAPPER}} .cubewp-load-more-conatiner' => 'background-color: {{VALUE}};',
+				),
+			)
+		);
+		$this->end_controls_section();
+
+		// Load More Button
+		$this->start_controls_section(
+			'load_more_button_style',
+			array(
+				'label'     => esc_html__('Load More Button', 'cubewp-framework'),
+				'tab'       => Controls_Manager::TAB_STYLE,
+				'condition' => $load_more_condition,
+			)
+		);
+		$this->add_group_control(
+			\Elementor\Group_Control_Typography::get_type(),
+			array(
+				'name'     => 'load_more_button_typography',
+				'label'    => esc_html__('Typography', 'cubewp-framework'),
+				'selector' => '{{WRAPPER}} .cubewp-load-more-conatiner .cubewp-load-more-button',
+			)
+		);
+		$this->add_control(
+			'load_more_button_color',
+			array(
+				'label'     => esc_html__('Text Color', 'cubewp-framework'),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array(
+					'{{WRAPPER}} .cubewp-load-more-conatiner .cubewp-load-more-button' => 'color: {{VALUE}};',
+				),
+			)
+		);
+		$this->add_control(
+			'load_more_button_bg',
+			array(
+				'label'     => esc_html__('Background Color', 'cubewp-framework'),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array(
+					'{{WRAPPER}} .cubewp-load-more-conatiner .cubewp-load-more-button' => 'background-color: {{VALUE}};',
+				),
+			)
+		);
+		$this->add_responsive_control(
+			'load_more_button_padding',
+			array(
+				'label'      => esc_html__('Padding', 'cubewp-framework'),
+				'type'       => Controls_Manager::DIMENSIONS,
+				'size_units' => array('px', 'em', '%'),
+				'selectors'  => array(
+					'{{WRAPPER}} .cubewp-load-more-conatiner .cubewp-load-more-button' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				),
+			)
+		);
+		$this->add_responsive_control(
+			'load_more_button_border_radius',
+			array(
+				'label'      => esc_html__('Border Radius', 'cubewp-framework'),
+				'type'       => Controls_Manager::DIMENSIONS,
+				'size_units' => array('px', '%'),
+				'selectors'  => array(
+					'{{WRAPPER}} .cubewp-load-more-conatiner .cubewp-load-more-button' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				),
+			)
+		);
+		$this->add_group_control(
+			\Elementor\Group_Control_Border::get_type(),
+			array(
+				'name'     => 'load_more_button_border',
+				'label'    => esc_html__('Border', 'cubewp-framework'),
+				'selector' => '{{WRAPPER}} .cubewp-load-more-conatiner .cubewp-load-more-button',
+			)
+		);
+		$this->add_group_control(
+			Group_Control_Box_Shadow::get_type(),
+			array(
+				'name'     => 'load_more_button_box_shadow',
+				'label'    => esc_html__('Box Shadow', 'cubewp-framework'),
+				'selector' => '{{WRAPPER}} .cubewp-load-more-conatiner .cubewp-load-more-button',
+			)
+		);
+		$this->add_control(
+			'load_more_button_heading_hover',
+			array(
+				'label'     => esc_html__('Hover', 'cubewp-framework'),
+				'type'      => Controls_Manager::HEADING,
+				'separator' => 'before',
+			)
+		);
+		$this->add_control(
+			'load_more_button_color_hover',
+			array(
+				'label'     => esc_html__('Text Color', 'cubewp-framework'),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array(
+					'{{WRAPPER}} .cubewp-load-more-conatiner .cubewp-load-more-button:hover' => 'color: {{VALUE}};',
+				),
+			)
+		);
+		$this->add_control(
+			'load_more_button_bg_hover',
+			array(
+				'label'     => esc_html__('Background Color', 'cubewp-framework'),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array(
+					'{{WRAPPER}} .cubewp-load-more-conatiner .cubewp-load-more-button:hover' => 'background-color: {{VALUE}};',
+				),
+			)
+		);
+		$this->add_control(
+			'load_more_button_border_color_hover',
+			array(
+				'label'     => esc_html__('Border Color', 'cubewp-framework'),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array(
+					'{{WRAPPER}} .cubewp-load-more-conatiner .cubewp-load-more-button:hover' => 'border-color: {{VALUE}};',
+				),
+			)
+		);
 		$this->end_controls_section();
 	}
 }

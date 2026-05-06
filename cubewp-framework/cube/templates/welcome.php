@@ -1,6 +1,107 @@
 <?php
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
 wp_enqueue_style('cubewp-welcome');
+$token   = (string) get_option( 'cubewp_hub_token', '' );
+$expires = (int) get_option( 'cubewp_hub_token_expires', 0 );
+$hub_email = (string) get_option( 'cubewp_hub_email', '' );
+$hub_items = get_option( 'cubewp_hub_items', array() );
+$hub_items = is_array( $hub_items ) ? $hub_items : array();
+$hub_connected = ! empty( $token ) && ( 0 === $expires || $expires > time() );
+
+// Ensure hub UI assets + ajax config are available on Welcome screen too.
+wp_enqueue_style( 'cubewp-admin' );
+wp_enqueue_script( 'cwp_vars' );
+wp_localize_script(
+	'cwp_vars',
+	'cubewpAddonsAjax',
+	array(
+		'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
+		'nonce'    => wp_create_nonce( 'cubewp_addons_action' ),
+		'pageSlug' => 'cubewp-addons',
+	)
+);
+
+require_once ABSPATH . 'wp-admin/includes/plugin.php';
+
+// Build purchased plugins/themes from hub snapshot.
+$hub_plugins = array();
+$hub_themes  = array();
+foreach ( $hub_items as $it ) {
+	if ( ! is_array( $it ) || empty( $it['slug'] ) ) {
+		continue;
+	}
+	$t = ( isset( $it['type'] ) && 'theme' === $it['type'] ) ? 'theme' : 'plugin';
+	if ( 'theme' === $t ) {
+		$hub_themes[] = $it;
+	} else {
+		$hub_plugins[] = $it;
+	}
+}
+
+// Helpers for status.
+$cwp_get_plugin_base = static function( $item ) {
+	$slug = isset( $item['slug'] ) ? sanitize_key( (string) $item['slug'] ) : '';
+	$base = isset( $item['base'] ) ? (string) $item['base'] : '';
+	if ( empty( $base ) && ! empty( $slug ) ) {
+		$saved = get_option( $slug.'_base', '' );
+		$base  = is_string( $saved ) ? $slug . '/' . $saved . '.php' : '';
+	}
+	if ( empty( $base ) && ! empty( $slug ) ) {
+		$base = $slug . '/' . $slug . '.php';
+	}
+	return $base;
+};
+$cwp_plugin_status = static function( $base ) {
+	if ( empty( $base ) ) {
+		return 'missing';
+	}
+	if ( file_exists( WP_PLUGIN_DIR . '/' . $base ) ) {
+		return is_plugin_active( $base ) ? 'active' : 'installed';
+	}
+	return 'missing';
+};
+$cwp_theme_status = static function( $stylesheet ) {
+	$theme = wp_get_theme( $stylesheet );
+	if ( ! $theme->exists() ) {
+		return 'missing';
+	}
+	return ( get_stylesheet() === $stylesheet ) ? 'active' : 'installed';
+};
+
+// Resolve addon image from local welcome-dashboard assets (fallback to default).
+$cwp_resolve_addon_image = static function ( $slug, $title ) {
+	$slug  = sanitize_key( (string) $slug );
+	$title = (string) $title;
+
+	// Allow hub payload to provide an explicit image URL in the future.
+	if ( is_array( $title ) ) {
+		$title = '';
+	}
+
+	$base_dir = trailingslashit( CWP_PLUGIN_PATH ) . 'cube/assets/admin/images/welcome-dashboard/';
+	$base_url = trailingslashit( CWP_PLUGIN_URI ) . 'cube/assets/admin/images/welcome-dashboard/';
+
+	$stem_title = strtolower( preg_replace( '/[^a-z0-9]+/i', '-', $title ) );
+	$stem_title = trim( $stem_title, '-' );
+
+	$candidates = array(
+		'themes-extensions/' . $slug . '.png',
+		'themes-extensions/' . $slug . '.jpg',
+		'themes-extensions/' . $stem_title . '.png',
+		'themes-extensions/' . $stem_title . '.jpg',
+		$slug . '.png',
+		$stem_title . '.png',
+	);
+
+	foreach ( $candidates as $rel ) {
+		if ( file_exists( $base_dir . $rel ) ) {
+			return $base_url . $rel;
+		}
+	}
+
+	// Last resort.
+	return CWP_PLUGIN_URI . 'cube/assets/admin/images/cube-addons.png';
+};
 $current_user = wp_get_current_user();
 if( $current_user->user_firstname ){
 	$display_name = $current_user->user_firstname;
@@ -16,8 +117,20 @@ if( $current_user->user_firstname ){
     color: #6852eb;
 }
 </style>
-<div class="cwp-welcome-title">
-    <h2>Welcome <?php echo esc_html($display_name); ?>! Let’s Get Started.</h2>
+<div class="cwp-welcome-title" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+    <h2 style="margin:0;">Welcome <?php echo esc_html($display_name); ?>! Let’s Get Started.</h2>
+	<div>
+		<?php if ( ! $hub_connected ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin:0;">
+				<?php wp_nonce_field( 'cubewp_hub_connect' ); ?>
+				<input type="hidden" name="action" value="cubewp_hub_connect_start" />
+				<input type="hidden" name="cwp_hub_back" value="cube_wp_dashboard" />
+				<button type="submit" class="button button-primary"><?php esc_html_e( 'Connect CubeWP', 'cubewp-framework' ); ?></button>
+			</form>
+		<?php else : ?>
+			<span class="button disabled" style="pointer-events:none;"><?php echo esc_html__( 'Connected', 'cubewp-framework' ); ?></span>
+		<?php endif; ?>
+	</div>
 </div>
 <div class="cubwp-welcome">
     <div class="cwp-dashboard-content-panel" id="Dashboard">
@@ -422,18 +535,41 @@ if( $current_user->user_firstname ){
         </div>
         <div class="cwp-dashboard-content-sidebar">
             <div class="cwp-dashboard-sidebar">
-                <div class="cwp-welcome-box">
-                    <div class="cwp-welcome-box-content">
-                        <h2>CubeWP Framework</h2>
-                        <p>CubeWP is an end-to-end dynamic content framework for WordPress to help you shrink time and cut cost of development up to 90%.</p>
-                        <div class="cwp-learmore-addons">
-                            <a target="_blank" href="https://cubewp.com/features/">Learn More</a>
-                        </div>
-                    </div>
-                    <div class="cwp-welcome-box-logo">
-                        <img src="<?php echo esc_url( CWP_PLUGIN_URI . 'cube/assets/admin/images/cube-addons.png' ) ; ?>" alt="" />
-                    </div>
-                </div>
+				<?php if ( ! $hub_connected ) : ?>
+					<div class="cwp-welcome-box">
+						<div class="cwp-welcome-box-content">
+							<h2>CubeWP Framework</h2>
+							<p>CubeWP is an end-to-end dynamic content framework for WordPress to help you shrink time and cut cost of development up to 90%.</p>
+							<div class="cwp-learmore-addons">
+								<a target="_blank" href="https://cubewp.com/features/">Learn More</a>
+							</div>
+						</div>
+						<div class="cwp-welcome-box-logo">
+							<img src="<?php echo esc_url( CWP_PLUGIN_URI . 'cube/assets/admin/images/cube-addons.png' ) ; ?>" alt="" />
+						</div>
+					</div>
+				<?php else : ?>
+					<div class="cubewp-account-panel">
+						<h2><span class="dashicons dashicons-admin-network"></span> <?php esc_html_e( 'CubeWP.COM', 'cubewp-framework' ); ?></h2>
+						<div class="account-details">
+							<div class="cubewp-hub-account-status">● <?php esc_html_e( 'Connected', 'cubewp-framework' ); ?></div>
+							<div class="cubewp-hub-account-email"><?php echo esc_html( $hub_email ); ?></div>
+						</div>
+						<div class="cubewp-hub-account-actions">
+							<form class="cwp-ajax-form" data-op="hub_refresh" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="flex:1;">
+								<?php wp_nonce_field( 'cubewp_hub_refresh' ); ?>
+								<input type="hidden" name="action" value="cubewp_hub_refresh" />
+								<button type="submit" class="button" style="width:100%;"><?php esc_html_e( 'Sync', 'cubewp-framework' ); ?></button>
+							</form>
+							<form class="cwp-ajax-form" data-op="hub_disconnect" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="flex:1;">
+								<?php wp_nonce_field( 'cubewp_hub_disconnect' ); ?>
+								<input type="hidden" name="action" value="cubewp_hub_disconnect" />
+								<button type="submit" class="button" style="width:100%;" onclick="return confirm('<?php echo esc_js( __( 'Disconnect from Hub?', 'cubewp-framework' ) ); ?>')"><?php esc_html_e( 'Sign Out', 'cubewp-framework' ); ?></button>
+							</form>
+						</div>
+					</div>
+				<?php endif; 
+                if ( ! $hub_connected ) : ?>
                 <div class="cwp-welcome-box cwp-leads-template-addons">
                     <div class="cwp-leads-template-addons-titles">
                         <h3>Download Free Extensions</h3>
@@ -446,172 +582,137 @@ if( $current_user->user_firstname ){
                         <a href="https://cubewp.com/downloads/cubewp-addon-bulk-import/" class="cwp-lead-content-imges four" target="_blank"><img src="<?php echo esc_url( CWP_PLUGIN_URI . 'cube/assets/admin/images/welcome-dashboard/themes-extensions/Bulk-Import.png' ); ?>" alt="image" />Bulk Import</a>
                     </div>
                 </div>
-                <div class="cwp-welcome-box cwp-leads-template-addons">
-                    <div class="cwp-leads-template-addons-titles">
-                        <h3>Premium Extensions <span>Included with All Premium Plans - Starting $19</span></h3>
-                        <a href="https://cubewp.com/extensions/" target="_blank">See All</a>
-                    </div>
-                    <div class="cwp-leads-template-addons-cotent">
-                        <a href="https://cubewp.com/downloads/cubewp-addon-frontend-pro/" class="cwp-lead-content-imges three" target="_blank"><img src="<?php echo esc_url(CWP_PLUGIN_URI . 'cube/assets/admin/images/welcome-dashboard/themes-extensions/Frontend.png'); ?>" alt="image" />Frontend Pro</a>
-                        <a href="https://cubewp.com/downloads/cubewp-addon-payments/" class="cwp-lead-content-imges three" target="_blank"><img src="<?php echo esc_url(CWP_PLUGIN_URI . 'cube/assets/admin/images/welcome-dashboard/themes-extensions/Payments.png'); ?>" alt="image" />Payments</a>
-                        <a href="https://cubewp.com/downloads/cubewp-addon-inbox/" class="cwp-lead-content-imges three" target="_blank"><img src="<?php echo esc_url(CWP_PLUGIN_URI . 'cube/assets/admin/images/welcome-dashboard/themes-extensions/Inbox.png'); ?>" alt="image" />Inbox</a>
-                        <a href="https://cubewp.com/downloads/cubewp-addon-reviews/" class="cwp-lead-content-imges three" target="_blank"><img src="<?php echo esc_url(CWP_PLUGIN_URI . 'cube/assets/admin/images/welcome-dashboard/themes-extensions/Reviews.png'); ?>" alt="image" />Reviews</a>
-                        <a href="https://cubewp.com/downloads/cubewp-addon-booster/" class="cwp-lead-content-imges three" target="_blank"><img src="<?php echo esc_url(CWP_PLUGIN_URI . 'cube/assets/admin/images/welcome-dashboard/themes-extensions/Booster.png'); ?>" alt="image" />Booster</a>
-                        <a href="https://cubewp.com/downloads/cubewp-addon-booking/" class="cwp-lead-content-imges three" target="_blank"><img src="<?php echo esc_url(CWP_PLUGIN_URI . 'cube/assets/admin/images/welcome-dashboard/themes-extensions/Booking.png'); ?>" alt="image" />Booking</a>
-                    </div>
-                </div>
-                <div class="cwp-welcome-box cwp-leads-template-addons">
-                    <div class="cwp-leads-template-addons-titles">
-                        <h3>Premium Themes <span>Included with All Premium Plans - Starting $19</span></h3>
-                        <a href="https://cubewp.com/themes/" target="_blank">See All</a>
-                    </div>
-                    <div class="cwp-leads-template-addons-cotent">
-                        <a href="https://cubewp.com/downloads/dubified/" class="cwp-lead-content-imges two" target="_blank"><img src="<?php echo esc_url(CWP_PLUGIN_URI . 'cube/assets/admin/images/welcome-dashboard/themes-extensions/dubi.png'); ?>" alt="image" />Classified Ads Theme</a>
-                        <a href="https://cubewp.com/downloads/streetwise/" class="cwp-lead-content-imges two" target="_blank"><img src="<?php echo esc_url(CWP_PLUGIN_URI . 'cube/assets/admin/images/welcome-dashboard/themes-extensions/street.png'); ?>" alt="image" />Real-Estate Theme</a>
-                        <a href="https://cubewp.com/downloads/yellowbooks/" class="cwp-lead-content-imges two" target="_blank"><img src="<?php echo esc_url(CWP_PLUGIN_URI . 'cube/assets/admin/images/welcome-dashboard/themes-extensions/yellow.png'); ?>" alt="image" />Directory Theme</a>
-                        <a href="https://themeforest.net/item/classifiedpro-recommerce-classified-wordpress-theme/44528010" class="cwp-lead-content-imges two" target="_blank"><img src="<?php echo esc_url(CWP_PLUGIN_URI . 'cube/assets/admin/images/welcome-dashboard/themes-extensions/classi.png'); ?>" alt="image" />Classified Ads Theme</a>
-						<a href="https://cubewp.com/downloads/staybnb/" class="cwp-lead-content-imges two" target="_blank"><img src="<?php echo esc_url(CWP_PLUGIN_URI . 'cube/assets/admin/images/welcome-dashboard/template-library/StayBnb_Preview.png'); ?>" alt="image" style=" background-color: #FFFAFA;border-radius: 5px;" />Staybnb Theme</a>
+				<?php 
+                endif;
+                if ( $hub_connected ) : ?>
+					<div class="cwp-welcome-box cwp-leads-template-addons">
+						<div class="cwp-leads-template-addons-titles">
+							<h3><?php esc_html_e( 'Premium Extensions', 'cubewp-framework' ); ?> <span><?php esc_html_e( 'Your purchased items', 'cubewp-framework' ); ?></span></h3>
+						</div>
+						<div class="cwp-leads-template-addons-cotent">
+							<?php foreach ( $hub_plugins as $it ) : ?>
+								<?php
+								$slug = sanitize_key( (string) $it['slug'] );
+								$title = ! empty( $it['item_name'] ) ? (string) $it['item_name'] : $slug;
+								$base  = $cwp_get_plugin_base( $it );
+								$status = $cwp_plugin_status( $base );
+								$license_key = ! empty( $it['license_key'] ) ? (string) $it['license_key'] : '';
+								$saved_license_key = get_option( $slug.'_key', '' );
+                                $license_id  = ! empty( $it['license_id'] ) ? (int) $it['license_id'] : 0;
+								$img = $cwp_resolve_addon_image( $slug, $title );
+								?>
+								<div class="cwp-lead-content-imges two cwp-lead-tile cubewp-card" data-addon-slug="<?php echo esc_attr( $slug ); ?>" data-addon-type="plugin" data-license-id="<?php echo esc_attr( (string) $license_id ); ?>">
+									<a href="javascript:void(0)"><img src="<?php echo esc_url( $img ); ?>" alt="image" /><?php echo esc_html( $title ); ?></a>
+									<div class="cwp-lead-actions cwp-card-actions">
+										<?php if ( 'missing' === $status ) : ?>
+											<form class="cwp-ajax-form" data-op="plugin_install" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+												<?php wp_nonce_field( 'cubewp_addons_action' ); ?>
+												<input type="hidden" name="action" value="cubewp_addons_install" />
+												<input type="hidden" name="addon_slug" value="<?php echo esc_attr( $slug ); ?>" />
+												<input type="hidden" name="addon_base" value="<?php echo esc_attr( $base ); ?>" />
+												<button class="button button-primary button-small" type="submit"><?php esc_html_e( 'Install', 'cubewp-framework' ); ?></button>
+											</form>
+										<?php elseif ( 'installed' === $status ) : ?>
+											<form class="cwp-ajax-form" data-op="plugin_activate" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+												<?php wp_nonce_field( 'cubewp_addons_action' ); ?>
+												<input type="hidden" name="action" value="cubewp_addons_activate" />
+												<input type="hidden" name="addon_slug" value="<?php echo esc_attr( $slug ); ?>" />
+												<input type="hidden" name="addon_base" value="<?php echo esc_attr( $base ); ?>" />
+												<button class="button button-primary button-small" type="submit"><?php esc_html_e( 'Activate', 'cubewp-framework' ); ?></button>
+											</form>
+										<?php else : ?>
+											<form class="cwp-ajax-form" data-op="plugin_deactivate" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+												<?php wp_nonce_field( 'cubewp_addons_action' ); ?>
+												<input type="hidden" name="action" value="cubewp_addons_deactivate" />
+												<input type="hidden" name="addon_base" value="<?php echo esc_attr( $base ); ?>" />
+												<button class="button button-small" type="submit"><?php esc_html_e( 'Deactivate', 'cubewp-framework' ); ?></button>
+											</form>
+										<?php endif; ?>
+
+										<?php if ( ! empty( $license_key ) && $license_id > 0 && $saved_license_key === $license_key && 'missing' !== $status ) : ?>
+											<button type="button" class="button button-small" data-cwp-manage="<?php echo esc_attr( $slug ); ?>"><?php esc_html_e( 'Manage', 'cubewp-framework' ); ?></button>
+										<?php endif; ?>
+									</div>
+								</div>
+							<?php endforeach; ?>
+						</div>
 					</div>
-                </div>
+                    <?php
+                    if ( $hub_connected && $hub_themes && count($hub_themes) > 0 ) :                     
+                    ?>
+					<div class="cwp-welcome-box cwp-leads-template-addons">
+						<div class="cwp-leads-template-addons-titles">
+							<h3><?php esc_html_e( 'Premium Themes', 'cubewp-framework' ); ?> <span><?php esc_html_e( 'Your purchased themes', 'cubewp-framework' ); ?></span></h3>
+						</div>
+						<div class="cwp-leads-template-addons-cotent">
+							<?php foreach ( $hub_themes as $it ) : ?>
+								<?php
+								$slug = sanitize_key( (string) $it['slug'] );
+								$title = ! empty( $it['item_name'] ) ? (string) $it['item_name'] : $slug;
+								$sheet = ! empty( $it['stylesheet'] ) ? (string) $it['stylesheet'] : $slug;
+								$status = $cwp_theme_status( $sheet );
+								$license_key = ! empty( $it['license_key'] ) ? (string) $it['license_key'] : '';
+								$license_id  = ! empty( $it['license_id'] ) ? (int) $it['license_id'] : 0;
+								$img = $cwp_resolve_addon_image( $slug, $title );
+								?>
+								<div class="cwp-lead-content-imges two cwp-lead-tile cubewp-card" data-addon-slug="<?php echo esc_attr( $slug ); ?>" data-addon-type="theme" data-license-id="<?php echo esc_attr( (string) $license_id ); ?>">
+									<a href="javascript:void(0)"><img src="<?php echo esc_url( $img ); ?>" alt="image" /><?php echo esc_html( $title ); ?></a>
+									<div class="cwp-lead-actions cwp-card-actions">
+										<?php if ( 'missing' === $status ) : ?>
+											<form class="cwp-ajax-form" data-op="theme_install" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+												<?php wp_nonce_field( 'cubewp_addons_action' ); ?>
+												<input type="hidden" name="action" value="cubewp_addons_install_theme" />
+												<input type="hidden" name="theme_slug" value="<?php echo esc_attr( $slug ); ?>" />
+												<button class="button button-primary button-small" type="submit"><?php esc_html_e( 'Install', 'cubewp-framework' ); ?></button>
+											</form>
+										<?php elseif ( 'installed' === $status ) : ?>
+											<form class="cwp-ajax-form" data-op="theme_activate" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+												<?php wp_nonce_field( 'cubewp_addons_action' ); ?>
+												<input type="hidden" name="action" value="cubewp_addons_activate_theme" />
+												<input type="hidden" name="theme_stylesheet" value="<?php echo esc_attr( $sheet ); ?>" />
+												<button class="button button-primary button-small" type="submit"><?php esc_html_e( 'Activate', 'cubewp-framework' ); ?></button>
+											</form>
+										<?php endif; ?>
+
+										<?php if ( ! empty( $license_key ) && $license_id > 0 && 'missing' !== $status ) : ?>
+											<button type="button" class="button button-small" data-cwp-manage="<?php echo esc_attr( $slug ); ?>"><?php esc_html_e( 'Manage', 'cubewp-framework' ); ?></button>
+										<?php endif; ?>
+									</div>
+								</div>
+							<?php endforeach; ?>
+						</div>
+					</div>
+                    <?php endif; ?>
+				<?php else : ?>
+					<div class="cwp-welcome-box cwp-leads-template-addons">
+						<div class="cwp-leads-template-addons-titles">
+							<h3>Premium Extensions <span>Included with All Premium Plans - Starting $19</span></h3>
+							<a href="https://cubewp.com/extensions/" target="_blank">See All</a>
+						</div>
+						<div class="cwp-leads-template-addons-cotent">
+							<a href="https://cubewp.com/downloads/cubewp-addon-frontend-pro/" class="cwp-lead-content-imges three" target="_blank"><img src="<?php echo esc_url(CWP_PLUGIN_URI . 'cube/assets/admin/images/welcome-dashboard/themes-extensions/Frontend.png'); ?>" alt="image" />Frontend Pro</a>
+							<a href="https://cubewp.com/downloads/cubewp-addon-payments/" class="cwp-lead-content-imges three" target="_blank"><img src="<?php echo esc_url(CWP_PLUGIN_URI . 'cube/assets/admin/images/welcome-dashboard/themes-extensions/Payments.png'); ?>" alt="image" />Payments</a>
+							<a href="https://cubewp.com/downloads/cubewp-addon-inbox/" class="cwp-lead-content-imges three" target="_blank"><img src="<?php echo esc_url(CWP_PLUGIN_URI . 'cube/assets/admin/images/welcome-dashboard/themes-extensions/Inbox.png'); ?>" alt="image" />Inbox</a>
+							<a href="https://cubewp.com/downloads/cubewp-addon-reviews/" class="cwp-lead-content-imges three" target="_blank"><img src="<?php echo esc_url(CWP_PLUGIN_URI . 'cube/assets/admin/images/welcome-dashboard/themes-extensions/Reviews.png'); ?>" alt="image" />Reviews</a>
+							<a href="https://cubewp.com/downloads/cubewp-addon-booster/" class="cwp-lead-content-imges three" target="_blank"><img src="<?php echo esc_url(CWP_PLUGIN_URI . 'cube/assets/admin/images/welcome-dashboard/themes-extensions/Booster.png'); ?>" alt="image" />Booster</a>
+							<a href="https://cubewp.com/downloads/cubewp-addon-booking/" class="cwp-lead-content-imges three" target="_blank"><img src="<?php echo esc_url(CWP_PLUGIN_URI . 'cube/assets/admin/images/welcome-dashboard/themes-extensions/Booking.png'); ?>" alt="image" />Booking</a>
+						</div>
+					</div>
+					<div class="cwp-welcome-box cwp-leads-template-addons">
+						<div class="cwp-leads-template-addons-titles">
+							<h3>Premium Themes <span>Included with All Premium Plans - Starting $19</span></h3>
+							<a href="https://cubewp.com/themes/" target="_blank">See All</a>
+						</div>
+						<div class="cwp-leads-template-addons-cotent">
+							<a href="https://cubewp.com/downloads/dubified/" class="cwp-lead-content-imges two" target="_blank"><img src="<?php echo esc_url(CWP_PLUGIN_URI . 'cube/assets/admin/images/welcome-dashboard/themes-extensions/dubi.png'); ?>" alt="image" />Classified Ads Theme</a>
+							<a href="https://cubewp.com/downloads/streetwise/" class="cwp-lead-content-imges two" target="_blank"><img src="<?php echo esc_url(CWP_PLUGIN_URI . 'cube/assets/admin/images/welcome-dashboard/themes-extensions/street.png'); ?>" alt="image" />Real-Estate Theme</a>
+							<a href="https://cubewp.com/downloads/yellowbooks/" class="cwp-lead-content-imges two" target="_blank"><img src="<?php echo esc_url(CWP_PLUGIN_URI . 'cube/assets/admin/images/welcome-dashboard/themes-extensions/yellow.png'); ?>" alt="image" />Directory Theme</a>
+							<a href="https://themeforest.net/item/classifiedpro-recommerce-classified-wordpress-theme/44528010" class="cwp-lead-content-imges two" target="_blank"><img src="<?php echo esc_url(CWP_PLUGIN_URI . 'cube/assets/admin/images/welcome-dashboard/themes-extensions/classi.png'); ?>" alt="image" />Classified Ads Theme</a>
+							<a href="https://cubewp.com/downloads/staybnb/" class="cwp-lead-content-imges two" target="_blank"><img src="<?php echo esc_url(CWP_PLUGIN_URI . 'cube/assets/admin/images/welcome-dashboard/template-library/StayBnb_Preview.png'); ?>" alt="image" style=" background-color: #FFFAFA;border-radius: 5px;" />Staybnb Theme</a>
+						</div>
+					</div>
+				<?php endif; ?>
                 <div class="cwp-welcome-row">
-                    <div class="cwp-welcome-col-md-12 margin-bottom-10 ">
-                        <div class="cwp-welcome-faqs">
-                            <div class="cwp-faqs-top cwp-welcome-row">
-                                <div class="cwp-welcome-header-info">
-                                    <span class="dashicons dashicons-shortcode"></span>
-                                    <h3 class="cwp-welcome-section-heading">All Shortcodes Cheatsheet</h3>
-                                </div>
-                            </div>
-                            <div class="cwp-post-grid-contentarea">
-                                <div class="cwp-shordcodes border-bottom-welcome">
-                                    <div class="cwp-set-title-copyarea">
-                                        <h3>Search Form</h3>
-                                        <div class="shoftcode-area">
-                                            <div class="cwpform-shortcode">
-                                                <div class="inner copy-to-clipboard"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                                        <path d="M13 0H6a2 2 0 0 0-2 2 2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2 2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm0 13V4a2 2 0 0 0-2-2H5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1zM3 4a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4z"></path>
-                                                    </svg>
-                                                    <p>copy shortcode</p>[cwpSearch type="YOUR POST TYPE"]
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="cwp-shordcodes border-bottom-welcome">
-                                    <div class="cwp-set-title-copyarea">
-                                        <h3>Search Filter</h3>
-                                        <div class="shoftcode-area">
-                                            <div class="cwpform-shortcode">
-                                                <div class="inner copy-to-clipboard"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                                        <path d="M13 0H6a2 2 0 0 0-2 2 2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2 2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm0 13V4a2 2 0 0 0-2-2H5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1zM3 4a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4z"></path>
-                                                    </svg>
-                                                    <p>copy shortcode</p>[cwpFilters]
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="cwp-shordcodes border-bottom-welcome">
-                                    <div class="cwp-set-title-copyarea">
-                                        <h3>Saved Posts Page</h3>
-                                        <div class="shoftcode-area">
-                                            <div class="cwpform-shortcode">
-                                                <div class="inner copy-to-clipboard"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                                        <path d="M13 0H6a2 2 0 0 0-2 2 2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2 2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm0 13V4a2 2 0 0 0-2-2H5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1zM3 4a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4z"></path>
-                                                    </svg>
-                                                    <p>copy shortcode</p>[cwpSaved]
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="cwp-shordcodes border-bottom-welcome">
-                                    <div class="cwp-set-title-copyarea">
-                                        <h3>User Signup Page <?php if( !class_exists('CubeWp_Frontend_Load') ){ ?>
-											<a href="https://cubewp.com/pricing/" target="_blank"><span class="dashicons dashicons-lock"></span></a>
-											<?php } ?>
-										</h3>
-                                        <div class="shoftcode-area">
-                                            <div class="cwpform-shortcode">
-                                                <div class="inner copy-to-clipboard"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                                        <path d="M13 0H6a2 2 0 0 0-2 2 2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2 2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm0 13V4a2 2 0 0 0-2-2H5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1zM3 4a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4z"></path>
-                                                    </svg>
-                                                    <p>copy shortcode</p>[cwpRegisterForm role=YOUR USER ROLE”]
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="cwp-shordcodes border-bottom-welcome">
-                                    <div class="cwp-set-title-copyarea">
-                                        <h3>Post Type Form Page <?php if( !class_exists('CubeWp_Frontend_Load') ){ ?>
-											<a href="https://cubewp.com/pricing/" target="_blank"><span class="dashicons dashicons-lock"></span></a>
-											<?php } ?>
-										</h3>
-                                        <div class="shoftcode-area">
-                                            <div class="cwpform-shortcode">
-                                                <div class="inner copy-to-clipboard">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                                        <path d="M13 0H6a2 2 0 0 0-2 2 2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2 2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm0 13V4a2 2 0 0 0-2-2H5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1zM3 4a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4z"></path>
-                                                    </svg>
-                                                    <p>copy shortcode</p>[cwpForm type="YOUR POST TYPE"]
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="cwp-shordcodes border-bottom-welcome">
-                                    <div class="cwp-set-title-copyarea">
-                                        <h3>User Dashboard Page <?php if( !class_exists('CubeWp_Frontend_Load') ){ ?>
-												<a href="https://cubewp.com/pricing/" target="_blank"><span class="dashicons dashicons-lock"></span></a>
-											<?php } ?>
-										</h3>
-                                        <div class="shoftcode-area">
-                                            <div class="cwpform-shortcode">
-                                                <div class="inner copy-to-clipboard"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                                        <path d="M13 0H6a2 2 0 0 0-2 2 2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2 2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm0 13V4a2 2 0 0 0-2-2H5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1zM3 4a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4z"></path>
-                                                    </svg>
-                                                    <p>copy shortcode</p>[cwp_dashboard]
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="cwp-shordcodes border-bottom-welcome">
-                                    <div class="cwp-set-title-copyarea">
-                                        <h3>Pricing Plan Page <?php if( !class_exists('CubeWp_Frontend_Load') ){ ?>
-											<a href="https://cubewp.com/pricing/" target="_blank"><span class="dashicons dashicons-lock"></span></a>
-											<?php } ?></h3>
-                                        <div class="shoftcode-area">
-                                            <div class="cwpform-shortcode">
-                                                <div class="inner copy-to-clipboard"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                                        <path d="M13 0H6a2 2 0 0 0-2 2 2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2 2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm0 13V4a2 2 0 0 0-2-2H5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1zM3 4a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4z"></path>
-                                                    </svg>
-                                                    <p>Copy Shortcode</p>[cwpPricingPlans]
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="cwp-shordcodes">
-                                    <div class="cwp-set-title-copyarea">
-                                        <h3>Reset Password Form <?php if( !class_exists('CubeWp_Frontend_Load') ){ ?>
-											<a href="https://cubewp.com/pricing/" target="_blank"><span class="dashicons dashicons-lock"></span></a>
-											<?php } ?></h3>
-                                        <div class="shoftcode-area">
-                                            <div class="cwpform-shortcode">
-                                                <div class="inner copy-to-clipboard"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                                        <path d="M13 0H6a2 2 0 0 0-2 2 2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2 2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm0 13V4a2 2 0 0 0-2-2H5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1zM3 4a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4z"></path>
-                                                    </svg>
-                                                    <p>Copy Shortcode</p>[cwpResetPasswordForm]
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                     <div class="cwp-welcome-col-md-12 margin-bottom-10">
                         <div class="cwp-welcome-faqs">
                             <div class="cwp-faqs-top cwp-welcome-row">
@@ -648,4 +749,43 @@ if( $current_user->user_firstname ){
         </div>
     </div>
 
+</div>
+
+<?php
+// Reuse the same Manage modal as the Addons page so "Manage" works on Welcome too.
+?>
+<div class="cwp-modal" id="cwp-addon-manage-modal" aria-hidden="true">
+	<div class="cwp-modal__backdrop" data-cwp-modal-close></div>
+	<div class="cwp-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="cwp-modal-title">
+		<div class="cwp-modal__header">
+			<h2 id="cwp-modal-title"><?php esc_html_e( 'Manage License', 'cubewp-framework' ); ?></h2>
+			<button type="button" class="cwp-modal__close" data-cwp-modal-close aria-label="<?php esc_attr_e( 'Close', 'cubewp-framework' ); ?>">×</button>
+		</div>
+		<div class="cwp-modal__body">
+			<div class="cwp-modal__loading">
+				<span class="spinner is-active" style="float:none; margin:0;"></span>
+				<span class="cwp-modal__loading-text"><?php esc_html_e( 'Loading…', 'cubewp-framework' ); ?></span>
+			</div>
+			<div class="cwp-modal__content" style="display:none;">
+				<p class="edd-sl-manage-license-details">
+					<span class="edd-sl-manage-license-key"><?php esc_html_e( 'License', 'edd_sl' ); ?>: <code data-cwp-license-key></code></span>
+					<span class="edd-sl-manage-license-product"><?php esc_html_e( 'Product', 'edd_sl' ); ?>: <span data-cwp-license-product></span></span>
+				</p>
+				<p class="description" data-cwp-license-summary style="margin:6px 0 14px;"></p>
+
+				<table class="widefat striped" id="cwp_license_sites">
+					<thead>
+						<tr>
+							<th><?php esc_html_e( 'Activation ID', 'edd_sl' ); ?></th>
+							<th><?php esc_html_e( 'Actions', 'edd_sl' ); ?></th>
+						</tr>
+					</thead>
+					<tbody data-cwp-sites-body></tbody>
+				</table>
+				<p class="description" data-cwp-modal-note></p>
+			</div>
+			<div class="cwp-modal__error notice notice-error" style="display:none;"><p data-cwp-modal-error></p></div>
+		</div>
+	</div>
+</div>
 </div>

@@ -104,7 +104,7 @@ class CubeWp_Frontend_File_Field extends CubeWp_Frontend {
 						'class'  => 'cwp-image-preview',
 						'value' => $args['value'],
 					);
-					echo wp_kses_post( cwp_render_hidden_input( $input_attrs ) );
+					echo cwp_render_hidden_input( $input_attrs ); //
 					?>
 				</div>
 			<?php } else { ?>

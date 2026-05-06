@@ -5,7 +5,7 @@ Tags: custom fields, custom post types, custom taxonomies, acf, metabox
 Requires at least: 5.0
 Requires PHP: 7.4
 Tested up to: 6.9
-Stable tag: 1.1.29
+Stable tag: 1.1.30
 License: GPLv2 or later
 
 CubeWP is an end-to-end dynamic content framework for WordPress to help you shrink time and cut cost of development up to 90%.
@@ -375,6 +375,33 @@ To getting started with the plugin, please go to [Documentation](https://support
 
 
 == Changelog ==
+
+= 1.1.30 2026-05-06
+
+- ADDED: CubeWP.com integration in the dashboard with connect/disconnect, license management, and one-click install/activate for purchased extensions and themes.
+- ADDED: Mobile view template support in CubeWP Theme Builder for header, footer, single, and archive layouts.
+- ADDED: No Results template type in CubeWP Theme Builder with post type selection for custom no-results display.
+- FIXED: Category and tag pages created via CubeWP Theme Builder now load correctly instead of default index pages.
+- ADDED: Author filter option in CubeWP Posts Widget to display posts by author.
+- ADDED: Styling options for pagination in CubeWP Archive Posts Widget.
+- ADDED: Responsiveness of CubeWP Archive Map Widget and also options for map to show in Popup.
+- ADDED: User data support for CubeWP Custom Fields dynamic tags with a Data Source selector, allowing Elementor tags to access CubeWP user custom fields.
+- ADDED: Taxonomy term relationship field in CubeWP Taxonomy Custom Fields.
+- ADDED: Term ID filtering support to CubeWP Taxonomy Field, allowing restriction of taxonomy options by specific term IDs.
+- ADDED: Restrict to single business hour slot per day with auto-increment to next weekday after adding.
+- ADDED: Mobile-only slider, advanced grid & styling options, and option to get associated terms for current post in CubeWP Taxonomy widget.
+- ADDED: Option to restrict Google Address custom field to city-only results on both frontend and admin.
+- ADDED: Drop pin option in Google Address field, allowing users to set location by placing a pin.
+- ADDED: Nearme Button against google address field in CubeWP Search Filter Builder Widget.
+- ADDED: Advanced filter options and styling controls in CubeWP Search Filter Builder.
+- ADDED: Icon option for terms in keyword Suggestion.
+- FIXED: List/Grid view issue on page load when no switcher is present on the page.
+- FIXED: Conditional field display issue on admin and frontend for CubeWP custom fields.
+- ADDED: Term Card Cache option in cubewp settings.
+- IMPROVED: Enhanced CubeWP Elementor widgets with advanced styling controls.
+- IMPROVED: Enhanced CubeWP dynamic tags with additional controls and refinements for better flexibility and usability.
+- FIXED: CubeWP custom JS from settings now properly enqueues and executes on frontend.
+- ADDED: UI Improvements.
 
 = 1.1.29 2026-01-08
 

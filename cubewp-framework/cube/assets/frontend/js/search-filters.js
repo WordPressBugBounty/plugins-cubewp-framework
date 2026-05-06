@@ -198,7 +198,8 @@ jQuery(document).on("change", '#cwp-sorting-filter', function () {
 });
 
 function cwp_search_filters_ajax_content(page_num = '') {
-
+    // Search Results loading Trigger
+    jQuery(document.body).trigger('cubewp_search_results_loading');
     // Loading SKeleton 
     if (jQuery('.cwp-archive-container .cwp-grids-container').length > 0) {
         jQuery('.cwp-archive-container .cwp-grids-container div').html(
@@ -217,24 +218,19 @@ function cwp_search_filters_ajax_content(page_num = '') {
                 '<div class="cwp-processing-post-content"><p></p><p></p><p></p></div>' +
                 '</div></div>';
         }
+        jQuery('.cwp-archive-container .cwp-search-result-output').addClass('cwp-processing-grids');
         jQuery('.cwp-archive-container .cwp-search-result-output').html(
             '<div class="cwp-grids-container cwp-row">' + processingGrid + '</div>'
         );
     }
-
     // Getting filter form
     var FilterForm = jQuery('.cwp-search-filters'),
         state = jQuery('.cwp-search-filters-fields').find('input[name="page"]').val(),
         is_tax = FilterForm.find('.is_tax').val();
-
     page_num = page_num || 1;
-
     var action = '&action=cwp_search_filters_ajax_content';
-
     FilterForm.find('input[name="page_num"]').val(page_num);
-
     var FilterFields = FilterForm.serialize();
-
     if (jQuery('#cwp-order-filter').length > 0) {
         FilterFields += '&order=' + jQuery('#cwp-order-filter').val();
     }
@@ -242,39 +238,43 @@ function cwp_search_filters_ajax_content(page_num = '') {
         FilterFields += '&orderby=' + jQuery('#cwp-sorting-filter').val();
     }
     var data_vals = FilterFields;
-
     data_vals = urlCombine(data_vals, window.location.search);
     data_vals = stripUrlParams(data_vals);
     data_vals = data_vals.replace(/(?!s=)[^&]+=\.?(?:&|$)/g, function (match) {
         return match.endsWith('&') ? '' : '&';
     }).replace(/&$/, ''); // remove all empty variables except s= and handle trailing '&'
-
     data_vals = data_vals.replace('undefined', ''); // remove extra and empty variables
-
     if (state !== 'page' && (is_tax == '' || is_tax == undefined)) {
         // var current_url = location.protocol + "//" + location.host + location.pathname + "?" + data_vals;
         // window.history.pushState(null, null, decodeURIComponent(current_url));
         var urlParams = new URLSearchParams(data_vals);
         var promotionalKeys = [];
-
         for (var key of urlParams.keys()) {
             if (key.startsWith('cubewp_promotional_card_')) {
                 promotionalKeys.push(key);
             }
         }
-
         promotionalKeys.forEach(function (key) {
             urlParams.delete(key);
         });
-
-        var cleanParams = urlParams.toString();
+        var sanitizedParams = new URLSearchParams();
+        urlParams.forEach(function (paramValue, paramKey) {
+            if (!paramKey) return;
+            if (typeof paramValue === 'undefined' || paramValue === null) return;
+            var val = String(paramValue).trim();
+            // Keep non-empty values only (except search `s`, which may be intentionally empty).
+            if (paramKey !== 's' && (val === '' || val === 'undefined')) return;
+            sanitizedParams.set(paramKey, val);
+        });
+        var cleanParams = sanitizedParams.toString().replace(/^&+|&+$/g, '');
+        if (cleanParams === '=') cleanParams = '';
         var current_url = location.protocol + "//" + location.host + location.pathname + (cleanParams ? "?" + cleanParams : "");
-        window.history.pushState(null, null, decodeURIComponent(current_url));
+        if (window.location.href !== current_url) {
+            window.history.pushState(null, null, current_url);
+        }
     }
-
     // Remove _ST_ from parameter names from query Strings like if there is a taxonomy property_type it will come in query string _ST_property_type
     data_vals = stripPrefixFromParams(data_vals, '_ST_');
-
     jQuery.ajax({
         url: cwp_search_filters_params.ajax_url,
         type: 'POST',
@@ -288,13 +288,12 @@ function cwp_search_filters_ajax_content(page_num = '') {
             }
             jQuery('.cwp-search-result-output').html(response.grid_view_html);
             jQuery('.cwp-total-results').html(response.post_data_details);
-
             // Listing update on Map
             if (typeof CWP_Cluster_Map === 'function') {
                 CWP_Cluster_Map(response.map_cordinates);
             }
-
             jQuery('.cwp-archive-container').removeClass('cwp-active-ajax');
+            jQuery('.cwp-archive-container .cwp-search-result-output').removeClass('cwp-processing-grids');
             jQuery(document.body).trigger('cubewp_search_results_loaded');
         }
     });

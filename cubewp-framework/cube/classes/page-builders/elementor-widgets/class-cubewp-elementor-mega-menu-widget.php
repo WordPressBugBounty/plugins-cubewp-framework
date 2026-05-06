@@ -69,47 +69,47 @@ class CubeWp_Elementor_Mega_Menu_Widget extends Widget_Base
 		return $menu_options;
 	}
 	/**
-     * Method cwp_elementor_builder_options_slug
-     *
-     * Returns options array keyed by slug instead of post ID
-     * specifically for Elementor controls that should store slugs.
-     *
-     * @param string $template_type
-     * @return array
-     */
-    private function cwp_elementor_builder_options_slug($template_type = '')
-    {
-        $args = array(
-            'post_type' => 'cubewp-tb',
-            'post_status' => 'publish',
+	 * Method cwp_elementor_builder_options_slug
+	 *
+	 * Returns options array keyed by slug instead of post ID
+	 * specifically for Elementor controls that should store slugs.
+	 *
+	 * @param string $template_type
+	 * @return array
+	 */
+	private function cwp_elementor_builder_options_slug($template_type = '')
+	{
+		$args = array(
+			'post_type' => 'cubewp-tb',
+			'post_status' => 'publish',
 			'order' => 'ASC',
-            'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-                array(
-                    'key' => 'template_type',
-                    'value' => $template_type,
-                    'compare' => '='
-                ),
-                array(
-                    'key' => 'template_location',
-                    'value' => 'all',
-                    'compare' => '='
-                )
-            ),
-            'fields' => 'ids'
-        );
+			'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+				array(
+					'key' => 'template_type',
+					'value' => $template_type,
+					'compare' => '='
+				),
+				array(
+					'key' => 'template_location',
+					'value' => 'all',
+					'compare' => '='
+				)
+			),
+			'fields' => 'ids'
+		);
 
-        $existing_posts = new WP_Query($args);
-        $options = [];
-        if ($existing_posts->have_posts()) {
-            foreach ($existing_posts->posts as $existing_post_id) {
-                $slug = get_post_field('post_name', $existing_post_id);
-                if (! empty($slug)) {
-                    $options[$slug] = get_the_title($existing_post_id);
-                }
-            }
-        }
-        return $options;
-    }
+		$existing_posts = new WP_Query($args);
+		$options = [];
+		if ($existing_posts->have_posts()) {
+			foreach ($existing_posts->posts as $existing_post_id) {
+				$slug = get_post_field('post_name', $existing_post_id);
+				if (! empty($slug)) {
+					$options[$slug] = get_the_title($existing_post_id);
+				}
+			}
+		}
+		return $options;
+	}
 
 	protected function register_controls()
 	{
@@ -354,9 +354,9 @@ class CubeWp_Elementor_Mega_Menu_Widget extends Widget_Base
 				'label' => esc_html__('Text Color', 'cubewp-framework'),
 				'type' => Controls_Manager::COLOR,
 				'selectors' => [
-					'{{WRAPPER}} .cubewp-mega-menu .cubewp-mega-menu-item' => 'color: {{VALUE}}; fill: {{VALUE}};',
-					'{{WRAPPER}} .cubewp-mega-menu .cubewp-mega-menu-item path' => 'color: {{VALUE}}; fill: {{VALUE}};',
-					'{{WRAPPER}} .cubewp-mega-menu .cubewp-mega-menu-item svg' => 'color: {{VALUE}}; fill: {{VALUE}};',
+					'{{WRAPPER}} .cubewp-mega-menu .cubewp-mega-menu-item ' => 'color: {{VALUE}}; fill: {{VALUE}};',
+					'{{WRAPPER}} .cubewp-mega-menu .cubewp-mega-menu-item  > svg path' => 'color: {{VALUE}}; fill: {{VALUE}};',
+					'{{WRAPPER}} .cubewp-mega-menu .cubewp-mega-menu-item > svg' => 'color: {{VALUE}}; fill: {{VALUE}};',
 				]
 			]
 		);
@@ -475,8 +475,8 @@ class CubeWp_Elementor_Mega_Menu_Widget extends Widget_Base
 				'selectors' => [
 					'
 					{{WRAPPER}} .cubewp-mega-menu .cubewp-mega-menu-item:hover,
-					{{WRAPPER}} .cubewp-mega-menu .cubewp-mega-menu-item:hover svg,
-					{{WRAPPER}} .cubewp-mega-menu .cubewp-mega-menu-item:hover svg path,
+					{{WRAPPER}} .cubewp-mega-menu .cubewp-mega-menu-item:hover > svg,
+					{{WRAPPER}} .cubewp-mega-menu .cubewp-mega-menu-item:hover > svg path,
 						{{WRAPPER}} .cubewp-mega-menu .cubewp-mega-menu-item.elementor-cubewp-item-active,
 						{{WRAPPER}} .cubewp-mega-menu .cubewp-mega-menu-item.active,
 						{{WRAPPER}} .cubewp-mega-menu .cubewp-mega-menu-item.highlighted,
@@ -547,8 +547,8 @@ class CubeWp_Elementor_Mega_Menu_Widget extends Widget_Base
 					],
 				],
 				'selectors' => [
-					'{{WRAPPER}} .cubewp-mega-menu .cubewp-mega-menu-item i' => 'font-size: {{SIZE}}{{UNIT}} !important;',
-					'{{WRAPPER}} .cubewp-mega-menu .cubewp-mega-menu-item svg' => 'width: {{SIZE}}{{UNIT}} !important; height: auto !important;',
+					'{{WRAPPER}} .cubewp-mega-menu .cubewp-mega-menu-item > i' => 'font-size: {{SIZE}}{{UNIT}} !important;',
+					'{{WRAPPER}} .cubewp-mega-menu .cubewp-mega-menu-item > svg' => 'width: {{SIZE}}{{UNIT}} !important; height: auto !important;',
 				],
 			]
 		);
@@ -652,6 +652,7 @@ class CubeWp_Elementor_Mega_Menu_Widget extends Widget_Base
 			]
 		);
 
+	 
 		$this->add_responsive_control(
 			'dropdown_border_radius',
 			[
@@ -669,7 +670,7 @@ class CubeWp_Elementor_Mega_Menu_Widget extends Widget_Base
 			Group_Control_Box_Shadow::get_type(),
 			[
 				'name' => 'dropdown_box_shadow',
-				'exclude' => [// phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_exclude
+				'exclude' => [ // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_exclude
 					'box_shadow_position',
 				],
 				'selector' => '{{WRAPPER}} .elementor-cubewp-mega-nav-menu,{{WRAPPER}} .elementor-cubewp-mega-nav-menu .menu-item-has-children .sub-menu',
@@ -712,6 +713,14 @@ class CubeWp_Elementor_Mega_Menu_Widget extends Widget_Base
 				'separator' => 'none',
 			]
 		);
+		$this->add_group_control(
+			Group_Control_Border::get_type(),
+			[
+				'name' => 'dropdown_item_border',
+				'selector' => '{{WRAPPER}} .elementor-cubewp-mega-nav-menu a',
+				'separator' => 'before',
+			]
+		);
 
 		$this->end_controls_tab();
 
@@ -731,8 +740,8 @@ class CubeWp_Elementor_Mega_Menu_Widget extends Widget_Base
 				'default' => '#fff',
 				'selectors' => [
 					'{{WRAPPER}} .elementor-cubewp-mega-nav-menu a:hover, 
-					{{WRAPPER}} .elementor-cubewp-mega-nav-menu a:hover i,
-					{{WRAPPER}} .elementor-cubewp-mega-nav-menu a:hover svg,
+					{{WRAPPER}} .elementor-cubewp-mega-nav-menu a:hover > i,
+					{{WRAPPER}} .elementor-cubewp-mega-nav-menu a:hover > svg,
 					{{WRAPPER}} .elementor-cubewp-menu-toggle:hover' => 'color: {{VALUE}};fill: {{VALUE}}',
 				],
 			]
@@ -752,7 +761,16 @@ class CubeWp_Elementor_Mega_Menu_Widget extends Widget_Base
 				'separator' => 'none',
 			]
 		);
-
+		$this->add_responsive_control(
+			'dropdown_item_border_hover_color',
+			[
+				'label' => esc_html__('Border Color', 'cubewp-framework'),
+				'type' => \Elementor\Controls_Manager::COLOR,
+				'selectors' => [
+					'{{WRAPPER}} .elementor-cubewp-mega-nav-menu a:hover' => 'border-color: {{VALUE}};',
+				],
+			]
+		);
 		$this->add_control(
 			'item_border_hover_color',
 			[
@@ -805,6 +823,51 @@ class CubeWp_Elementor_Mega_Menu_Widget extends Widget_Base
 		);
 
 		$this->end_controls_tabs();
+
+		$this->end_controls_section();
+		$this->start_controls_section(
+			'section_style_dropdown_tooltip',
+			[
+				'label' => esc_html__('Dropdown Tooltip', 'cubewp-framework'),
+				'tab' => Controls_Manager::TAB_STYLE,
+			]
+		);
+
+
+		$this->add_control(
+			'dropdown_tooltip_color',
+			[
+				'label' => esc_html__('Tooltip Color', 'cubewp-framework'),
+				'type' => \Elementor\Controls_Manager::COLOR,
+				'selectors' => [
+					'{{WRAPPER}} .elementor-cubewp-mega-nav-menu::after' => 'border-bottom-color: {{VALUE}};',
+				],
+
+			]
+		);
+
+		$this->add_responsive_control(
+			'dropdown_tooltip_left',
+			[
+				'label' => esc_html__('Tooltip Position Left (%)', 'cubewp-framework'),
+				'type' => \Elementor\Controls_Manager::SLIDER,
+				'size_units' => ['%'],
+				'default' => [
+					'unit' => '%',
+					'size' => 10,
+				],
+				'range' => [
+					'%' => [
+						'min' => 0,
+						'max' => 100,
+					],
+				],
+				'selectors' => [
+					'{{WRAPPER}} .elementor-cubewp-mega-nav-menu::after' => 'left: {{SIZE}}%; transform: translateX(-{{SIZE}}%);',
+				],
+			]
+		);
+
 
 		$this->end_controls_section();
 	}

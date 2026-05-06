@@ -97,9 +97,14 @@ class CubeWp_Frontend_Radio_Field extends CubeWp_Frontend {
                                 'value'        =>  $value,
                                 'class'        =>  'custom-control-input '. $args['class'],
                             );
-                            if(isset($args['value']) && $args['value'] == $value){
+                            if (
+                                (isset($args['value']) && isset($value) && $args['value'] == $value) ||
+                                (isset($args['default_value']) && isset($value) && $args['default_value'] == $value && (!empty($args['form_type']) && $args['form_type'] == 'search'))
+                            ) {
                                 $input_attrs['extra_attrs'] = ' checked="checked"';
                             }
+                       
+                       
                             
                             $output .= cwp_render_text_input( $input_attrs );
                             $output .= '<label for="'. esc_attr($args['id'] . $label) .'">'. esc_html($label) .'</label>';

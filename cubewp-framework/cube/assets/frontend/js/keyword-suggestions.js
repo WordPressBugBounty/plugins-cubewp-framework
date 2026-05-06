@@ -212,6 +212,7 @@
 
                     // Set the visible input value to the selected term name
                     $input.val(termName);
+                    self.updateInputTrailingAction($input);
 
                     // Clear the hidden "s" field (no text search when term is selected)
                     var $hiddenS = $form.find('input[name="s"][type="hidden"]');
@@ -239,6 +240,19 @@
                 if (!$(e.target).closest('.cubewp-keyword-suggestions-container, input[name="select"]').length) {
                     $('.cubewp-keyword-suggestions-container').hide();
                 }
+            });
+
+            // Clear icon click (same trailing area as loader)
+            $(document).on('click', '.keyword-suggest-input-loader[data-role="clear"]', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var $input = $(this).siblings('input[name="select"]').first();
+                if (!$input.length) {
+                    return;
+                }
+                $input.val('');
+                self.updateInputTrailingAction($input);
+                $input.trigger('input').focus();
             });
 
         },
@@ -297,13 +311,39 @@
         },
 
         showInputLoader: function ($input) {
-            this.removeInputLoader($input); // Remove any existing loaders
-            var loader = $('<span class="keyword-suggest-input-loader" style="position: absolute;right: 10px;transform: translate(-2px, 14px);"><span class="loading-spinner" style="width:16px;height:16px;display:inline-block;vertical-align:middle;"></span></span>');
+            $input.data('keyword-suggest-loading', true);
+            this.removeInputClear($input);
+            this.removeInputLoader($input);
+            var loader = $('<span class="keyword-suggest-input-loader" data-role="loader" style="position: absolute;right: 10px;transform: translate(-2px, 14px);"><span class="loading-spinner" style="width:16px;height:16px;display:inline-block;vertical-align:middle;"></span></span>');
             $input.after(loader);
         },
 
         removeInputLoader: function ($input) {
-            $input.siblings('.keyword-suggest-input-loader').remove();
+            $input.data('keyword-suggest-loading', false);
+            $input.siblings('.keyword-suggest-input-loader[data-role="loader"]').remove();
+        },
+
+        removeInputClear: function ($input) {
+            $input.siblings('.keyword-suggest-input-loader[data-role="clear"]').remove();
+        },
+
+        showInputClear: function ($input) {
+            this.removeInputClear($input);
+            var clearIcon = $('<span class="keyword-suggest-input-loader" data-role="clear" style="position: absolute;right: 10px;transform: translate(-2px, 14px);cursor:pointer;line-height:1;" aria-label="Clear keyword" title="Clear"><span class="keyword-suggest-input-clear" style="display:inline-block;vertical-align:middle;font-size:18px;font-weight:600;">&times;</span></span>');
+            $input.after(clearIcon);
+        },
+
+        updateInputTrailingAction: function ($input) {
+            var isLoading = !!$input.data('keyword-suggest-loading');
+            var keyword = ($input.val() || '').trim();
+            if (isLoading) {
+                return;
+            }
+            if (keyword.length > 0) {
+                this.showInputClear($input);
+            } else {
+                this.removeInputClear($input);
+            }
         },
 
         // Accepts doneCallback(suggestions, renderedHtml, $container)
@@ -333,6 +373,7 @@
                 },
                 success: function (response) {
                     self.removeInputLoader($input);
+                    self.updateInputTrailingAction($input);
                     var htmlStr;
                     if (response.success && response.data.suggestions) {
                         htmlStr = self.renderSuggestionsHtml($input, response.data.suggestions, $container);
@@ -345,6 +386,7 @@
                 },
                 error: function () {
                     self.removeInputLoader($input);
+                    self.updateInputTrailingAction($input);
                     $container.hide();
                     if (typeof doneCallback === "function") doneCallback();
                 }
@@ -377,6 +419,7 @@
                 },
                 success: function (response) {
                     self.removeInputLoader($input);
+                    self.updateInputTrailingAction($input);
                     var htmlStr;
                     if (response.success && response.data.suggestions) {
                         htmlStr = self.renderSuggestionsHtml($input, response.data.suggestions, $container);
@@ -389,6 +432,7 @@
                 },
                 error: function () {
                     self.removeInputLoader($input);
+                    self.updateInputTrailingAction($input);
                     $container.hide();
                     if (typeof doneCallback === "function") doneCallback();
                 }
@@ -435,6 +479,10 @@
                     html += '<span class="suggestion-thumbnail"><img src="' + suggestion.thumbnail + '" alt="' + suggestion.name + '" /></span>';
                 }
 
+                if (suggestion.type === 'term' && suggestion.icon) {
+                    html += '<span class="suggestion-icon">' + suggestion.icon + '</span>';
+                }
+
                 html += '<span class="suggestion-name">' + suggestion.name + '</span>' +
                     '<span class="suggestion-type">' + taxonomyInfo + '</span>' +
                     '</li>';
@@ -448,6 +496,7 @@
                 .find('.cubewp-keyword-suggestions-container');
             $container.hide();
             this.removeInputLoader($input);
+            this.updateInputTrailingAction($input);
         },
 
         addHiddenInput: function ($input, term) {

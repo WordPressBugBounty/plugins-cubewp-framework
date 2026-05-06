@@ -296,11 +296,13 @@ jQuery(document).ready(function () {
         var editLocation = jQuery(this).data('tlocation'),
             edittype = jQuery(this).data('ttype'),
             editname = jQuery(this).data('tname'),
-            editid = jQuery(this).data('tid');
+            editid = jQuery(this).data('tid'),
+            editMobileView = jQuery(this).data('tmobileview');
         //Empty all values    
         jQuery('#template_name').val('');
         jQuery('#template_type').val('');
         jQuery('#template_location').val('');
+        jQuery('#template_mobile_view').prop('checked', false);
 
         if(jQuery('.ctb-hidden-post-id').length > 0){
             jQuery('.ctb-hidden-post-id').remove();
@@ -311,7 +313,9 @@ jQuery(document).ready(function () {
         }
         if(edittype){
             jQuery('#template_type').val(edittype);
-            jQuery('#template_type').trigger('change');
+            cwp_load_theme_builder_rules(edittype, editname ? editMobileView : undefined);
+        } else {
+            cwp_tb_toggle_mobile_view_field('');
         }
         if(editLocation){
             setTimeout(function() {
@@ -372,7 +376,15 @@ jQuery(document).ready(function () {
     
 });
 
-function cwp_load_theme_builder_rules( templateType = ''){
+function cwp_tb_toggle_mobile_view_field(templateType) {
+    var show = templateType === 'single' || templateType === 'archive' || templateType === 'header' || templateType === 'footer';
+    jQuery('#cwp_tb_mobile_view_wrap').toggle(show);
+    if (!show) {
+        jQuery('#template_mobile_view').prop('checked', false);
+    }
+}
+
+function cwp_load_theme_builder_rules( templateType = '', presetMobileView ){
     
     var templateLocation = jQuery('#template_location');
     var excludeLocation = jQuery('#exclude_location');
@@ -390,12 +402,19 @@ function cwp_load_theme_builder_rules( templateType = ''){
         success: function(response) {
             if (response.success) {
                 templateLocation.append(response.data.template_options);
-                excludeLocation.append(response.data.exclude_options);
+                if (response.data.exclude_options) {
+                    excludeLocation.append(response.data.exclude_options);
+                }
 
                 if (templateType === '404' || templateType === 'mega-menu' || templateType === 'shop') {
                     templateLocation.closest('.form-fileds').hide();
                 } else {
                     templateLocation.closest('.form-fileds').show();
+                }
+
+                cwp_tb_toggle_mobile_view_field(templateType);
+                if (typeof presetMobileView !== 'undefined') {
+                    jQuery('#template_mobile_view').prop('checked', presetMobileView == 1 || presetMobileView === '1' || presetMobileView === true);
                 }
             } else {
                 console.log(response.data.message);
@@ -406,3 +425,282 @@ function cwp_load_theme_builder_rules( templateType = ''){
         }
     });
 }
+
+/* CubeWP hub connect JS Start */
+// CubeWP Addons page AJAX + modal management
+(function ($) {
+    function isAddonsPage() {
+        return $('.cubewp-addons-wrap').length > 0 || $('.cubwp-welcome').length > 0;
+    }
+
+    function norm(s) {
+        return (s || '').toString().toLowerCase().trim();
+    }
+
+    function ajaxPost(payload) {
+        var cfg = window.cubewpAddonsAjax || {};
+        return $.ajax({
+            url: cfg.ajaxUrl || (typeof ajaxurl !== 'undefined' ? ajaxurl : ''),
+            method: 'POST',
+            dataType: 'json',
+            data: $.extend({
+                action: 'cubewp_addons_ajax',
+                nonce: cfg.nonce || ''
+            }, payload)
+        });
+    }
+
+    function showTopNotice(type, message) {
+        var cls = 'notice';
+        if (type) cls += ' notice-' + type;
+        var $wrap = $('.cubewp-addons-wrap');
+        if (!$wrap.length) return;
+        $wrap.find('.notice').remove();
+        $wrap.find('.cubewp-header').after('<div class="' + cls + ' is-dismissible"><p>' + (message || '') + '</p></div>');
+    }
+
+    function openModal() {
+        $('#cwp-addon-manage-modal').attr('aria-hidden', 'false');
+    }
+
+    function closeModal() {
+        var $m = $('#cwp-addon-manage-modal');
+        $m.attr('aria-hidden', 'true');
+        $m.removeData('addonSlug').removeData('licenseId');
+        $m.find('[data-cwp-modal-error]').text('');
+        $m.find('.cwp-modal__error').hide();
+        $m.find('.cwp-modal__content').hide();
+        $m.find('.cwp-modal__loading').show();
+    }
+
+    function renderSites($modal, sites) {
+        var $tbody = $modal.find('[data-cwp-sites-body]');
+        $tbody.empty();
+        if (!sites || !sites.length) {
+            $tbody.append('<tr><td colspan="2">This license has not been activated.</td></tr>');
+            return;
+        }
+        sites.forEach(function (s) {
+            var siteId = s.site_id || 0;
+            var name = s.site_name || '';
+            var escName = $('<div/>').text(name).html();
+            $tbody.append(
+                '<tr>' +
+                '<td>' + escName + '</td>' +
+                '<td><button type="button" class="button-link-delete" data-cwp-site-deactivate="' + siteId + '">Deactivate</button></td>' +
+                '</tr>'
+            );
+        });
+    }
+
+    function loadManageDetails(addonSlug) {
+        var $m = $('#cwp-addon-manage-modal');
+        $m.data('addonSlug', addonSlug);
+        $m.find('.cwp-modal__error').hide();
+        $m.find('.cwp-modal__content').hide();
+        $m.find('.cwp-modal__loading').show();
+
+        return ajaxPost({ op: 'manage_details', addon_slug: addonSlug }).done(function (res) {
+            if (!res || !res.success) {
+                var msg = (res && res.data && res.data.message) ? res.data.message : 'Request failed.';
+                $m.find('[data-cwp-modal-error]').text(msg);
+                $m.find('.cwp-modal__error').show();
+                return;
+            }
+            var lic = (res.data && res.data.license) ? res.data.license : {};
+            $m.data('licenseId', lic.id || 0);
+            $m.find('[data-cwp-license-key]').text(lic.key || '');
+            $m.find('[data-cwp-license-product]').text(lic.product || '');
+            $m.find('[data-cwp-license-summary]').text(lic.summary || '');
+            renderSites($m, lic.sites || []);
+            $m.find('[data-cwp-modal-note]').text('');
+            $m.find('.cwp-modal__loading').hide();
+            $m.find('.cwp-modal__content').show();
+        }).fail(function (xhr) {
+            var msg = (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) ? xhr.responseJSON.data.message : 'Request failed.';
+            $m.find('[data-cwp-modal-error]').text(msg);
+            $m.find('.cwp-modal__error').show();
+        });
+    }
+
+    function updateCardAfterOp($card, res, op) {
+        if (!res || !res.success) return;
+        var data = res.data || {};
+        if (data.base) {
+            $card.find('input[name="addon_base"]').val(data.base);
+        }
+        if (data.status) {
+            $card.find('.cwp-badge')
+                .removeClass('status-missing status-installed status-active')
+                .addClass('status-' + data.status)
+                .text(data.status.charAt(0).toUpperCase() + data.status.slice(1));
+        }
+
+        // If install succeeded, ensure Manage appears immediately (no reload)
+        if (data.status && data.status !== 'missing') {
+            var hasLicenseId = parseInt($card.attr('data-license-id') || '0', 10) > 0;
+            var hasManage = $card.find('.cwp-card-manage').length > 0;
+            if (hasLicenseId && !hasManage) {
+                var slug = $card.attr('data-addon-slug') || '';
+                if (slug) {
+                    $card.find('.cubewp-card-footer').append(
+                        '<div class="cwp-card-manage">' +
+                        '<button type="button" class="button cwp-btn-manage" data-cwp-manage="' + slug + '">Manage</button>' +
+                        '</div>'
+                    );
+                }
+            }
+        }
+
+        // After plugin install, switch Install -> Activate (no reload)
+        if (op === 'plugin_install' && data.status === 'installed') {
+            var $installForm = $card.find('form.cwp-ajax-form[data-op="plugin_install"]').first();
+            if ($installForm.length) {
+                $installForm.attr('data-op', 'plugin_activate');
+                $installForm.data('op', 'plugin_activate');
+                $installForm.find('input[name="action"]').val('cubewp_addons_activate');
+                $installForm.find('button[type="submit"]').text('Activate Plugin').addClass('cwp-btn-primary');
+            }
+        }
+
+        // After plugin activate, switch Activate -> Deactivate (no reload)
+        if (op === 'plugin_activate' && data.status === 'active') {
+            var $actForm = $card.find('form.cwp-ajax-form[data-op="plugin_activate"]').first();
+            if ($actForm.length) {
+                $actForm.attr('data-op', 'plugin_deactivate');
+                $actForm.data('op', 'plugin_deactivate');
+                $actForm.find('input[name="action"]').val('cubewp_addons_deactivate');
+                // Deactivate only needs addon_base; keep addon_slug if present (harmless)
+                $actForm.find('button[type="submit"]').text('Deactivate').removeClass('cwp-btn-primary');
+            }
+        }
+
+        // After plugin deactivate, switch Deactivate -> Activate (no reload)
+        if (op === 'plugin_deactivate' && data.status === 'installed') {
+            var $deactForm = $card.find('form.cwp-ajax-form[data-op="plugin_deactivate"]').first();
+            if ($deactForm.length) {
+                $deactForm.attr('data-op', 'plugin_activate');
+                $deactForm.data('op', 'plugin_activate');
+                $deactForm.find('input[name="action"]').val('cubewp_addons_activate');
+                $deactForm.find('button[type="submit"]').text('Activate Plugin').addClass('cwp-btn-primary');
+            }
+        }
+    }
+
+    $(document).ready(function () {
+        if (!isAddonsPage()) return;
+
+        $(document).on('input', '.cubewp-search-input', function () {
+            var term = norm($(this).val());
+            $('.cubewp-card[data-haystack]').each(function () {
+                var $c = $(this);
+                var hay = norm($c.attr('data-haystack'));
+                $c.css('display', (!term || hay.indexOf(term) !== -1) ? 'flex' : 'none');
+            });
+        });
+
+        $(document).on('submit', 'form.cwp-ajax-form', function (e) {
+            e.preventDefault();
+            var $form = $(this);
+            var op = $form.data('op');
+            if (!op) return;
+
+            var payload = { op: op };
+            if (op === 'plugin_install' || op === 'plugin_activate') {
+                payload.addon_slug = $form.find('input[name="addon_slug"]').val() || '';
+                payload.addon_base = $form.find('input[name="addon_base"]').val() || '';
+            } else if (op === 'plugin_deactivate') {
+                payload.addon_base = $form.find('input[name="addon_base"]').val() || '';
+            } else if (op === 'theme_install') {
+                payload.theme_slug = $form.find('input[name="theme_slug"]').val() || '';
+            } else if (op === 'theme_activate') {
+                payload.theme_stylesheet = $form.find('input[name="theme_stylesheet"]').val() || '';
+            }
+
+            var $card = $form.closest('.cubewp-card');
+            var $btn = $form.find('button[type="submit"]');
+            var oldText = $btn.text();
+            $btn.prop('disabled', true).addClass('cwp-btn-loading');
+            if (!$btn.find('.cwp-inline-spinner').length) {
+                $btn.append('<span class="spinner is-active cwp-inline-spinner"></span>');
+            }
+
+            ajaxPost(payload).done(function (res) {
+                if (!res || !res.success) {
+                    var msg = (res && res.data && res.data.message) ? res.data.message : 'Request failed.';
+                    showTopNotice('error', msg);
+                    return;
+                }
+                showTopNotice('success', (res.data && res.data.message) ? res.data.message : 'Done.');
+                if ($card.length) updateCardAfterOp($card, res, op);
+
+                // Keep Hub panel in sync without reload
+                if (op === 'hub_disconnect') {
+                    window.location.reload();
+                    return;
+                }
+            }).fail(function (xhr) {
+                var msg = (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) ? xhr.responseJSON.data.message : 'Request failed.';
+                showTopNotice('error', msg);
+            }).always(function () {
+                $btn.prop('disabled', false).removeClass('cwp-btn-loading');
+                $btn.find('.cwp-inline-spinner').remove();
+                // If the form op changed (e.g. Install -> Activate), don't revert the new label.
+                if (($form.data('op') || $form.attr('data-op')) === op) {
+                    $btn.text(oldText);
+                }
+            });
+        });
+
+        $(document).on('click', '[data-cwp-manage]', function () {
+            var slug = $(this).attr('data-cwp-manage') || '';
+            if (!slug) return;
+            openModal();
+            loadManageDetails(slug);
+        });
+
+        $(document).on('click', '[data-cwp-modal-close]', function () {
+            closeModal();
+        });
+        $(document).on('keydown', function (e) {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // license action buttons removed from modal per UX requirements
+
+        $(document).on('click', '[data-cwp-site-deactivate]', function () {
+            var $m = $('#cwp-addon-manage-modal');
+            var slug = $m.data('addonSlug') || '';
+            var licenseId = $m.data('licenseId') || 0;
+            var siteId = parseInt($(this).attr('data-cwp-site-deactivate') || '0', 10);
+            if (!slug || !licenseId || !siteId) {
+                $m.find('[data-cwp-modal-error]').text('Missing license/site information. Please close the popup and open Manage again.');
+                $m.find('.cwp-modal__error').show();
+                return;
+            }
+            if (!window.confirm('Deactivate this site?')) return;
+
+            var $btn = $(this);
+            $btn.prop('disabled', true).text('Deactivating...');
+            ajaxPost({ op: 'manage_deactivate_site', license_id: licenseId, site_id: siteId }).done(function (res) {
+                if (!res || !res.success) {
+                    var msg = (res && res.data && res.data.message) ? res.data.message : 'Request failed.';
+                    $m.find('[data-cwp-modal-error]').text(msg);
+                    $m.find('.cwp-modal__error').show();
+                    return;
+                }
+                $m.find('.cwp-modal__error').hide();
+                loadManageDetails(slug);
+            }).fail(function (xhr) {
+                var msg = (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message)
+                    ? xhr.responseJSON.data.message
+                    : 'Request failed.';
+                $m.find('[data-cwp-modal-error]').text(msg);
+                $m.find('.cwp-modal__error').show();
+            }).always(function () {
+                $btn.prop('disabled', false).text('Deactivate');
+            });
+        });
+    });
+})(jQuery);
+/* CubeWP hub connect JS End */

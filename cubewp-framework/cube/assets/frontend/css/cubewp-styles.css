@@ -1333,7 +1333,7 @@ body .cwp-frontend-search-form .cubewp-field-container .cwp-field-container.cwp-
     position: absolute;
     left: 0;
     top: 100%;
-    min-width: 230px;
+    min-width: 160px;
     padding: 1.8rem 2.1rem;
     box-shadow: 0 12rem 20rem #00000012;
     z-index: 11;
@@ -1347,6 +1347,21 @@ body .cwp-frontend-search-form .cubewp-field-container .cwp-field-container.cwp-
 
 .elementor-cubewp-mega-nav-menu li.menu-item.menu-item-has-children {
     position: relative;
+}
+
+.elementor-cubewp-mega-nav-menu::after {
+    content: "";
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 10px solid #fff;
+    position: absolute;
+    top: -9px;
+    left: 10%;
+    bottom: unset;
+    right: unset;
+    transform: translateX(-10%);
 }
 
 .elementor-cubewp-mega-nav-menu li.menu-item.menu-item-has-children::after {
@@ -1525,31 +1540,44 @@ body .cwp-frontend-search-form .cubewp-field-container .cwp-field-container.cwp-
     }
 }
 
-/* CubeWP Title Tag Styling */
-.cubewp-post-title-tag {
+/* CubeWP Clamp Styling */
+.cubewp-clamp-1 {
     display: -webkit-box;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-.cubewp-post-title-tag.cubewp-clamp-1 {
     -webkit-line-clamp: 1;
 }
 
-.cubewp-post-title-tag.cubewp-clamp-2 {
+.cubewp-clamp-2 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
     -webkit-line-clamp: 2;
 }
 
-.cubewp-post-title-tag.cubewp-clamp-3 {
+.cubewp-clamp-3 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
     -webkit-line-clamp: 3;
 }
 
-.cubewp-post-title-tag.cubewp-clamp-4 {
+.cubewp-clamp-4 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
     -webkit-line-clamp: 4;
 }
 
-.cubewp-post-title-tag.cubewp-clamp-5 {
+.cubewp-clamp-5 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
     -webkit-line-clamp: 5;
 }
 
@@ -1635,7 +1663,7 @@ body .cwp-frontend-search-form .cubewp-field-container .cwp-field-container.cwp-
     opacity: 0 !important;
     visibility: hidden !important;
     pointer-events: none !important;
-    transition: opacity 0.6s ease, visibility 0.6s ease !important;
+    transition: var(--cwp-hover-duration) !important;
 }
 
 /* For non-absolute elements, remove from flow when hidden */
@@ -1665,7 +1693,7 @@ body .cwp-frontend-search-form .cubewp-field-container .cwp-field-container.cwp-
     opacity: 1 !important;
     visibility: visible !important;
     pointer-events: auto !important;
-    transition: opacity 0.6s ease, visibility 0.6s ease !important;
+    transition: var(--cwp-hover-duration, 0.3s) !important;
 }
 
 /* Hide on hover */
@@ -1824,6 +1852,311 @@ body.cwp-map-open {
     align-items: center;
 }
 
+.cubewp-filter-builder-container {
+    position: relative;
+}
+
+.cubewp-filter-popup-wrapper.cubewp-filter-dropdown-mode .cubewp-filter-popup-content {
+    position: absolute !important;
+    transform: unset !important;
+    top: 100% !important;
+    overflow: auto;
+}
+
+.cubewp-filter-popup-wrapper.cubewp-filter-dropdown-mode .cubewp-filter-popup-content .cubewp-filter-popup-header {
+    display: none;
+}
+
+.cubewp-filter-popup-wrapper.cubewp-filter-dropdown-mode .cubewp-filter-popup-content .cubewp-filter-popup-footer {
+    display: none;
+}
+
+.cubewp-filter-popup-wrapper.cubewp-filter-dropdown-mode .cubewp-filter-popup-overlay.active {
+    background: #fff0;
+}
+
+/* Custom Icon Support for Checkbox/Radio */
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-checkbox-container .cwp-field-checkbox input[type="checkbox"]:checked+label::after,
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-radio-container .cwp-field-radio input[type="radio"]:checked+label::after {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cubewp-google-address-filter-container .cubewp-filter-builder-field:not(.cubewp-google-address-filter) {
+    display: none;
+}
+
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-checkbox-container .cwp-field-checkbox input[type="checkbox"]:checked+label::after i,
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-checkbox-container .cwp-field-checkbox input[type="checkbox"]:checked+label::after svg,
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-radio-container .cwp-field-radio input[type="radio"]:checked+label::after i,
+.cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-radio-container .cwp-field-radio input[type="radio"]:checked+label::after svg {
+    display: inline-block;
+    line-height: 1;
+}
+
+.cubewp-google-address-filter-container .cubewp-filter-builder-field .cwp-field-google-address-input-container,
+.cubewp-google-address-filter-container .cubewp-filter-builder-field label {
+    display: none !important;
+}
+
+.cubewp-filter-button-wrapper {
+    margin-bottom: 15px;
+}
+
+.cubewp-filter-button {
+    cursor: pointer;
+    border: 1px solid #ddd;
+    padding: 10px 20px;
+    background: #fff;
+    border-radius: 4px;
+    transition: all 0.3s;
+}
+
+.cubewp-filter-button:hover {
+    background: #f5f5f5;
+}
+
+.cubewp-filter-field-container {
+    margin-top: 15px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+}
+
+
+.cubewp-filter-popup-wrapper {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.cubewp-filter-popup-button {
+    cursor: pointer;
+    border: 1px solid #ddd;
+    padding: 10px 20px;
+    background: #fff;
+    border-radius: 4px;
+}
+
+.cubewp-filter-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9998;
+    display: none;
+    overflow: hidden;
+}
+
+.cubewp-filter-popup-overlay.active {
+    display: block;
+}
+
+.cubewp-filter-popup-content {
+    position: fixed;
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.cubewp-filter-popup-content.active {
+    display: flex;
+}
+
+/* Center Position (Default) */
+.cubewp-filter-popup-content.cubewp-popup-position-center {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Top Position */
+
+.cubewp-filter-popup-header {
+    padding: 20px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cubewp-filter-popup-header h3 {
+    margin: 0;
+}
+
+.cubewp-filter-popup-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+}
+
+.cubewp-filter-popup-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.cubewp-filter-popup-footer {
+    padding: 20px;
+    border-top: 1px solid #ddd;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.cubewp-filter-popup-apply {
+    padding: 10px 20px;
+    background: #0073aa;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.cubewp-filter-popup-apply:hover {
+    background: #005a87;
+}
+
+.cubewp-business-hours-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 0;
+}
+
+.cubewp-business-hours-btn {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    background: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 14px;
+}
+
+.cubewp-business-hours-btn:hover {
+    background: #f5f5f5;
+    border-color: #0073aa;
+}
+
+.cubewp-business-hours-btn.active {
+    background: #0073aa;
+    color: #fff;
+    border-color: #0073aa;
+}
+
+/* Sorting Dropdown Styles */
+.cubewp-sorting-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.cubewp-sorting-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 200px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    list-style: none;
+    padding: 5px 0;
+    margin: 5px 0 0 0;
+    z-index: 1000;
+    display: none !important;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.cubewp-sorting-dropdown-menu.open {
+    display: block !important;
+}
+
+.cubewp-sorting-dropdown-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.cubewp-sorting-dropdown-item:hover {
+    background: #f5f5f5;
+}
+
+.cubewp-sorting-dropdown-item.selected {
+    background: #e8f4f8;
+}
+
+.cubewp-rating-stars {
+    display: inline-flex;
+    gap: 2px;
+    align-items: center;
+}
+
+.cubewp-rating-star {
+    color: #ddd;
+    display: inline-flex;
+    align-items: center;
+}
+
+.cubewp-rating-star.filled {
+    color: #FFA500;
+}
+
+.cubewp-rating-star svg {
+    width: 16px;
+    height: 16px;
+}
+
+.cubewp-business-hours-btn .cubewp-button-content-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cubewp-business-hours-btn.cubewp-icon-left .cubewp-button-content-wrapper {
+    flex-direction: row;
+}
+
+.cubewp-business-hours-btn.cubewp-icon-right .cubewp-button-content-wrapper {
+    flex-direction: row-reverse;
+}
+
+.cubewp-business-hours-btn .cubewp-button-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.cubewp-business-hours-btn .cubewp-button-text {
+    display: inline-block;
+}
+
+.cubewp-google-address-filter-container.active:hover .cubewp-filter-builder-field {
+    display: block !important;
+}
+
+.cubewp-google-address-filter-container.active .cubewp-filter-builder-field .cwp-address-range {
+    display: block !important;
+    background-color: #fff;
+    padding: 10px;
+    position: absolute;
+    z-index: 999;
+    min-width: 162px;
+    margin-top: 0 !important;
+}
+
 /* Custom Checkbox/Radio Styling */
 /* Only apply when custom styling is enabled via class */
 .cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-checkbox-container .cwp-field-checkbox input[type="checkbox"],
@@ -1950,6 +2283,16 @@ body.cwp-map-open {
 .elementor-widget-cubewp_search_filter_builder .cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-radio-container .cwp-field-radio input[type="radio"]:checked+label::after {
     border-radius: 50%;
     left: 4px;
+}
+
+.cubewp-filter-builder-container .cwp-field-container .cwp-field-checkbox-container,
+.cubewp-filter-builder-container .cwp-field-container .cwp-field-radio-container {
+    padding: 0;
+    margin: 0;
+}
+
+.cwp-pagination ul li {
+    display: inline-block;
 }
 
 .cubewp-filter-popup-content {
@@ -2224,7 +2567,6 @@ body.cwp-map-open {
     font-weight: 400;
     text-decoration: none;
     transition: all 0.3s ease;
-    gap: 8px;
 }
 
 .cubewp-sorting-dropdown-toggle:hover {
@@ -2254,8 +2596,8 @@ body.cwp-map-open {
 }
 
 .cubewp-filter-builder-reset-button-button {
-  transition: all 0.3s ease;
-  cursor: pointer;
+    transition: all 0.3s ease;
+    cursor: pointer;
 }
 
 /**
@@ -2363,8 +2705,13 @@ body.cwp-map-open {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* Removed selected terms display - now using hidden fields only */
@@ -2379,4 +2726,128 @@ body.cwp-map-open {
 .cwp-field-container input[name="s"],
 .cubewp-filter-builder-field-container input[name="s"] {
     position: relative;
+}
+
+/* Claim Status Styles */
+.cwp-claim-status-wrapper {
+    display: inline-block;
+}
+
+.cwp-claim-status {
+    display: inline-flex;
+    align-items: center;
+}
+
+.cwp-claim-status-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cwp-claim-status-text {
+    display: inline-block;
+}
+
+/* Tooltip Styles */
+.cwp-claim-status-tooltip-wrapper {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.cwp-claim-status-tooltip {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+    z-index: 1000;
+    transition: opacity 0.3s, visibility 0.3s;
+    pointer-events: none;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.cwp-claim-status-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+}
+
+.cwp-claim-status-tooltip-wrapper:hover .cwp-claim-status-tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+.elementor-widget-heading .elementor-heading-title[class*=elementor-size-]>a {
+    color: inherit;
+    font-size: inherit;
+    line-height: inherit;
+}
+
+.cubewp-processing-ajax {
+    position: relative;
+    overflow: hidden;
+    /* Clips the glow to button edges */
+    pointer-events: none;
+    /* Prevents clicks while loading */
+    color: transparent !important;
+    /* Hide text to show loader clearly (Optional) */
+}
+
+.cubewp-processing-ajax::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    /* High-end gradient sweep */
+    background: linear-gradient(90deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.2) 20%,
+            rgba(255, 255, 255, 0.6) 50%,
+            rgba(255, 255, 255, 0.2) 80%,
+            rgba(255, 255, 255, 0) 100%);
+    animation: liquid-sweep 1.2s infinite ease-in-out;
+}
+
+.cubewp-processing-ajax::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 18px;
+    height: 18px;
+    margin-top: -9px;
+    margin-left: -9px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+    /* The tip of the spinner */
+    border-radius: 50%;
+    animation: spin-loader 0.8s linear infinite;
+    z-index: 2;
+}
+
+@keyframes liquid-sweep {
+    0% {
+        left: -100%;
+    }
+
+    100% {
+        left: 100%;
+    }
+}
+
+@keyframes spin-loader {
+    to {
+        transform: rotate(360deg);
+    }
 }

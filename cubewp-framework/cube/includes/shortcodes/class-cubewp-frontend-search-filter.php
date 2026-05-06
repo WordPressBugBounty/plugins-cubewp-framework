@@ -412,15 +412,34 @@ class CubeWp_Frontend_Search_Filter {
      * @return void
      */
     public static function get_hidden_field_if_tax(){
-        if(is_tax() && !is_search()){
-            if(!is_page()){
+        if (is_tax() && !is_search()) {
+            if (!is_page()) {
                 $queried_object = get_queried_object();
+    
                 if (is_object($queried_object) && !empty($queried_object) && !is_wp_error($queried_object)) {
                     $slug = $queried_object->term_id;
                     $taxonomy = $queried_object->taxonomy;
+    
                     echo '<input class="is_tax" data-current-tax="'.esc_attr($slug).'" type="hidden" name="' .esc_attr($taxonomy). '" value="' . esc_attr($slug) . '">';
-
                 }
+            }
+        } elseif (is_tag()) {
+            $term = get_queried_object();
+    
+            if (is_object($term) && !empty($term) && !is_wp_error($term)) {
+                $slug = $term->term_id;
+                $taxonomy = $term->taxonomy; // post_tag
+    
+                echo '<input class="is_tax" data-current-tax="'.esc_attr($slug).'" type="hidden" name="' .esc_attr($taxonomy). '" value="' . esc_attr($slug) . '">';
+            }
+        } elseif (is_category()) {
+            $term = get_queried_object();
+    
+            if (is_object($term) && !empty($term) && !is_wp_error($term)) {
+                $slug = $term->term_id;
+                $taxonomy = $term->taxonomy; // category
+    
+                echo '<input class="is_tax" data-current-tax="'.esc_attr($slug).'" type="hidden" name="' .esc_attr($taxonomy). '" value="' . esc_attr($slug) . '">';
             }
         }
     }

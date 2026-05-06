@@ -16,6 +16,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 class CubeWp_Admin_Business_Hours_Field extends CubeWp_Frontend {
 
     private static $timings = [];
+    private static function cwp_format_business_display_time($time)
+    {
+        if (empty($time) || $time === '24-hours-open') {
+            return '';
+        }
+        $timestamp = strtotime($time);
+        if (!$timestamp) {
+            return '';
+        }
+        return date_i18n('h:i A', $timestamp);
+    }
 
     public function __construct( ) {
         add_filter('cubewp/admin/post/business_hours/field', array($this, 'render_business_hours_admin'), 10, 2);
@@ -61,7 +72,6 @@ class CubeWp_Admin_Business_Hours_Field extends CubeWp_Frontend {
         $field_name = $args['name'];
         $field_id = $args['id'];
         $business_hours = $args['value'];
-        $time_format = get_option('time_format');
         $output .= '<div class="yb-business-hours-display">';
         if (is_array($business_hours) && !empty($business_hours)) {
             foreach ($business_hours as $day => $business_hour) {
@@ -90,12 +100,12 @@ class CubeWp_Admin_Business_Hours_Field extends CubeWp_Frontend {
                                 'fullday' => '',
                                 'open_time' => $open_time[$i],
                                 'close_time' => $close_time[$i],
-                                'start_time' => date_i18n($time_format, strtotime($open_time[$i])),
-                                'end_time' => date_i18n($time_format, strtotime($close_time[$i])),
+                                'start_time' => self::cwp_format_business_display_time($open_time[$i]),
+                                'end_time' => self::cwp_format_business_display_time($close_time[$i]),
                                 'day' => $day,
                                 'fullhoursclass' => '',
                                 'field_name' => $field_name,
-                                'dash' => '~',
+                                'dash' => ' - ',
                                 'meta_open' => '[open][]',
                                 'meta_close' => '[close][]',
                             ];
@@ -108,6 +118,9 @@ class CubeWp_Admin_Business_Hours_Field extends CubeWp_Frontend {
             }
         }
         $output .= '</div>';
+        $default_day = 'monday';
+        $default_open_time = '09:00';
+        $default_close_time = '17:00';
         $args['value'] = '';
         $output .= '<div class="yb-business-hour-fields">';
         $args['type'] = 'dropdown';
@@ -115,6 +128,7 @@ class CubeWp_Admin_Business_Hours_Field extends CubeWp_Frontend {
         $args['id'] = $field_id . '_day';
         $args['placeholder'] = esc_html__('Select Day', 'cubewp-framework');
         $args['class'] = 'business-days';
+        $args['value'] = $default_day;
         $output .= self::yellow_books_render_dropdown_admin($args);
 
         $args['name'] = $args['custom_name'] = $field_name . '_open_time';
@@ -122,6 +136,7 @@ class CubeWp_Admin_Business_Hours_Field extends CubeWp_Frontend {
         $args['type'] = 'time_picker';
         $args['placeholder'] = esc_html__('Open Time', 'cubewp-framework');
         $args['class'] = 'business-open-time';
+        $args['value'] = $default_open_time;
         $output .= self::yellow_books_render_timepicker_admin($args);
 
         $args['name'] = $args['custom_name'] = $field_name . '_close_time';
@@ -129,6 +144,7 @@ class CubeWp_Admin_Business_Hours_Field extends CubeWp_Frontend {
         $args['placeholder'] = esc_html__('Close Time', 'cubewp-framework');
         $args['admin_size'] = '1/3';
         $args['class'] = 'business-close-time';
+        $args['value'] = $default_close_time;
         $output .= self::yellow_books_render_timepicker_admin($args);
 
         $output .= '<div class="yb_business_hour_fulldayopen">
@@ -161,7 +177,7 @@ class CubeWp_Admin_Business_Hours_Field extends CubeWp_Frontend {
 
         $output = '<div class="business-hours ' . $timings['day'] . ' ' . $timings['day'] . '-' . $timings['field_name'] . ' ' . $timings['fullhoursclass'] . ' ">
                     <div class="day-hours">
-                    <span class="weekday">' . $timings['day'] . '</span>
+                    <span class="weekday">' . ucfirst($timings['day']) . '</span>
                     <span class="start-end fullday">' . $timings['fullday'] . '</span>
                     <span class="open">' . $timings['start_time'] . '</span>
                     <span class="dash">' . $timings['dash'] . '</span>

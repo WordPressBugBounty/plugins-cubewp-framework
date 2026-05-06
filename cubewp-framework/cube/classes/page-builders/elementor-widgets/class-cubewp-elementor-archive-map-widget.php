@@ -63,6 +63,20 @@ class CubeWp_Elementor_Archive_Map_Widget extends Widget_Base
                 'default'      => '',
             ]
         );
+        $this->add_control(
+            'show_data_for',
+            [
+                'label' => esc_html__('Show Layout', 'cubewp-framework'),
+                'type' => Controls_Manager::SELECT,
+                'options' => [
+                    'mobile_desktop' => esc_html__('Mobile & Desktop', 'cubewp-framework'),
+                    'desktop' => esc_html__('Desktop', 'cubewp-framework'),
+                    'mobile' => esc_html__('Mobile', 'cubewp-framework'),
+                ],
+                'default' =>  'mobile_desktop',
+            ]
+        );
+
 
         $this->add_control(
             'map_display_type',
@@ -246,7 +260,7 @@ class CubeWp_Elementor_Archive_Map_Widget extends Widget_Base
                 ],
             ]
         );
-        
+
         $this->add_responsive_control(
             'popup_btn_icon_size',
             [
@@ -413,6 +427,41 @@ class CubeWp_Elementor_Archive_Map_Widget extends Widget_Base
             ]
         );
 
+        $this->add_control(
+            'close_btn_bg_color',
+            [
+                'label' => __('Background Color', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-map-close-btn' => 'background: {{VALUE}}',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'close_btn_radius',
+            [
+                'label' => __('Border Radius', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em'],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-map-close-btn' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'close_btn_padding',
+            [
+                'label' => __('Padding', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em'],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-map-close-btn' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
         $this->add_responsive_control(
             'close_btn_position',
             [
@@ -442,6 +491,633 @@ class CubeWp_Elementor_Archive_Map_Widget extends Widget_Base
         );
 
         $this->end_controls_section();
+
+        // New Map Pin Tab Section
+        $this->start_controls_section(
+            'map_pin_section',
+            [
+                'label' => __('Map Pin', 'cubewp-framework'),
+                'tab'   => Controls_Manager::TAB_STYLE,
+            ]
+        );
+
+        $this->add_control(
+            'custom_map_pin_switcher',
+            [
+                'label' => __('Custom Map Pin', 'cubewp-framework'),
+                'type' => Controls_Manager::SWITCHER,
+                'label_on' => __('Yes', 'cubewp-framework'),
+                'label_off' => __('No', 'cubewp-framework'),
+                'return_value' => 'yes',
+                'default' => 'no'
+            ]
+        );
+
+        $this->add_control(
+            'custom_map_pin_icon',
+            [
+                'label' => __('Pin Icon', 'cubewp-framework'),
+                'type' => Controls_Manager::ICONS,
+                'condition' => [
+                    'custom_map_pin_switcher' => 'yes',
+                ],
+            ]
+        );
+
+
+        $this->add_control(
+            'map_pin_style_note',
+            [
+                'type' => Controls_Manager::RAW_HTML,
+                'raw'  => __('Map Pin Styling available when Custom Map Pin is enabled', 'cubewp-framework'),
+                'content_classes' => 'elementor-panel-alert elementor-panel-alert-info',
+                'condition' => ['custom_map_pin_switcher' => 'yes'],
+            ]
+        );
+        $this->end_controls_section();
+
+        // Map Pin Wrapper (.leaflet-marker-icon .cwp-pin)
+        $this->start_controls_section(
+            'map_pin_wrapper_style',
+            [
+                'label' => __('Pin Wrapper', 'cubewp-framework'),
+                'tab' => Controls_Manager::TAB_STYLE,
+                'condition' => ['custom_map_pin_switcher' => 'yes'],
+            ]
+        );
+
+        $this->add_control(
+            'map_pin_wrapper_bg_color',
+            [
+                'label' => __('Background Color', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .leaflet-marker-icon .cwp-pin' => 'background-color: {{VALUE}};',
+                ]
+            ]
+        );
+
+        $this->add_control(
+            'map_pin_wrapper_transition',
+            [
+                'label' => __('Transition', 'cubewp-framework'),
+                'type' => Controls_Manager::TEXT,
+                'default' => 'all 0.3s',
+                'selectors' => [
+                    '{{WRAPPER}} .leaflet-marker-icon .cwp-pin' => 'transition: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'map_pin_wrapper_width',
+            [
+                'label' => __('Width', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', '%', 'em'],
+                'range' => ['px' => ['min' => 10, 'max' => 200], '%' => ['min' => 1, 'max' => 100], 'em' => ['min' => 1, 'max' => 10]],
+                'selectors' => [
+                    '{{WRAPPER}} .leaflet-marker-icon .cwp-pin' => 'width: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'map_pin_wrapper_height',
+            [
+                'label' => __('Height', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', '%', 'em'],
+                'range' => ['px' => ['min' => 10, 'max' => 200], '%' => ['min' => 1, 'max' => 100], 'em' => ['min' => 1, 'max' => 10]],
+                'selectors' => [
+                    '{{WRAPPER}} .leaflet-marker-icon .cwp-pin' => 'height: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'map_pin_wrapper_padding',
+            [
+                'label' => __('Padding', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em'],
+                'selectors' => [
+                    '{{WRAPPER}} .leaflet-marker-icon .cwp-pin' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_group_control(
+            Group_Control_Border::get_type(),
+            [
+                'name' => 'map_pin_wrapper_border',
+                'selector' => '{{WRAPPER}} .leaflet-marker-icon .cwp-pin',
+            ]
+        );
+
+        $this->add_responsive_control(
+            'map_pin_wrapper_radius',
+            [
+                'label' => __('Border Radius', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em'],
+                'selectors' => [
+                    '{{WRAPPER}} .leaflet-marker-icon .cwp-pin' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_group_control(
+            Group_Control_Box_Shadow::get_type(),
+            [
+                'name' => 'map_pin_wrapper_shadow',
+                'selector' => '{{WRAPPER}} .leaflet-marker-icon .cwp-pin',
+            ]
+        );
+
+        $this->add_control(
+            'map_pin_wrapper_transform_rotate',
+            [
+                'label' => __('Rotate (deg)', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['deg'],
+                'range' => ['deg' => ['min' => 0, 'max' => 360]],
+                'default' => ['size' => 0, 'unit' => 'deg'],
+                'selectors' => [
+                    '{{WRAPPER}} .leaflet-marker-icon .cwp-pin' => 'transform: rotate({{SIZE}}deg);',
+                ],
+            ]
+        );
+
+        // Hover options for .cwp-pin
+        $this->start_controls_tabs('map_pin_wrapper_style_tabs');
+        $this->start_controls_tab(
+            'map_pin_wrapper_normal',
+            [
+                'label' => __('Normal', 'cubewp-framework'),
+            ]
+        );
+        // Nothing - fields above apply to normal state
+        $this->end_controls_tab();
+
+        $this->start_controls_tab(
+            'map_pin_wrapper_hover',
+            [
+                'label' => __('Hover', 'cubewp-framework'),
+            ]
+        );
+        $this->add_control(
+            'map_pin_wrapper_hover_bg_color',
+            [
+                'label' => __('Background Color (Hover)', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .leaflet-marker-icon .cwp-pin:hover' => 'background-color: {{VALUE}};',
+                ]
+            ]
+        );
+        $this->add_control(
+            'map_pin_wrapper_hover_transition',
+            [
+                'label' => __('Transition (Hover)', 'cubewp-framework'),
+                'type' => Controls_Manager::TEXT,
+                'default' => 'all 0.3s',
+                'selectors' => [
+                    '{{WRAPPER}} .leaflet-marker-icon .cwp-pin:hover' => 'transition: {{VALUE}};',
+                ],
+            ]
+        );
+        $this->end_controls_tab();
+        $this->end_controls_tabs();
+
+        $this->end_controls_section();
+
+
+        // Icon Wrapper (.leaflet-marker-icon .cwp-pin .cwp-map-pin-icon)
+        $this->start_controls_section(
+            'map_pin_icon_wrapper_style',
+            [
+                'label' => __('Icon Wrapper', 'cubewp-framework'),
+                'tab' => Controls_Manager::TAB_STYLE,
+                'condition' => ['custom_map_pin_switcher' => 'yes'],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'map_pin_icon_wrapper_width',
+            [
+                'label' => __('Width', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', '%', 'em'],
+                'range' => ['px' => ['min' => 10, 'max' => 200], '%' => ['min' => 1, 'max' => 100], 'em' => ['min' => 1, 'max' => 10]],
+                'selectors' => [
+                    '{{WRAPPER}} .leaflet-marker-icon .cwp-pin .cwp-map-pin-icon' => 'width: {{SIZE}}{{UNIT}};display: inline-block;',
+                ]
+            ]
+        );
+        $this->add_responsive_control(
+            'map_pin_icon_wrapper_height',
+            [
+                'label' => __('Height', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', '%', 'em'],
+                'range' => ['px' => ['min' => 10, 'max' => 200], '%' => ['min' => 1, 'max' => 100], 'em' => ['min' => 1, 'max' => 10]],
+                'selectors' => [
+                    '{{WRAPPER}} .leaflet-marker-icon .cwp-pin .cwp-map-pin-icon' => 'height: {{SIZE}}{{UNIT}};',
+                ]
+            ]
+        );
+        $this->add_responsive_control(
+            'map_pin_icon_wrapper_padding',
+            [
+                'label' => __('Padding', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em'],
+                'selectors' => [
+                    '{{WRAPPER}} .leaflet-marker-icon .cwp-pin .cwp-map-pin-icon' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ]
+            ]
+        );
+        $this->add_group_control(
+            Group_Control_Border::get_type(),
+            [
+                'name' => 'map_pin_icon_wrapper_border',
+                'selector' => '{{WRAPPER}} .leaflet-marker-icon .cwp-pin .cwp-map-pin-icon',
+            ]
+        );
+        $this->add_responsive_control(
+            'map_pin_icon_wrapper_radius',
+            [
+                'label' => __('Border Radius', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em'],
+                'selectors' => [
+                    '{{WRAPPER}} .leaflet-marker-icon .cwp-pin .cwp-map-pin-icon' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+        $this->add_group_control(
+            Group_Control_Box_Shadow::get_type(),
+            [
+                'name' => 'map_pin_icon_wrapper_shadow',
+                'selector' => '{{WRAPPER}} .leaflet-marker-icon .cwp-pin .cwp-map-pin-icon',
+            ]
+        );
+        $this->add_control(
+            'map_pin_icon_wrapper_bg_color',
+            [
+                'label' => __('Background Color', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .leaflet-marker-icon .cwp-pin .cwp-map-pin-icon' => 'background-color: {{VALUE}};',
+                ]
+            ]
+        );
+        $this->add_control(
+            'map_pin_icon_wrapper_transform_rotate',
+            [
+                'label' => __('Rotate (deg)', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['deg'],
+                'range' => ['deg' => ['min' => 0, 'max' => 360]],
+                'default' => ['size' => 0, 'unit' => 'deg'],
+                'selectors' => [
+                    '{{WRAPPER}} .leaflet-marker-icon .cwp-pin .cwp-map-pin-icon' => 'transform: rotate({{SIZE}}deg);',
+                ],
+            ]
+        );
+        $this->end_controls_section();
+
+        // Icon SVG (.leaflet-marker-icon .cwp-pin .cwp-map-pin-icon svg)
+        $this->start_controls_section(
+            'map_pin_icon_svg_style',
+            [
+                'label' => __('Pin Icon SVG', 'cubewp-framework'),
+                'tab' => Controls_Manager::TAB_STYLE,
+                'condition' => ['custom_map_pin_switcher' => 'yes'],
+            ]
+        );
+
+        $this->add_control(
+            'map_pin_icon_svg_color',
+            [
+                'label' => __('SVG Color', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .leaflet-marker-icon .cwp-pin .cwp-map-pin-icon svg' => 'color: {{VALUE}}; fill: {{VALUE}};',
+                ]
+            ]
+        );
+
+        $this->add_responsive_control(
+            'map_pin_icon_svg_size',
+            [
+                'label' => __('SVG Size', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', 'em', 'rem', '%'],
+                'range' => [
+                    'px' => ['min' => 8, 'max' => 200],
+                    'em' => ['min' => 0.5, 'max' => 10],
+                    'rem' => ['min' => 0.5, 'max' => 10],
+                    '%' => ['min' => 10, 'max' => 100]
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .leaflet-marker-icon .cwp-pin .cwp-map-pin-icon svg' => 'width: {{SIZE}}{{UNIT}}; height: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'map_pin_icon_svg_rotate',
+            [
+                'label' => __('SVG Rotate (deg)', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['deg'],
+                'range' => [
+                    'deg' => ['min' => 0, 'max' => 360],
+                ],
+                'default' => ['size' => 0, 'unit' => 'deg'],
+                'selectors' => [
+                    '{{WRAPPER}} .leaflet-marker-icon .cwp-pin .cwp-map-pin-icon svg' => 'transform: rotate({{SIZE}}deg);',
+                ],
+            ]
+        );
+
+        $this->end_controls_section();
+        // Icon SVG (.leaflet-marker-icon .cwp-pin .cwp-map-pin-icon svg)
+        $this->start_controls_section(
+            'map_post_card',
+            [
+                'label' => __('Map Post Card', 'cubewp-framework'),
+                'tab' => Controls_Manager::TAB_STYLE,
+            ]
+        );
+
+        // Main Card Controls (background, box shadow, border, margin, radius)
+        $this->add_group_control(
+            \Elementor\Group_Control_Background::get_type(),
+            [
+                'name' => 'map_popup_card_bg',
+                'selector' => '{{WRAPPER}} .leaflet-popup-content-wrapper,{{WRAPPER}} .leaflet-popup-tip-container .leaflet-popup-tip',
+            ]
+        );
+        $this->add_group_control(
+            \Elementor\Group_Control_Box_Shadow::get_type(),
+            [
+                'name' => 'map_popup_card_shadow',
+                'selector' => '{{WRAPPER}} .leaflet-popup-content-wrapper ,{{WRAPPER}} .leaflet-popup-tip-container .leaflet-popup-tip',
+            ]
+        );
+        $this->add_group_control(
+            \Elementor\Group_Control_Border::get_type(),
+            [
+                'name' => 'map_popup_card_border',
+                'selector' => '{{WRAPPER}} .leaflet-popup-content-wrapper ,{{WRAPPER}} .leaflet-popup-tip-container .leaflet-popup-tip',
+            ]
+        );
+        $this->add_control(
+            'map_popup_card_radius',
+            [
+                'label' => __('Border Radius', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', '%', 'em'],
+                'range' => [
+                    'px' => ['min' => 0, 'max' => 50],
+                    '%' => ['min' => 0, 'max' => 50],
+                    'em' => ['min' => 0, 'max' => 10],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .leaflet-popup-content-wrapper' => 'border-radius: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+        $this->add_responsive_control(
+            'map_popup_card_margin',
+            [
+                'label' => __('Margin', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em'],
+                'selectors' => [
+                    '{{WRAPPER}} .leaflet-popup' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        // Content Wrapper Controls
+        $this->add_responsive_control(
+            'map_popup_content_padding',
+            [
+                'label' => __('Content Padding', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em'],
+                'selectors' => [
+                    '{{WRAPPER}} .leaflet-popup-content' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                    '{{WRAPPER}} .leaflet-popup-content a' => 'display:inline-block;max-width: 100%;',
+                    '{{WRAPPER}} .cwp-map-popover' => 'width: 100%;',
+                ],
+            ]
+        );
+        $this->add_responsive_control(
+            'map_popup_content_width',
+            [
+                'label' => __('Content Width', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', '%', 'em'],
+                'range' => [
+                    'px' => ['min' => 100, 'max' => 500],
+                    '%' => ['min' => 10, 'max' => 100],
+                    'em' => ['min' => 5, 'max' => 30],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .leaflet-popup-content' => 'width: {{SIZE}}{{UNIT}} !important;',
+                    '{{WRAPPER}} .cwp-map-popover' => 'width: {{SIZE}}{{UNIT}} !important;',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'map_popup_content_radius',
+            [
+                'label' => __('Border Radius', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em'],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-map-popover' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        // Image Controls
+        $this->add_group_control(
+            \Elementor\Group_Control_Image_Size::get_type(),
+            [
+                'name' => 'map_popup_image',
+                'label' => __('Image Size', 'cubewp-framework'),
+                'default' => 'full',
+            ]
+        );
+        $this->add_responsive_control(
+            'map_popup_image_width',
+            [
+                'label' => __('Image Width', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', '%', 'em'],
+                'range' => [
+                    'px' => ['min' => 40, 'max' => 400],
+                    '%' => ['min' => 10, 'max' => 100],
+                    'em' => ['min' => 2, 'max' => 30],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-map-popover img' => 'width: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+        $this->add_responsive_control(
+            'map_popup_image_height',
+            [
+                'label' => __('Image Height', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', '%', 'em'],
+                'range' => [
+                    'px' => ['min' => 40, 'max' => 400],
+                    '%' => ['min' => 10, 'max' => 100],
+                    'em' => ['min' => 2, 'max' => 30],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-map-popover img' => 'height: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+        $this->add_control(
+            'map_popup_image_object_fit',
+            [
+                'label' => __('Image Object Fit', 'cubewp-framework'),
+                'type' => Controls_Manager::SELECT,
+                'default' => 'cover',
+                'options' => [
+                    'fill' => __('Fill', 'cubewp-framework'),
+                    'contain' => __('Contain', 'cubewp-framework'),
+                    'cover' => __('Cover', 'cubewp-framework'),
+                    'none' => __('None', 'cubewp-framework'),
+                    'scale-down' => __('Scale Down', 'cubewp-framework'),
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-map-popover img' => 'object-fit: {{VALUE}};',
+                ],
+            ]
+        );
+        $this->add_responsive_control(
+            'map_popup_image_position',
+            [
+                'label' => __('Image Position', 'plugin-name'),
+                'type' => \Elementor\Controls_Manager::SELECT,
+                'options' => [
+                    'left top' => __('Top Left', 'plugin-name'),
+                    'center top' => __('Top Center', 'plugin-name'),
+                    'right top' => __('Top Right', 'plugin-name'),
+                    'left center' => __('Center Left', 'plugin-name'),
+                    'center center' => __('Center Center', 'plugin-name'),
+                    'right center' => __('Center Right', 'plugin-name'),
+                    'left bottom' => __('Bottom Left', 'plugin-name'),
+                    'center bottom' => __('Bottom Center', 'plugin-name'),
+                    'right bottom' => __('Bottom Right', 'plugin-name'),
+                ],
+                'default' => 'center center',
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-map-popover img' => 'object-position: {{VALUE}};',
+                ],
+            ]
+        );
+        $this->add_responsive_control(
+            'map_popup_image_radius',
+            [
+                'label' => __('Image Radius', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em'],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-map-popover img' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        // Title Controls
+        $this->add_responsive_control(
+            'map_popup_title_padding',
+            [
+                'label' => __('Title Padding', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em'],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-map-popover h3' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+        $this->add_responsive_control(
+            'map_popup_title_alignment',
+            [
+                'label' => __('Title Alignment', 'cubewp-framework'),
+                'type' => Controls_Manager::CHOOSE,
+                'options' => [
+                    'left'    => [
+                        'title' => __('Left', 'cubewp-framework'),
+                        'icon'  => 'eicon-text-align-left',
+                    ],
+                    'center' => [
+                        'title' => __('Center', 'cubewp-framework'),
+                        'icon'  => 'eicon-text-align-center',
+                    ],
+                    'right'   => [
+                        'title' => __('Right', 'cubewp-framework'),
+                        'icon'  => 'eicon-text-align-right',
+                    ],
+                ],
+                'default' => 'left',
+                'toggle' => true,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-map-popover h3' => 'text-align: {{VALUE}};',
+                ],
+            ]
+        );
+        $this->add_control(
+            'map_popup_title_color',
+            [
+                'label' => __('Title Color', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-map-popover h3' => 'color: {{VALUE}};',
+                ],
+            ]
+        );
+        $this->add_control(
+            'map_popup_title_color_hover',
+            [
+                'label' => __('Title Color (Hover)', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-map-popover h3:hover' => 'color: {{VALUE}};',
+                ],
+            ]
+        );
+        $this->add_control(
+            'map_popup_title_color_hover_transition',
+            [
+                'label' => __('Transition (Hover)', 'cubewp-framework'),
+                'type' => Controls_Manager::TEXT,
+                'default' => 'color 0.3s',
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-map-popover h3' => 'transition: {{VALUE}};',
+                ],
+            ]
+        );
+        $this->add_group_control(
+            \Elementor\Group_Control_Typography::get_type(),
+            [
+                'name' => 'map_popup_title_typography',
+                'selector' => '{{WRAPPER}} .cwp-map-popover h3',
+            ]
+        );
+
+        $this->end_controls_section();
     }
 
     protected function render()
@@ -455,9 +1131,41 @@ class CubeWp_Elementor_Archive_Map_Widget extends Widget_Base
         CubeWp_Enqueue::enqueue_script('cubewp-leaflet-cluster');
         CubeWp_Enqueue::enqueue_script('cubewp-leaflet-fullscreen');
 
+        $show_data_for = isset($settings['show_data_for']) ? $settings['show_data_for'] : 'mobile_desktop';
+
+        if (!cubewp_is_elementor_editing()) {
+            if ($show_data_for == 'mobile') {
+                if (!wp_is_mobile()) {
+                    return;
+                }
+            } elseif ($show_data_for == 'desktop') {
+                if (wp_is_mobile()) {
+                    return;
+                }
+            }
+        }
+
+
         $popup_enabled = ($settings['enable_map_popup'] === 'yes');
         $display_type  = $settings['map_display_type'];
 ?>
+        <?php
+        // Build the custom map pin HTML if icon enabled
+        $map_pin_html = '';
+        if (isset($settings['custom_map_pin_switcher']) && $settings['custom_map_pin_switcher'] === 'yes' && !empty($settings['custom_map_pin_icon'])) {
+            ob_start();
+        ?>
+            <span class="cwp-map-pin-icon">
+                <?php
+                if (class_exists('Elementor\Icons_Manager')) {
+                    \Elementor\Icons_Manager::render_icon($settings['custom_map_pin_icon'], ['aria-hidden' => 'true']);
+                }
+                ?>
+            </span>
+        <?php
+            $map_pin_html = trim(ob_get_clean());
+        }
+        ?>
         <div class="cwp-archive-map-wrapper map-display-<?php echo esc_attr($display_type); ?> <?php echo $popup_enabled ? 'map-hidden' : ''; ?>">
 
             <?php if ($popup_enabled) : ?>
@@ -476,7 +1184,7 @@ class CubeWp_Elementor_Archive_Map_Widget extends Widget_Base
                 <?php endif; ?>
                 <div class="cwp-archive-content-map-inner">
 
-                    <div class="cwp-archive-content-map">
+                    <div class="cwp-archive-content-map" <?php if (!empty($map_pin_html)) echo 'data-mappin-html="' . esc_attr($map_pin_html) . '"'; ?>>
 
                     </div>
                 </div>
@@ -491,11 +1199,11 @@ class CubeWp_Elementor_Archive_Map_Widget extends Widget_Base
                         CWP_Cluster_Map();
                     }
                 };
-
+                initMap();
                 $(document).ready(function() {
                     initMap();
 
-                    $('.cwp-map-toggle-btn').on('click', function() {
+                    $('.cwp-map-toggle-btn').off('click.cwpMapToggle').on('click.cwpMapToggle', function() {
                         const wrapper = $(this).closest('.cwp-archive-map-wrapper');
 
                         if (wrapper.hasClass('map-display-popup')) {
@@ -505,17 +1213,23 @@ class CubeWp_Elementor_Archive_Map_Widget extends Widget_Base
                             wrapper.toggleClass('map-hidden');
                         }
 
-                        // Force refresh Leaflet
+                        // Rebuild map with latest AJAX coordinates after becoming visible.
+                        if (typeof window.CWP_Refresh_Cluster_Map === 'function') {
+                            window.CWP_Refresh_Cluster_Map();
+                        }
+
+                        // Force refresh Leaflet viewport size
                         setTimeout(() => {
                             window.dispatchEvent(new Event('resize'));
                         }, 200);
                     });
 
-                    $('.cwp-map-close-btn').on('click', function() {
+                    $('.cwp-map-close-btn').off('click.cwpMapClose').on('click.cwpMapClose', function() {
                         const wrapper = $(this).closest('.cwp-archive-map-wrapper');
                         wrapper.removeClass('map-active');
                         $('body').removeClass('cwp-map-open');
-                    });
+                    }); 
+                 
                 });
             })(jQuery);
         </script>

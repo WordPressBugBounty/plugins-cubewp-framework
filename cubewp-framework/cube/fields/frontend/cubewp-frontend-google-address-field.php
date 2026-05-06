@@ -55,13 +55,30 @@ class CubeWp_Frontend_Google_Address_Field extends CubeWp_Frontend {
         );
         $input_attrs['extra_attrs'] = isset($args['extra_attrs']) ? $args['extra_attrs'] : '';
         $input_attrs['extra_attrs'] .= ' autocomplete="off" data-placeholder="' . esc_html__("Enter a Location", "cubewp-framework") . '"';
+        if ( isset( $args['map_use'] ) && $args['map_use'] == '1' ) {
+            $input_attrs['extra_attrs'] .= ' data-city-location="1"';
+            $cwp_options = get_option( 'cwpOptions', array() );
+            if ( ! empty( $cwp_options['google_address_country_code'] ) ) {
+                $input_attrs['extra_attrs'] .= ' data-country-code="' . esc_attr( sanitize_text_field( $cwp_options['google_address_country_code'] ) ) . '"';
+            }
+        }
         
         $output .= '<div class="cwp-field-google-address-input-container">';
             $output .= cwp_render_text_input( $input_attrs );
         $output .= '
-            <svg xmlns="http://www.w3.org/2000/svg" width="15px" height="15px" class="'.$args['id'].'-cwp-get-current-location cwp-get-current-location" viewBox="0 0 28.278 28.278">
-                <path d="M17.995,12.854a5.141,5.141,0,1,0,5.141,5.141,5.14,5.14,0,0,0-5.141-5.141ZM29.486,16.71A11.561,11.561,0,0,0,19.28,6.5V3.856H16.71V6.5A11.561,11.561,0,0,0,6.5,16.71H3.856V19.28H6.5A11.561,11.561,0,0,0,16.71,29.486v2.648H19.28V29.486A11.561,11.561,0,0,0,29.486,19.28h2.648V16.71H29.486ZM17.995,26.992a9,9,0,1,1,9-9A9,9,0,0,1,17.995,26.992Z" transform="translate(-3.856 -3.856)"/>
-            </svg>
+            <span class="cwp-icon-tooltip-wrapper cwp-get-current-location-wrapper">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15px" height="15px" class="'.$args['id'].'-cwp-get-current-location cwp-get-current-location" viewBox="0 0 28.278 28.278" title="'.esc_attr__("Get Current Location", "cubewp-framework").'">
+                    <path d="M17.995,12.854a5.141,5.141,0,1,0,5.141,5.141,5.14,5.14,0,0,0-5.141-5.141ZM29.486,16.71A11.561,11.561,0,0,0,19.28,6.5V3.856H16.71V6.5A11.561,11.561,0,0,0,6.5,16.71H3.856V19.28H6.5A11.561,11.561,0,0,0,16.71,29.486v2.648H19.28V29.486A11.561,11.561,0,0,0,29.486,19.28h2.648V16.71H29.486ZM17.995,26.992a9,9,0,1,1,9-9A9,9,0,0,1,17.995,26.992Z" transform="translate(-3.856 -3.856)"/>
+                </svg>
+                <span class="cwp-icon-tooltip">'.esc_html__("Get Current Location", "cubewp-framework").'</span>
+            </span>
+            <span class="cwp-icon-tooltip-wrapper cwp-drop-pin-wrapper">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15px" height="15px" class="'.$args['id'].'-cwp-drop-pin cwp-drop-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" title="'.esc_attr__("Drop Pin on Map", "cubewp-framework").'">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                <span class="cwp-icon-tooltip">'.esc_html__("Drop Pin on Map", "cubewp-framework").'</span>
+            </span>
         </div>';
         
         $input_attrs = array( 
@@ -84,6 +101,25 @@ class CubeWp_Frontend_Google_Address_Field extends CubeWp_Frontend {
         
         $id = isset($args['id']) ? $args['id'] : $args['name'];
         $output .= '<div class="cwp-map-holder" id="map-'. esc_attr($id) .'"></div>';
+    
+        // Drop Pin Modal
+        $output .= '<div class="cwp-drop-pin-modal" id="cwp-drop-pin-modal-'. esc_attr($id) .'" style="display: none;">';
+            $output .= '<div class="cwp-drop-pin-modal-overlay"></div>';
+            $output .= '<div class="cwp-drop-pin-modal-content">';
+                $output .= '<div class="cwp-drop-pin-modal-header">';
+                    $output .= '<h3>'. esc_html__("Drop Pin on Map", "cubewp-framework") .'</h3>';
+                    $output .= '<span class="cwp-drop-pin-modal-close">&times;</span>';
+                $output .= '</div>';
+                $output .= '<div class="cwp-drop-pin-modal-body">';
+                    $output .= '<div class="cwp-drop-pin-map-holder" id="cwp-drop-pin-map-'. esc_attr($id) .'"></div>';
+                    $output .= '<p class="cwp-drop-pin-instruction">'. esc_html__("Click anywhere on the map to drop a pin and select the location.", "cubewp-framework") .'</p>';
+                $output .= '</div>';
+                $output .= '<div class="cwp-drop-pin-modal-footer">';
+                    $output .= '<button type="button" class="cwp-drop-pin-cancel">'. esc_html__("Cancel", "cubewp-framework") .'</button>';
+                    $output .= '<button type="button" class="cwp-drop-pin-confirm">'. esc_html__("Confirm Location", "cubewp-framework") .'</button>';
+                $output .= '</div>';
+            $output .= '</div>';
+        $output .= '</div>';
     
         $output .= '</div>';
     
@@ -119,6 +155,14 @@ class CubeWp_Frontend_Google_Address_Field extends CubeWp_Frontend {
                 'value'        =>    isset($args['value']) ? $args['value'] : '',
                 'placeholder'  =>    $args['placeholder']
             );
+            if ( isset( $args['map_use'] ) && $args['map_use'] == '1' ) {
+                $input_attrs['extra_attrs'] = isset( $input_attrs['extra_attrs'] ) ? $input_attrs['extra_attrs'] : '';
+                $input_attrs['extra_attrs'] .= ' data-city-location="1"';
+                $cwp_options = get_option( 'cwpOptions', array() );
+                if ( ! empty( $cwp_options['google_address_country_code'] ) ) {
+                    $input_attrs['extra_attrs'] .= ' data-country-code="' . esc_attr( sanitize_text_field( $cwp_options['google_address_country_code'] ) ) . '"';
+                }
+            }
             
             $output .= '<div class="cwp-field-google-address-input-container">';
                 $output .= cwp_render_text_input( $input_attrs );
@@ -159,6 +203,7 @@ class CubeWp_Frontend_Google_Address_Field extends CubeWp_Frontend {
 				$type = 'hidden';
 				$value = '';
 				$extra_attrs = '';
+                $extra_attrs = 'min="' . $min_radius . '" max="' . $max_radius . '" ';
 				if (isset($args['range']) && !empty($args['range'])) {
 					$type = 'range';
 					$value = $args['range'];

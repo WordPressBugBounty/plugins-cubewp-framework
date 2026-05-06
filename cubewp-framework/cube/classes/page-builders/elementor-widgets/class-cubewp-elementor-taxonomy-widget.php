@@ -57,12 +57,22 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base
 
 	protected function register_controls()
 	{
-		$args       = array(
-			'public'   => true,
-			'_builtin' => false
-		);
-		$taxonomies = get_taxonomies($args);
-		$taxonomies = self::cwp_get_taxonomies_label($taxonomies);
+		// $args       = array(
+		// 	'public'   => true,
+		// 	'_builtin' => false
+		// );
+		// $taxonomies = get_taxonomies($args);
+		// $taxonomies = self::cwp_get_taxonomies_label($taxonomies);
+		$taxonomies = self::cwp_get_taxonomy_options();
+		//Default Post Taxonomies
+		// $post_taxonomies = get_object_taxonomies('post');
+		// foreach ($post_taxonomies as $taxonomy) {
+		// 	if (taxonomy_exists($taxonomy) && $taxonomy !== 'post_format') {
+		// 		$label = get_taxonomy($taxonomy)->labels->name;
+		// 		$taxonomies[$taxonomy] = $label;
+		// 	}
+		// }
+
 		$this->start_controls_section('cubewp_widgets_section', array(
 			'label' => esc_html__('Widget Options', 'cubewp-framework'),
 			'tab'   => Controls_Manager::TAB_CONTENT,
@@ -270,10 +280,131 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base
 			'default' => 'no'
 		));
 
+		// New Control: Get Terms Based on Post
+		$this->add_control(
+			'get_terms_from_post',
+			[
+				'type'    => Controls_Manager::SWITCHER,
+				'label'   => esc_html__('Post Associated Terms', 'cubewp-framework'),
+				'description' => esc_html__('When enabled, will show only terms attached to the selected post', 'cubewp-framework'),
+				'default' => 'no',
+				'separator' => 'before',
+			]
+		);
+
+		// Post Source Selection
+		$this->add_control(
+			'post_source',
+			[
+				'type'    => Controls_Manager::SELECT,
+				'label'   => esc_html__('Post Source', 'cubewp-framework'),
+				'options' => [
+					'current'  => esc_html__('Current Post', 'cubewp-framework'),
+					'specific' => esc_html__('Specific Post', 'cubewp-framework'),
+				],
+				'default' => 'current',
+				'condition' => [
+					'get_terms_from_post' => 'yes',
+				],
+			]
+		);
+
+		// Specific Post ID
+		$this->add_control(
+			'specific_post_id',
+			[
+				'type'        => Controls_Manager::NUMBER,
+				'label'       => esc_html__('Post ID', 'cubewp-framework'),
+				'description' => esc_html__('Enter the ID of the specific post', 'cubewp-framework'),
+				'min'         => 1,
+				'condition'   => [
+					'get_terms_from_post' => 'yes',
+					'post_source' => 'specific',
+				],
+			]
+		);
+
+		// Terms source: all, by IDs, or by slugs
+		$this->add_control(
+			'terms_source',
+			[
+				'type'        => Controls_Manager::SELECT,
+				'label'       => esc_html__('Terms Source', 'cubewp-framework'),
+				'options'     => [
+					'all'       => esc_html__('All Terms', 'cubewp-framework'),
+					'by_ids'    => esc_html__('Specific Term IDs', 'cubewp-framework'),
+					'by_slugs'  => esc_html__('Specific Term Slugs', 'cubewp-framework'),
+				],
+				'default'     => 'all',
+				'separator'   => 'before',
+			]
+		);
+
+		$this->add_control(
+			'term_ids',
+			[
+				'type'        => Controls_Manager::TEXT,
+				'label'       => esc_html__('Term IDs', 'cubewp-framework'),
+				'description' => esc_html__('Enter comma-separated term IDs to show only those terms (e.g. 5, 12, 23)', 'cubewp-framework'),
+				'placeholder' => '5, 12, 23',
+				'condition'   => [
+					'terms_source' => 'by_ids',
+				],
+			]
+		);
+
+		$this->add_control(
+			'term_slugs',
+			[
+				'type'        => Controls_Manager::TEXT,
+				'label'       => esc_html__('Term Slugs', 'cubewp-framework'),
+				'description' => esc_html__('Enter comma-separated term slugs to show only those terms (e.g. news, events, blog)', 'cubewp-framework'),
+				'placeholder' => 'news, events, blog',
+				'condition'   => [
+					'terms_source' => 'by_slugs',
+				],
+			]
+		);
+
+		// Ordering
+		$this->add_control(
+			'orderby',
+			[
+				'type'    => Controls_Manager::SELECT,
+				'label'   => esc_html__('Order By', 'cubewp-framework'),
+				'options' => [
+					'name'        => esc_html__('Name', 'cubewp-framework'),
+					'slug'        => esc_html__('Slug', 'cubewp-framework'),
+					'term_id'     => esc_html__('Term ID', 'cubewp-framework'),
+					'id'          => esc_html__('ID', 'cubewp-framework'),
+					'count'       => esc_html__('Count', 'cubewp-framework'),
+					'description' => esc_html__('Description', 'cubewp-framework'),
+					'parent'      => esc_html__('Parent', 'cubewp-framework'),
+					'none'        => esc_html__('None', 'cubewp-framework'),
+				],
+				'default' => 'name',
+				'separator' => 'before',
+			]
+		);
+
+		$this->add_control(
+			'order',
+			[
+				'type'    => Controls_Manager::SELECT,
+				'label'   => esc_html__('Order', 'cubewp-framework'),
+				'options' => [
+					'ASC'  => esc_html__('Ascending', 'cubewp-framework'),
+					'DESC' => esc_html__('Descending', 'cubewp-framework'),
+				],
+				'default' => 'ASC',
+			]
+		);
+
 		do_action('cubewp_taxonomy_widget_additional_controls', $this);
 		$this->end_controls_section();
 		$this->cwp_get_term_grids_controls();
 		$this->cubewp_taxonomy_add_slider_controls();
+		$this->cwp_get_taxonomy_style_controls();
 	}
 
 	private function cwp_get_output_style_controls()
@@ -303,7 +434,7 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base
 			));
 			$this->add_control('icon_media_name_' . $taxonomy, array(
 				'type'        => Controls_Manager::TEXT,
-				'label'       => esc_html__('Icon Or Image', 'cubewp-framework'),
+				'label'       => esc_html__('Icon Or Image Term Meta', 'cubewp-framework'),
 				'description' => esc_html__('Enter taxonomy custom field slug for term icon or image.', 'cubewp-framework'),
 				'condition'   => array(
 					'taxonomy' => $taxonomy,
@@ -593,6 +724,545 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base
 		$this->end_controls_section();
 	}
 
+	private function cwp_get_taxonomy_style_controls()
+	{
+		// ============ STYLING CONTROLS ============
+
+		// Section: Container Styling
+		$this->start_controls_section(
+			'section_container_style',
+			[
+				'label' => esc_html__('Container', 'cubewp-framework'),
+				'tab'   => Controls_Manager::TAB_STYLE,
+			]
+		);
+
+		$this->add_responsive_control(
+			'container_padding',
+			[
+				'label'      => esc_html__('Padding', 'cubewp-framework'),
+				'type'       => Controls_Manager::DIMENSIONS,
+				'size_units' => ['px', '%', 'em', 'rem'],
+				'selectors'  => [
+					'{{WRAPPER}} .cwp-taxonomy-terms' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'container_margin',
+			[
+				'label'      => esc_html__('Margin', 'cubewp-framework'),
+				'type'       => Controls_Manager::DIMENSIONS,
+				'size_units' => ['px', '%', 'em', 'rem'],
+				'selectors'  => [
+					'{{WRAPPER}} .cwp-taxonomy-terms' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Background::get_type(),
+			[
+				'name' => 'container_background',
+				'label' => esc_html__('Background', 'cubewp-framework'),
+				'types' => ['classic', 'gradient'],
+				'selector' => '{{WRAPPER}} .cwp-taxonomy-terms',
+			]
+		);
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Border::get_type(),
+			[
+				'name' => 'container_border',
+				'label' => esc_html__('Border', 'cubewp-framework'),
+				'selector' => '{{WRAPPER}} .cwp-taxonomy-terms',
+			]
+		);
+
+		$this->add_responsive_control(
+			'container_border_radius',
+			[
+				'label'      => esc_html__('Border Radius', 'cubewp-framework'),
+				'type'       => Controls_Manager::DIMENSIONS,
+				'size_units' => ['px', '%', 'em', 'rem'],
+				'selectors'  => [
+					'{{WRAPPER}} .cwp-taxonomy-terms' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Box_Shadow::get_type(),
+			[
+				'name' => 'container_box_shadow',
+				'label' => esc_html__('Box Shadow', 'cubewp-framework'),
+				'selector' => '{{WRAPPER}} .cwp-taxonomy-terms',
+			]
+		);
+
+		$this->end_controls_section();
+
+		// Section: List View Styling
+		$this->start_controls_section(
+			'section_list_style',
+			[
+				'label' => esc_html__('List View', 'cubewp-framework'),
+				'tab'   => Controls_Manager::TAB_STYLE,
+				// 'condition' => [
+				// 	'term_style' => 'list',
+				// ],
+			]
+		);
+
+		// List Container
+		$this->add_control(
+			'list_container_heading',
+			[
+				'label' => esc_html__('List Item Container', 'cubewp-framework'),
+				'type' => Controls_Manager::HEADING,
+				'separator' => 'before',
+			]
+		);
+
+		$this->add_responsive_control(
+			'list_item_padding',
+			[
+				'label'      => esc_html__('Padding', 'cubewp-framework'),
+				'type'       => Controls_Manager::DIMENSIONS,
+				'size_units' => ['px', '%', 'em', 'rem'],
+				'selectors'  => [
+					'{{WRAPPER}} .cwp-taxonomy-term-list' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'list_item_margin',
+			[
+				'label'      => esc_html__('Margin', 'cubewp-framework'),
+				'type'       => Controls_Manager::DIMENSIONS,
+				'size_units' => ['px', '%', 'em', 'rem'],
+				'selectors'  => [
+					'{{WRAPPER}} .cwp-taxonomy-term-list' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Background::get_type(),
+			[
+				'name' => 'list_item_background',
+				'label' => esc_html__('Background', 'cubewp-framework'),
+				'types' => ['classic', 'gradient'],
+				'selector' => '{{WRAPPER}} .cwp-taxonomy-term-list',
+			]
+		);
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Border::get_type(),
+			[
+				'name' => 'list_item_border',
+				'label' => esc_html__('Border', 'cubewp-framework'),
+				'selector' => '{{WRAPPER}} .cwp-taxonomy-term-list',
+			]
+		);
+
+		$this->add_responsive_control(
+			'list_item_border_radius',
+			[
+				'label'      => esc_html__('Border Radius', 'cubewp-framework'),
+				'type'       => Controls_Manager::DIMENSIONS,
+				'size_units' => ['px', '%', 'em', 'rem'],
+				'selectors'  => [
+					'{{WRAPPER}} .cwp-taxonomy-term-list' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Box_Shadow::get_type(),
+			[
+				'name' => 'list_item_box_shadow',
+				'label' => esc_html__('Box Shadow', 'cubewp-framework'),
+				'selector' => '{{WRAPPER}} .cwp-taxonomy-term-list',
+			]
+		);
+
+		// Link Typography
+		$this->add_control(
+			'list_link_heading',
+			[
+				'label' => esc_html__('Link Typography', 'cubewp-framework'),
+				'type' => Controls_Manager::HEADING,
+				'separator' => 'before',
+			]
+		);
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Typography::get_type(),
+			[
+				'name' => 'list_link_typography',
+				'label' => esc_html__('Typography', 'cubewp-framework'),
+				'selector' => '{{WRAPPER}} .cwp-taxonomy-term-list a',
+			]
+		);
+
+		// Link Colors
+		$this->start_controls_tabs('list_link_tabs');
+
+		$this->start_controls_tab(
+			'list_link_normal',
+			[
+				'label' => esc_html__('Normal', 'cubewp-framework'),
+			]
+		);
+
+		$this->add_control(
+			'list_link_color',
+			[
+				'label' => esc_html__('Text Color', 'cubewp-framework'),
+				'type' => Controls_Manager::COLOR,
+				'selectors' => [
+					'{{WRAPPER}} .cwp-taxonomy-term-list a' => 'color: {{VALUE}};',
+				],
+			]
+		);
+
+		$this->end_controls_tab();
+
+		$this->start_controls_tab(
+			'list_link_hover',
+			[
+				'label' => esc_html__('Hover', 'cubewp-framework'),
+			]
+		);
+
+		$this->add_control(
+			'list_link_color_hover',
+			[
+				'label' => esc_html__('Text Color', 'cubewp-framework'),
+				'type' => Controls_Manager::COLOR,
+				'selectors' => [
+					'{{WRAPPER}} .cwp-taxonomy-term-list a:hover' => 'color: {{VALUE}};',
+				],
+			]
+		);
+
+		$this->add_control(
+			'list_item_background_hover',
+			[
+				'label' => esc_html__('Background Color', 'cubewp-framework'),
+				'type' => Controls_Manager::COLOR,
+				'selectors' => [
+					'{{WRAPPER}} .cwp-taxonomy-term-list:hover' => 'background-color: {{VALUE}};',
+				],
+			]
+		);
+
+		$this->end_controls_tab();
+
+		$this->end_controls_tabs();
+
+		$this->end_controls_section();
+
+		// Section: Boxed/Grid View Styling
+		$this->start_controls_section(
+			'section_boxed_style',
+			[
+				'label' => esc_html__('Boxed/Grid View', 'cubewp-framework'),
+				'tab'   => Controls_Manager::TAB_STYLE,
+				// 'condition' => [
+				// 	'term_style' => 'boxed',
+				// ],
+			]
+		);
+
+		// Box Container
+		$this->add_control(
+			'box_container_heading',
+			[
+				'label' => esc_html__('Box Container', 'cubewp-framework'),
+				'type' => Controls_Manager::HEADING,
+				'separator' => 'before',
+			]
+		);
+
+		$this->add_responsive_control(
+			'box_container_padding',
+			[
+				'label'      => esc_html__('Padding', 'cubewp-framework'),
+				'type'       => Controls_Manager::DIMENSIONS,
+				'size_units' => ['px', '%', 'em', 'rem'],
+				'selectors'  => [
+					'{{WRAPPER}} .cwp-taxonomy-term-box' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'box_container_margin',
+			[
+				'label'      => esc_html__('Margin', 'cubewp-framework'),
+				'type'       => Controls_Manager::DIMENSIONS,
+				'size_units' => ['px', '%', 'em', 'rem'],
+				'selectors'  => [
+					'{{WRAPPER}} .cwp-taxonomy-term-box' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Background::get_type(),
+			[
+				'name' => 'box_container_background',
+				'label' => esc_html__('Background', 'cubewp-framework'),
+				'types' => ['classic', 'gradient'],
+				'selector' => '{{WRAPPER}} .cwp-taxonomy-term-box',
+			]
+		);
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Border::get_type(),
+			[
+				'name' => 'box_container_border',
+				'label' => esc_html__('Border', 'cubewp-framework'),
+				'selector' => '{{WRAPPER}} .cwp-taxonomy-term-box',
+			]
+		);
+
+		$this->add_responsive_control(
+			'box_container_border_radius',
+			[
+				'label'      => esc_html__('Border Radius', 'cubewp-framework'),
+				'type'       => Controls_Manager::DIMENSIONS,
+				'size_units' => ['px', '%', 'em', 'rem'],
+				'selectors'  => [
+					'{{WRAPPER}} .cwp-taxonomy-term-box' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Box_Shadow::get_type(),
+			[
+				'name' => 'box_container_box_shadow',
+				'label' => esc_html__('Box Shadow', 'cubewp-framework'),
+				'selector' => '{{WRAPPER}} .cwp-taxonomy-term-box',
+			]
+		);
+
+		// Box Heading
+		$this->add_control(
+			'box_heading_heading',
+			[
+				'label' => esc_html__('Box Heading', 'cubewp-framework'),
+				'type' => Controls_Manager::HEADING,
+				'separator' => 'before',
+			]
+		);
+
+		$this->add_responsive_control(
+			'box_heading_padding',
+			[
+				'label'      => esc_html__('Padding', 'cubewp-framework'),
+				'type'       => Controls_Manager::DIMENSIONS,
+				'size_units' => ['px', '%', 'em', 'rem'],
+				'selectors'  => [
+					'{{WRAPPER}} .cwp-taxonomy-term-box-heading' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'box_heading_margin',
+			[
+				'label'      => esc_html__('Margin', 'cubewp-framework'),
+				'type'       => Controls_Manager::DIMENSIONS,
+				'size_units' => ['px', '%', 'em', 'rem'],
+				'selectors'  => [
+					'{{WRAPPER}} .cwp-taxonomy-term-box-heading' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Background::get_type(),
+			[
+				'name' => 'box_heading_background',
+				'label' => esc_html__('Background', 'cubewp-framework'),
+				'types' => ['classic', 'gradient'],
+				'selector' => '{{WRAPPER}} .cwp-taxonomy-term-box-heading',
+			]
+		);
+
+		$this->add_responsive_control(
+			'box_heading_border_radius',
+			[
+				'label'      => esc_html__('Border Radius', 'cubewp-framework'),
+				'type'       => Controls_Manager::DIMENSIONS,
+				'size_units' => ['px', '%', 'em', 'rem'],
+				'selectors'  => [
+					'{{WRAPPER}} .cwp-taxonomy-term-box-heading' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				],
+			]
+		);
+
+		// Box Link Typography
+		$this->add_control(
+			'box_link_heading',
+			[
+				'label' => esc_html__('Link Typography', 'cubewp-framework'),
+				'type' => Controls_Manager::HEADING,
+				'separator' => 'before',
+			]
+		);
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Typography::get_type(),
+			[
+				'name' => 'box_link_typography',
+				'label' => esc_html__('Typography', 'cubewp-framework'),
+				'selector' => '{{WRAPPER}} .cwp-taxonomy-term-box-heading a',
+			]
+		);
+
+		// Box Link Colors
+		$this->start_controls_tabs('box_link_tabs');
+
+		$this->start_controls_tab(
+			'box_link_normal',
+			[
+				'label' => esc_html__('Normal', 'cubewp-framework'),
+			]
+		);
+
+		$this->add_control(
+			'box_link_color',
+			[
+				'label' => esc_html__('Text Color', 'cubewp-framework'),
+				'type' => Controls_Manager::COLOR,
+				'selectors' => [
+					'{{WRAPPER}} .cwp-taxonomy-term-box-heading a' => 'color: {{VALUE}};',
+				],
+			]
+		);
+
+		$this->end_controls_tab();
+
+		$this->start_controls_tab(
+			'box_link_hover',
+			[
+				'label' => esc_html__('Hover', 'cubewp-framework'),
+			]
+		);
+
+		$this->add_control(
+			'box_link_color_hover',
+			[
+				'label' => esc_html__('Text Color', 'cubewp-framework'),
+				'type' => Controls_Manager::COLOR,
+				'selectors' => [
+					'{{WRAPPER}} .cwp-taxonomy-term-box-heading a:hover' => 'color: {{VALUE}};',
+				],
+			]
+		);
+
+		$this->add_control(
+			'box_container_background_hover',
+			[
+				'label' => esc_html__('Box Background Hover', 'cubewp-framework'),
+				'type' => Controls_Manager::COLOR,
+				'selectors' => [
+					'{{WRAPPER}} .cwp-taxonomy-term-box:hover' => 'background-color: {{VALUE}};',
+				],
+			]
+		);
+
+		$this->add_control(
+			'box_heading_background_hover',
+			[
+				'label' => esc_html__('Heading Background Hover', 'cubewp-framework'),
+				'type' => Controls_Manager::COLOR,
+				'selectors' => [
+					'{{WRAPPER}} .cwp-taxonomy-term-box:hover .cwp-taxonomy-term-box-heading' => 'background-color: {{VALUE}};',
+				],
+			]
+		);
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Box_Shadow::get_type(),
+			[
+				'name' => 'box_container_box_shadow_hover',
+				'label' => esc_html__('Box Shadow Hover', 'cubewp-framework'),
+				'selector' => '{{WRAPPER}} .cwp-taxonomy-term-box:hover',
+			]
+		);
+
+		$this->end_controls_tab();
+
+		$this->end_controls_tabs();
+
+		// Icon Styling
+		$this->add_control(
+			'box_icon_heading',
+			[
+				'label' => esc_html__('Icon', 'cubewp-framework'),
+				'type' => Controls_Manager::HEADING,
+				'separator' => 'before',
+			]
+		);
+
+		$this->add_control(
+			'box_icon_color',
+			[
+				'label' => esc_html__('Icon Color', 'cubewp-framework'),
+				'type' => Controls_Manager::COLOR,
+				'selectors' => [
+					'{{WRAPPER}} .cwp-taxonomy-term-box-heading i' => 'color: {{VALUE}};',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'box_icon_size',
+			[
+				'label' => esc_html__('Icon Size', 'cubewp-framework'),
+				'type' => Controls_Manager::SLIDER,
+				'size_units' => ['px', 'em', 'rem'],
+				'range' => [
+					'px' => [
+						'min' => 0,
+						'max' => 100,
+					],
+				],
+				'selectors' => [
+					'{{WRAPPER}} .cwp-taxonomy-term-box-heading i' => 'font-size: {{SIZE}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'box_icon_spacing',
+			[
+				'label' => esc_html__('Icon Spacing', 'cubewp-framework'),
+				'type' => Controls_Manager::SLIDER,
+				'size_units' => ['px', 'em', 'rem'],
+				'range' => [
+					'px' => [
+						'min' => 0,
+						'max' => 50,
+					],
+				],
+				'selectors' => [
+					'{{WRAPPER}} .cwp-taxonomy-term-box-heading i' => 'margin-right: {{SIZE}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->end_controls_section();
+	}
+
 	public function cwp_get_taxonomies_label($taxonomies)
 	{
 		$taxonomy_labels = array();
@@ -604,6 +1274,25 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base
 				}
 			}
 		return $taxonomy_labels;
+	}
+
+	private function cwp_get_taxonomy_options()
+	{
+		$args = array(
+			'public' => true,
+			'show_ui' => true, // Only show UI-enabled taxonomies
+		);
+
+		$taxonomies = get_taxonomies($args, 'objects');
+		$options = array();
+
+		foreach ($taxonomies as $taxonomy => $taxonomy_obj) {
+			if (!empty($taxonomy_obj->labels->name)) {
+				$options[$taxonomy] = $taxonomy_obj->labels->name;
+			}
+		}
+
+		return $options;
 	}
 
 	protected function render()
@@ -646,6 +1335,21 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base
 			]
 		);
 
+		$this->add_control(
+			'slider_device_option',
+			[
+				'label'   => esc_html__('Use Slider for', 'valuepack-addons'),
+				'type'    => Controls_Manager::SELECT,
+				'options' => [
+					'all_devices'  => esc_html__('All Devices', 'valuepack-addons'),
+					'mobile_only'  => esc_html__('Mobile Only', 'valuepack-addons'),
+				],
+				'default' => 'all_devices',
+				'condition' => [
+					'cwp_enable_slider' => 'yes',
+				],
+			]
+		);
 
 		$this->add_responsive_control(
 			'slider_post_spacing',
@@ -753,6 +1457,19 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base
 				'label'   => esc_html__('Infinite Loop', 'cubewp-framework'),
 				'default' => 'yes',
 				'description' => esc_html__('Enable or disable infinite loop for the slider.', 'cubewp-framework'),
+				'condition'   => [
+					'cwp_enable_slider' => 'yes',
+				],
+			]
+		);
+
+		$this->add_control(
+			'draggable',
+			[
+				'type'    => \Elementor\Controls_Manager::SWITCHER,
+				'label'   => esc_html__('Draggable', 'cubewp-framework'),
+				'default' => 'yes',
+				'description' => esc_html__('Enable or disable draggable for the slider.', 'cubewp-framework'),
 				'condition'   => [
 					'cwp_enable_slider' => 'yes',
 				],

@@ -1,4 +1,3 @@
-
 function Tiles() {
     var tiles = false;
     if (cubewp_map_params.map_option == 'google') {
@@ -10,7 +9,8 @@ function Tiles() {
         });
     } else if (cubewp_map_params.map_option == 'openstreet') {
         tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 18, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            maxZoom: 18,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         });
     } else if (cubewp_map_params.map_option == 'mapbox') {
         tiles = L.tileLayer('https://api.mapbox.com/styles/v1/' + cubewp_map_params.map_style + '/tiles/256/{z}/{x}/{y}?access_token=' + cubewp_map_params.mapbox_token, {
@@ -54,11 +54,15 @@ function CWP_Single_Map() {
             if (typeof latitude == "undefined" || latitude === '') latitude = 51.5072;
             if (typeof longitude == "undefined" || longitude === '') longitude = -0.128;
 
-            if (checkIfValidlatitudeAndlongitude(latitude + ',' + latitude)) {
+            if (checkIfValidlatitudeAndlongitude(latitude + ',' + longitude)) {
                 var map = latlng = marker = null;
                 latlng = new L.latLng(latitude, longitude);
                 jQuery('#' + uniqueID).css('height', '100%');
-                map = new L.map(uniqueID, {center: latlng, zoom: cubewp_map_params.map_zoom, layers: [tiles]});
+                map = new L.map(uniqueID, {
+                    center: latlng,
+                    zoom: cubewp_map_params.map_zoom,
+                    layers: [tiles]
+                });
                 marker = new L.marker(new L.LatLng(latitude, longitude), markerOptions);
                 map.addLayer(marker);
             }
@@ -70,65 +74,159 @@ CWP_Single_Map();
 
 function checkIfValidlatitudeAndlongitude(str) {
     // Regular expression to check if string is a latitude and longitude
-    const regexExp = /^((\-?|\+?)?\d+(\.\d+)?),\s*((\-?|\+?)?\d+(\.\d+)?)$/gi;
+    const regexExp = /^((\-?|\+?)?\d+(\.\d+)?),\s*((\-?|\+?)?\d+(\.\d+)?)$/i;
 
     return regexExp.test(str);
 }
-function CWP_Cluster_Map(args ='') {
+
+
+var CWP_MAP_SETTINGS = {
+    pin: {
+        useHtml: true, // true = HTML pin | false = image pin
+        defaultIcon: '', // fallback image icon
+        size: [30, 42],
+        anchor: [15, 42],
+        popupAnchor: [0, -42]
+    },
+    cluster: {
+        enabled: true
+    },
+    map: {
+        scrollWheelZoom: true,
+        fitPadding: [50, 50]
+    }
+};
+
+// Keep last coordinates so map can be rebuilt when hidden container becomes visible.
+var CWP_MAP_LAST_ARGS = [];
+
+function CWP_Cluster_Map(args = '') {
+
     var cwpArchiveMap = jQuery('.cwp-archive-content-map');
-    if(cwpArchiveMap.length > 0){
-        var tiles = Tiles(),
-            latlng = L.latLng(cubewp_map_params.map_latitude, cubewp_map_params.map_longitude);
-        if (!tiles) {
-            return false;
+    if (!cwpArchiveMap.length) return;
+
+    var tiles = Tiles();
+    if (!tiles) return;
+
+    var latlng = L.latLng(
+        cubewp_map_params.map_latitude,
+        cubewp_map_params.map_longitude
+    );
+
+    var MapID = 'archive-map';
+    cwpArchiveMap.empty().html('<div id="' + MapID + '"></div>');
+
+    var map = L.map(MapID, {
+        center: latlng,
+        zoom: cubewp_map_params.map_zoom,
+        layers: [tiles],
+        fullscreenControl: false
+    });
+
+    map.addControl(new L.Control.Fullscreen());
+
+    if (!args || !args.length) {
+        return;
+    }
+
+    CWP_MAP_LAST_ARGS = args;
+
+    var markers = CWP_MAP_SETTINGS.cluster.enabled ?
+        L.markerClusterGroup() :
+        L.layerGroup();
+
+    var showmap = false;
+
+    for (var i = 0; i < args.length; i++) {
+
+        if (!checkIfValidlatitudeAndlongitude(args[i][0] + ',' + args[i][1])) {
+            continue;
         }
-        var MapID = 'archive-map';
-        cwpArchiveMap.empty();
-        cwpArchiveMap.html('<div id="' + MapID + '"></div>');
-        var map = L.map(MapID, {center: latlng,fullscreenControl: false, zoom: cubewp_map_params.map_zoom, layers: [tiles]});
-        map.addControl(new L.Control.Fullscreen());
-        if(args !== ''){
-            var markers = L.markerClusterGroup();
-            var showmap = 'false';
-            for (var i = 0; i < args.length; i++) {
-                if(checkIfValidlatitudeAndlongitude(args[i][0]+','+args[i][1])){
-                    showmap = 'true';
-                    var a = args[i],
-                        title = a[2],
-                        url = a[3],
-                        thumbnail = a[4],
-                        popover = '',
-                        pinIconUrl = a[5],
-                        markerOptions = {
-                            title: title
-                        };
-                        if (pinIconUrl) {
-                            markerOptions.icon = createCustomIcon(pinIconUrl);
-                        }
-                        marker = L.marker(new L.LatLng(a[0], a[1]), markerOptions);
-                    popover = '<div class="cwp-map-popover">' +
-                        '<a href="' + url + '" target="_blank"><img src="' + thumbnail + '" alt="' + title + '" />' +
-                        '<h3>' + title + '</h3></a>' +
-                    '</div>';
-                    marker.bindPopup(popover);
-                    markers.addLayer(marker);
-                }
-            }
-            if(showmap == 'true'){
-                map.addLayer(markers);
-                map.fitBounds(markers.getBounds(), {padding: [50, 50]});
-                map.scrollWheelZoom.enable();
-                map.invalidateSize();
-                map.dragging.enable();
-            }
+
+        showmap = true;
+
+        var a = args[i];
+        var lat = a[0];
+        var lng = a[1];
+        var title = a[2];
+        var url = a[3];
+        var thumbnail = a[4];
+        var pinIconUrl = a[5] || CWP_MAP_SETTINGS.pin.defaultIcon;
+
+        var markerOptions = {
+            title: title
+        };
+
+        // ✅ HTML PIN FROM DATA ATTRIBUTE
+        var pinHtml = cwpArchiveMap.data('mappin-html');
+
+        if (CWP_MAP_SETTINGS.pin.useHtml && pinHtml) {
+            markerOptions.icon = createCustomIcons(pinHtml);
         }
+        // ✅ IMAGE PIN FALLBACK
+        else if (pinIconUrl) {
+            markerOptions.icon = createCustomIcon(pinIconUrl);
+        }
+
+        var marker = L.marker([lat, lng], markerOptions);
+
+        var popover =
+            '<div class="cwp-map-popover">' +
+            '<a href="' + url + '" target="_blank">' +
+            '<img src="' + thumbnail + '" alt="' + title + '">' +
+            '<h3>' + title + '</h3>' +
+            '</a>' +
+            '</div>';
+
+        marker.bindPopup(popover);
+        markers.addLayer(marker);
+    }
+
+    if (showmap) {
+        map.addLayer(markers);
+        map.fitBounds(markers.getBounds(), {
+            padding: CWP_MAP_SETTINGS.map.fitPadding
+        });
+
+        if (CWP_MAP_SETTINGS.map.scrollWheelZoom) {
+            map.scrollWheelZoom.enable();
+        } else {
+            map.scrollWheelZoom.disable();
+        }
+
+        map.invalidateSize();
+        map.dragging.enable();
     }
 }
+
+function CWP_Refresh_Cluster_Map() {
+    if (typeof CWP_Cluster_Map !== 'function') {
+        return;
+    }
+    if (Array.isArray(CWP_MAP_LAST_ARGS) && CWP_MAP_LAST_ARGS.length) {
+        CWP_Cluster_Map(CWP_MAP_LAST_ARGS);
+    }
+}
+
+if (typeof window !== 'undefined') {
+    window.CWP_Refresh_Cluster_Map = CWP_Refresh_Cluster_Map;
+}
+
 function createCustomIcon(iconUrl) {
     return L.icon({
         iconUrl: iconUrl,
-        iconSize: [32, 32], // size of the icon
-        iconAnchor: [16, 32], // point of the icon which will correspond to marker's location
-        popupAnchor: [0, -32] // point from which the popup should open relative to the iconAnchor
+        iconSize: CWP_MAP_SETTINGS.pin.size,
+        iconAnchor: CWP_MAP_SETTINGS.pin.anchor,
+        popupAnchor: CWP_MAP_SETTINGS.pin.popupAnchor
+    });
+}
+
+function createCustomIcons(html) {
+    return L.divIcon({
+        className: 'cwp-svg-pin',
+        html: `<div class="cwp-pin">${html}</div>`,
+        iconSize: CWP_MAP_SETTINGS.pin.size,
+        iconAnchor: CWP_MAP_SETTINGS.pin.anchor,
+        popupAnchor: CWP_MAP_SETTINGS.pin.popupAnchor
     });
 }

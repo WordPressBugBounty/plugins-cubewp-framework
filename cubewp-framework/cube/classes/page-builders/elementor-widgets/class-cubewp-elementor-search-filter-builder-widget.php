@@ -55,6 +55,7 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
         return ['cubewp'];
     }
 
+
     public function get_keywords()
     {
         return ['cubewp', 'search', 'filter', 'builder'];
@@ -88,6 +89,20 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 ]
             );
         }
+
+        $this->add_control(
+            'show_data_for',
+            [
+                'label' => esc_html__('Show Layout', 'cubewp-framework'),
+                'type' => Controls_Manager::SELECT,
+                'options' => [
+                    'mobile_desktop' => esc_html__('Mobile & Desktop', 'cubewp-framework'),
+                    'desktop' => esc_html__('Desktop', 'cubewp-framework'),
+                    'mobile' => esc_html__('Mobile', 'cubewp-framework'),
+                ],
+                'default' =>  'mobile_desktop',
+            ]
+        );
 
         $this->end_controls_section();
 
@@ -293,7 +308,21 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 ],
             ]
         );
-
+        $this->add_responsive_control(
+            'reset_button_icon_margin',
+            [
+                'label'     => esc_html__('Icon Margin', 'cubewp-framework'),
+                'type'      => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em'],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-filter-builder-reset-button-button i' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                    '{{WRAPPER}} .cubewp-filter-builder-reset-button-button svg' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+                'condition' => [
+                    'reset_button_icon[value]!' => '',
+                ],
+            ]
+        );
         // Padding
         $this->add_responsive_control(
             'reset_button_padding',
@@ -460,6 +489,40 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
             ]
         );
 
+        // Display Type
+        $this->add_control(
+            'convert_popup_to_dropdown',
+            [
+                'label' => esc_html__('Convert Popup to Dropdown', 'cubewp-framework'),
+                'type' => Controls_Manager::SELECT,
+                'default' => 'no',
+                'options' => [
+                    'yes' => esc_html__('Yes', 'cubewp-framework'),
+                    'no' => esc_html__('No', 'cubewp-framework'),
+                ],
+                'condition' => [
+                    'field_display_type' => 'popup',
+                ],
+                'description' => esc_html__('Convert Popup to Dropdown', 'cubewp-framework'),
+            ]
+        );
+        // $this->add_control(
+        //     'convert_simple_to_accordion',
+        //     [
+        //         'label' => esc_html__('Convert Simple to Accordion', 'cubewp-framework'),
+        //         'type' => Controls_Manager::SELECT,
+        //         'default' => 'no',
+        //         'options' => [
+        //             'yes' => esc_html__('Yes', 'cubewp-framework'),
+        //             'no' => esc_html__('No', 'cubewp-framework'),
+        //         ],
+        //         'condition' => [
+        //             'field_display_type' => 'simple',
+        //         ],
+        //         'description' => esc_html__('Convert Popup to Dropdown', 'cubewp-framework'),
+        //     ]
+        // );
+
         // Field Type Selection (Custom Fields or Taxonomies) - for Simple
         $this->add_control(
             'field_type_selection',
@@ -492,7 +555,7 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 $custom_fields_options = $this->get_custom_fields_for_post_type($post_type_key);
                 // Add keyword to custom fields
                 $custom_fields_options = array_merge(['keyword' => esc_html__('Keyword', 'cubewp-framework')], $custom_fields_options);
-
+                $custom_fields_options = apply_filters('cubewp/builder/custom_fields_options', $custom_fields_options, $post_type_key);
                 // Taxonomy Options
                 $taxonomy_options = $this->get_taxonomies_for_post_type($post_type_key);
 
@@ -512,22 +575,16 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                     ]
                 );
 
-                // Taxonomy Display Type (only for taxonomies)
                 $this->add_control(
-                    'taxonomy_display_type_' . $post_type_key,
+                    'field_name_' . $post_type_key,
                     [
-                        'label' => esc_html__('Taxonomy Display Type', 'cubewp-framework'),
+                        'label' => esc_html__('Select Custom Field', 'cubewp-framework'),
                         'type' => Controls_Manager::SELECT,
-                        'default' => 'checkbox',
-                        'options' => [
-                            'checkbox' => esc_html__('Checkbox', 'cubewp-framework'),
-                            'radio' => esc_html__('Radio', 'cubewp-framework'),
-                            'select' => esc_html__('Select', 'cubewp-framework'),
-                            'select2' => esc_html__('Select2', 'cubewp-framework'),
-                            'multi_select' => esc_html__('Multi Select', 'cubewp-framework'),
-                        ],
+                        'options' => $custom_fields_options,
+                        'default' => '',
                         'condition' => [
-                            'field_type_selection' => 'taxonomies',
+                            'post_type' => $post_type_key,
+                            'field_type_selection' => 'custom_fields',
                             'field_display_type' => 'simple',
                         ],
                     ]
@@ -547,6 +604,183 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                             'field_display_type' => 'simple',
                         ],
                         'description' => esc_html__('Custom label for the taxonomy field. Leave empty to use the default taxonomy label.', 'cubewp-framework'),
+                    ]
+                );
+
+                // Field Label for Custom Fields
+                $this->add_control(
+                    'field_label_' . $post_type_key,
+                    [
+                        'label' => esc_html__('Field Label', 'cubewp-framework'),
+                        'type' => Controls_Manager::TEXT,
+                        'default' => '',
+                        'placeholder' => esc_html__('Leave empty to use default label', 'cubewp-framework'),
+                        'condition' => [
+                            'post_type' => $post_type_key,
+                            'field_type_selection' => 'custom_fields',
+                            'field_display_type' => 'simple',
+                        ],
+                        'description' => esc_html__('Custom label for the field. Leave empty to use the default field label.', 'cubewp-framework'),
+                    ]
+                );
+
+                // Number Range Slider (optional overrides for this widget)
+                $this->add_control(
+                    'number_range_slider_ui_' . $post_type_key,
+                    [
+                        'label' => esc_html__('Number Range Slider UI', 'cubewp-framework'),
+                        'type' => Controls_Manager::SELECT,
+                        'default' => 'inherit',
+                        'options' => [
+                            'inherit' => esc_html__('Inherit (from CubeWP builder)', 'cubewp-framework'),
+                            'no' => esc_html__('No', 'cubewp-framework'),
+                            'yes' => esc_html__('Yes', 'cubewp-framework'),
+                        ],
+                        'condition' => [
+                            'post_type' => $post_type_key,
+                            'field_type_selection' => 'custom_fields',
+                            'field_display_type' => 'simple',
+                        ],
+                        'description' => esc_html__('Overrides the CubeWP builder setting for this widget instance only (Number fields only).', 'cubewp-framework'),
+                    ]
+                );
+
+                $this->add_control(
+                    'number_range_min_' . $post_type_key,
+                    [
+                        'label' => esc_html__('Range Min', 'cubewp-framework'),
+                        'type' => Controls_Manager::NUMBER,
+                        'default' => '',
+                        'condition' => [
+                            'post_type' => $post_type_key,
+                            'field_type_selection' => 'custom_fields',
+                            'field_display_type' => 'simple',
+                            'number_range_slider_ui_' . $post_type_key . '!' => 'inherit',
+                        ],
+                    ]
+                );
+
+                $this->add_control(
+                    'number_range_max_' . $post_type_key,
+                    [
+                        'label' => esc_html__('Range Max', 'cubewp-framework'),
+                        'type' => Controls_Manager::NUMBER,
+                        'default' => '',
+                        'condition' => [
+                            'post_type' => $post_type_key,
+                            'field_type_selection' => 'custom_fields',
+                            'field_display_type' => 'simple',
+                            'number_range_slider_ui_' . $post_type_key . '!' => 'inherit',
+                        ],
+                    ]
+                );
+
+                $this->add_control(
+                    'number_range_step_' . $post_type_key,
+                    [
+                        'label' => esc_html__('Range Step', 'cubewp-framework'),
+                        'type' => Controls_Manager::NUMBER,
+                        'default' => '',
+                        'min' => 0.000001,
+                        'condition' => [
+                            'post_type' => $post_type_key,
+                            'field_type_selection' => 'custom_fields',
+                            'field_display_type' => 'simple',
+                            'number_range_slider_ui_' . $post_type_key . '!' => 'inherit',
+                        ],
+                    ]
+                );
+
+                $this->add_control(
+                    'taxonomy_display_type_placeholder' . $post_type_key,
+                    [
+                        'label' => esc_html__('Placeholder', 'cubewp-framework'),
+                        'type' => Controls_Manager::TEXT,
+                        'default' => '',
+                        'condition' => [
+                            'field_display_type' => 'simple',
+                            'post_type' => $post_type_key,
+                        ],
+                    ]
+                );
+
+
+                // Taxonomy Display Type (only for taxonomies)
+                $this->add_control(
+                    'taxonomy_display_type_' . $post_type_key,
+                    [
+                        'label' => esc_html__('Taxonomy Display Type', 'cubewp-framework'),
+                        'type' => Controls_Manager::SELECT,
+                        'default' => 'checkbox',
+                        'options' => [
+                            'checkbox' => esc_html__('Checkbox', 'cubewp-framework'), 
+                            'select' => esc_html__('Select', 'cubewp-framework'),
+                            'select2' => esc_html__('Select2', 'cubewp-framework'),
+                        ],
+                        'condition' => [
+                            'field_type_selection' => 'taxonomies',
+                            'field_display_type' => 'simple',
+                            'post_type' => $post_type_key,
+                        ],
+                    ]
+                );
+
+                // Conditional Taxonomy Controls for Simple Display Type
+                $this->add_control(
+                    'enable_conditional_taxonomy_' . $post_type_key,
+                    [
+                        'type'         => Controls_Manager::SWITCHER,
+                        'label'        => esc_html__('Enable Conditional Taxonomy', 'cubewp-framework'),
+                        'description'  => esc_html__('Show this taxonomy field only when a term is selected in another taxonomy.', 'cubewp-framework'),
+                        'label_on'     => esc_html__('Yes', 'cubewp-framework'),
+                        'label_off'    => esc_html__('No', 'cubewp-framework'),
+                        'return_value' => 'yes',
+                        'default'      => 'no',
+                        'condition'    => [
+                            'post_type' => $post_type_key,
+                            'field_type_selection' => 'taxonomies',
+                            'field_display_type' => 'simple',
+                        ],
+                    ]
+                );
+
+                $this->add_control(
+                    'conditional_taxonomy_' . $post_type_key,
+                    [
+                        'type'        => Controls_Manager::SELECT,
+                        'label'       => esc_html__('Conditional Taxonomy', 'cubewp-framework'),
+                        'description' => esc_html__('Select the taxonomy that will trigger this field to show.', 'cubewp-framework'),
+                        'options'     => $taxonomy_options,
+                        'default'     => array_key_first($taxonomy_options),
+                        'label_block' => true,
+                        'condition'   => [
+                            'post_type' => $post_type_key,
+                            'field_type_selection' => 'taxonomies',
+                            'field_display_type' => 'simple',
+                            'enable_conditional_taxonomy_' . $post_type_key => 'yes',
+                        ],
+                    ]
+                );
+
+                // Get term meta keys from CubeWP taxonomy custom fields
+                $term_meta_key_options = $this->get_term_meta_key_options($post_type_key);
+
+                $this->add_control(
+                    'conditional_term_meta_key_' . $post_type_key,
+                    [
+                        'type'        => Controls_Manager::SELECT,
+                        'label'       => esc_html__('Term Meta Key', 'cubewp-framework'),
+                        'description' => esc_html__('Select the term meta key that stores the associated terms.', 'cubewp-framework'),
+                        'options'     => $term_meta_key_options,
+                        'default'     => '',
+                        'label_block' => true,
+                        'condition'   => [
+                            'post_type' => $post_type_key,
+                            'field_type_selection' => 'taxonomies',
+                            'field_display_type' => 'simple',
+                            'enable_conditional_taxonomy_' . $post_type_key => 'yes',
+                            'conditional_taxonomy_' . $post_type_key . '!' => '',
+                        ],
                     ]
                 );
 
@@ -572,38 +806,6 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 );
 
 
-                $this->add_control(
-                    'field_name_' . $post_type_key,
-                    [
-                        'label' => esc_html__('Select Custom Field', 'cubewp-framework'),
-                        'type' => Controls_Manager::SELECT,
-                        'options' => $custom_fields_options,
-                        'default' => '',
-                        'condition' => [
-                            'post_type' => $post_type_key,
-                            'field_type_selection' => 'custom_fields',
-                            'field_display_type' => 'simple',
-                        ],
-                    ]
-                );
-
-                // Field Label for Custom Fields
-                $this->add_control(
-                    'field_label_' . $post_type_key,
-                    [
-                        'label' => esc_html__('Field Label', 'cubewp-framework'),
-                        'type' => Controls_Manager::TEXT,
-                        'default' => '',
-                        'placeholder' => esc_html__('Leave empty to use default label', 'cubewp-framework'),
-                        'condition' => [
-                            'post_type' => $post_type_key,
-                            'field_type_selection' => 'custom_fields',
-                            'field_display_type' => 'simple',
-                        ],
-                        'description' => esc_html__('Custom label for the field. Leave empty to use the default field label.', 'cubewp-framework'),
-                    ]
-                );
-
                 // Field Icon for Custom Fields
                 $this->add_control(
                     'field_icon_' . $post_type_key,
@@ -625,13 +827,15 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                     ]
                 );
 
-                // Business Hours Button Text
+                // Display an alert box to inform users that the following options are just for Business Hours fields.
                 $this->add_control(
-                    'business_hours_button_text_' . $post_type_key,
+                    'business_hours_notice_' . $post_type_key,
                     [
-                        'label' => esc_html__('Business Hours Label', 'cubewp-framework'),
-                        'type' => Controls_Manager::TEXT,
-                        'default' => esc_html__('Business Hours', 'cubewp-framework'),
+                        'type' => \Elementor\Controls_Manager::RAW_HTML,
+                        'raw' => '<div class="elementor-alert elementor-alert-warning" style="margin: 0 0 20px 0; padding: 10px; background: #fffbeb; color: #b66509; border: 1px solid #ffe5b2; border-radius: 4px; font-size: 13px;">' .
+                            esc_html__('Note: The following options apply only to Business Hours fields.', 'cubewp-framework') .
+                            '</div>',
+                        'content_classes' => 'elementor-panel-alert elementor-panel-alert-warning',
                         'condition' => [
                             'post_type' => $post_type_key,
                             'field_type_selection' => 'custom_fields',
@@ -639,6 +843,7 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                         ],
                     ]
                 );
+
 
                 $this->add_control(
                     'business_hours_filter_' . $post_type_key,
@@ -658,6 +863,58 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                             'field_display_type' => 'simple',
                         ],
                         'description' => esc_html__('Select a single business hours filter option to display.', 'cubewp-framework'),
+                    ]
+                );
+
+
+                // Display an alert box to inform users that the following options are just for Business Hours fields.
+                $this->add_control(
+                    'business_hours_notice__2' . $post_type_key,
+                    [
+                        'type' => \Elementor\Controls_Manager::RAW_HTML,
+                        'raw' => '<div class="elementor-alert elementor-alert-warning" style="margin: 0 0 20px 0; padding: 10px; background: #fffbeb; color: #b66509; border: 1px solid #ffe5b2; border-radius: 4px; font-size: 13px;">' .
+                            esc_html__('Note: The following options apply only to Google Address and Business Hours fields.', 'cubewp-framework') .
+                            '</div>',
+                        'content_classes' => 'elementor-panel-alert elementor-panel-alert-warning',
+                        'condition' => [
+                            'post_type' => $post_type_key,
+                            'field_type_selection' => 'custom_fields',
+                            'field_display_type' => 'simple',
+                        ],
+                    ]
+                );
+
+                // Business Hours Button Text
+                $this->add_control(
+                    'allow_near_me_option' . $post_type_key,
+                    [
+                        'label' => esc_html__('Allow Near Me Option', 'cubewp-framework'),
+                        'type' => Controls_Manager::SELECT,
+                        'options' => [
+                            'yes' => esc_html__('Yes', 'cubewp-framework'),
+                            'no' => esc_html__('No', 'cubewp-framework'),
+                        ],
+                        'default' => 'no',
+                        'condition' => [
+                            'post_type' => $post_type_key,
+                            'field_type_selection' => 'custom_fields',
+                            'field_display_type' => 'simple',
+                        ],
+                    ]
+                );
+
+
+                $this->add_control(
+                    'business_hours_button_text_' . $post_type_key,
+                    [
+                        'label' => esc_html__('Label', 'cubewp-framework'),
+                        'type' => Controls_Manager::TEXT,
+                        'default' => esc_html__('Filter Label', 'cubewp-framework'),
+                        'condition' => [
+                            'post_type' => $post_type_key,
+                            'field_type_selection' => 'custom_fields',
+                            'field_display_type' => 'simple',
+                        ],
                     ]
                 );
 
@@ -756,37 +1013,6 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                         ],
                     ]
                 );
-                $popup_custom_repeater->add_control(
-                    'popup_taxonomy_name',
-                    [
-                        'label' => esc_html__('Select Taxonomy', 'cubewp-framework'),
-                        'type' => Controls_Manager::SELECT,
-                        'options' => $taxonomy_options,
-                        'default' => '',
-                        'condition' => [
-                            'popup_field_type' => 'taxonomies',
-                        ],
-                    ]
-                );
-                $popup_custom_repeater->add_control(
-                    'popup_taxonomy_display',
-                    [
-                        'label' => esc_html__('Taxonomy Display', 'cubewp-framework'),
-                        'type' => Controls_Manager::SELECT,
-                        'default' => 'checkbox',
-                        'options' => [
-                            'checkbox' => esc_html__('Checkbox', 'cubewp-framework'),
-                            'radio' => esc_html__('Radio', 'cubewp-framework'),
-                            'select' => esc_html__('Select', 'cubewp-framework'),
-                            'select2' => esc_html__('Select2', 'cubewp-framework'),
-                            'multi_select' => esc_html__('Multi Select', 'cubewp-framework'),
-                        ],
-                        'condition' => [
-                            'popup_field_type' => 'taxonomies',
-                        ],
-                    ]
-                );
-
                 // Field Label for Popup Taxonomy
                 $popup_custom_repeater->add_control(
                     'popup_taxonomy_label',
@@ -817,6 +1043,60 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                     ]
                 );
 
+                $popup_custom_repeater->add_control(
+                    'popup_taxonomy_display_placeholder',
+                    [
+                        'label' => esc_html__('Placeholder', 'cubewp-framework'),
+                        'type' => Controls_Manager::TEXT,
+                        'default' => '',
+                    ]
+                );
+                $popup_custom_repeater->add_control(
+                    'popup_taxonomy_name',
+                    [
+                        'label' => esc_html__('Select Taxonomy', 'cubewp-framework'),
+                        'type' => Controls_Manager::SELECT,
+                        'options' => $taxonomy_options,
+                        'default' => '',
+                        'condition' => [
+                            'popup_field_type' => 'taxonomies',
+                        ],
+                    ]
+                );
+                $popup_custom_repeater->add_control(
+                    'popup_taxonomy_display',
+                    [
+                        'label' => esc_html__('Taxonomy Display', 'cubewp-framework'),
+                        'type' => Controls_Manager::SELECT,
+                        'default' => 'checkbox',
+                        'options' => [
+                            'checkbox' => esc_html__('Checkbox', 'cubewp-framework'), 
+                            'select' => esc_html__('Select', 'cubewp-framework'),
+                            'select2' => esc_html__('Select2', 'cubewp-framework'),
+                        ],
+                        'condition' => [
+                            'popup_field_type' => 'taxonomies',
+                        ],
+                    ]
+                ); 
+
+                // Allow Near Me Option for Popup Repeater (for Google Address fields)
+                $popup_custom_repeater->add_control(
+                    'popup_allow_near_me_option',
+                    [
+                        'label' => esc_html__('Allow Near Me Option', 'cubewp-framework'),
+                        'type' => Controls_Manager::SELECT,
+                        'options' => [
+                            'yes' => esc_html__('Yes', 'cubewp-framework'),
+                            'no' => esc_html__('No', 'cubewp-framework'),
+                        ],
+                        'default' => 'no',
+                        'condition' => [
+                            'popup_field_type' => 'custom_fields',
+                        ],
+                        'description' => esc_html__('Enable Near Me button for Google Address fields.', 'cubewp-framework'),
+                    ]
+                );
 
                 // Business Hours Options for Popup Repeater
                 $popup_custom_repeater->add_control(
@@ -930,6 +1210,8 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
         // ============================================
         // Section 3: Sorting Options
         // ============================================
+        // Add Sorting Options section, and add a dropdown containing all current post type number fields from CubeWP
+
         $this->start_controls_section(
             'section_sorting_options',
             [
@@ -940,6 +1222,9 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 ],
             ]
         );
+
+
+
 
         // Sorting Display Type
         $this->add_control(
@@ -955,79 +1240,292 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 'description' => esc_html__('Choose how sorting options should be displayed.', 'cubewp-framework'),
             ]
         );
-
-        // Check if reviews plugin is active
-        $reviews_active = defined('CUBEWP_REVIEWS') || class_exists('CubeWp_Reviews_Load');
-
-        // Sorting Field Selection (like filter field selection - single field)
-        $sorting_options = [
-            'DESC' => esc_html__('Newest', 'cubewp-framework'),
-            'ASC' => esc_html__('Oldest', 'cubewp-framework'),
-            'title' => esc_html__('Title', 'cubewp-framework'),
-            'rand' => esc_html__('Random', 'cubewp-framework'),
-            'relevance' => esc_html__('Relevance', 'cubewp-framework'),
-            'most_viewed' => esc_html__('Most Viewed', 'cubewp-framework'),
-        ];
-
-        // Add reviews options if plugin is active
-        if ($reviews_active) {
-            $sorting_options['high_rated'] = esc_html__('High Rated', 'cubewp-framework');
-            $sorting_options['most_reviewed'] = esc_html__('Most Reviewed', 'cubewp-framework');
-            $sorting_options['rating_1'] = esc_html__('1 Star', 'cubewp-framework');
-            $sorting_options['rating_2'] = esc_html__('2 Stars', 'cubewp-framework');
-            $sorting_options['rating_3'] = esc_html__('3 Stars', 'cubewp-framework');
-            $sorting_options['rating_4'] = esc_html__('4 Stars', 'cubewp-framework');
-            $sorting_options['rating_5'] = esc_html__('5 Stars', 'cubewp-framework');
-        }
-
-        // Get custom sorting fields from CubeWP
-        $cwp_search_filters = CWP()->get_form('search_filters');
-        if (!empty($cwp_search_filters) && is_array($cwp_search_filters)) {
-            foreach ($cwp_search_filters as $post_type_key => $filter_data) {
-                if (!empty($filter_data['fields']) && is_array($filter_data['fields'])) {
-                    foreach ($filter_data['fields'] as $field_name => $field_data) {
-                        if (isset($field_data['sorting']) && $field_data['sorting'] == 1) {
-                            $field_label = isset($field_data['label']) ? $field_data['label'] : $field_name;
-                            $sorting_options[$field_name . '-ASC'] = $field_label . ': ' . esc_html__('Low to High', 'cubewp-framework');
-                            $sorting_options[$field_name . '-DESC'] = $field_label . ': ' . esc_html__('High to Low', 'cubewp-framework');
-                        }
-                    }
-                }
-            }
-        }
-
-        // Select Sorting Fields for Dropdown (multiple options)
+        // Sorting Display Type
         $this->add_control(
-            'sorting_fields_dropdown',
+            'sorting_display_type_title_default',
             [
-                'label' => esc_html__('Select Sorting Options (Dropdown)', 'cubewp-framework'),
-                'type' => Controls_Manager::SELECT2,
-                'multiple' => true,
-                'options' => $sorting_options,
-                'default' => ['DESC'],
-                'description' => esc_html__('Select multiple sorting options to display in dropdown.', 'cubewp-framework'),
+                'label' => esc_html__('Sorting', 'cubewp-framework'),
+                'type' => Controls_Manager::TEXT,
+                'default' => 'Sort By',
+                'description' => esc_html__('Enter the default title for the sorting options. Leave empty to use the default title.', 'cubewp-framework'),
                 'condition' => [
-                    'filter_type' => 'sorting',
                     'sorting_display_type' => 'dropdown',
                 ],
             ]
         );
 
-        // Select Sorting Field for Buttons (single option)
-        $this->add_control(
-            'sorting_field',
-            [
-                'label' => esc_html__('Select Sorting Field (Button)', 'cubewp-framework'),
-                'type' => Controls_Manager::SELECT,
-                'options' => $sorting_options,
-                'default' => 'DESC',
-                'description' => esc_html__('Select a single sorting option to display as button.', 'cubewp-framework'),
-                'condition' => [
-                    'filter_type' => 'sorting',
-                    'sorting_display_type' => 'buttons',
-                ],
-            ]
-        );
+
+
+        $post_types = CWP_all_post_types();
+
+        $number_fields = [];
+
+        foreach ($post_types as $post_type_key => $post_type_label) {
+            // Ensure the key exists even if no number fields are found
+            $number_fields[$post_type_key] = [];
+
+            $allGroups = cwp_get_groups_by_post_type($post_type_key);
+            foreach ($allGroups as $group) {
+                $group_fields = get_post_meta($group, '_cwp_group_fields', true);
+                $group_fields_array = explode(',', $group_fields);
+                foreach ($group_fields_array as $field_name) {
+                    $field_data = get_field_options($field_name);
+                    if (isset($field_data['type']) && $field_data['type'] === 'number') {
+                        $label = isset($field_data['label']) ? $field_data['label'] : $field_name;
+                        $number_fields[$post_type_key][$field_name] = $label;
+                    }
+                }
+            }
+        }
+
+        // Sorting Display Type
+        foreach ($number_fields as $post_type_key => $number_fields_array) {
+            $custom_order_options = [
+                'DESC' => esc_html__('Newest', 'cubewp-framework'),
+                'ASC' => esc_html__('Oldest', 'cubewp-framework'),
+                'title' => esc_html__('Title', 'cubewp-framework'),
+                'rand' => esc_html__('Random', 'cubewp-framework'),
+                'relevance' => esc_html__('Relevance', 'cubewp-framework'),
+                'cubewp_post_views' => esc_html__('Most Viewed', 'cubewp-framework'),
+            ];
+
+            if (class_exists('CubeWp_Reviews_Load')) {
+                $custom_order_options['cubewp_review_count'] = 'Review Count';
+                $custom_order_options['cubewp_overall_rating'] = 'Post Rating';
+            }
+
+            $merged_options = $custom_order_options + $number_fields_array;
+
+            // For Dropdown display type: Use a repeater field
+            $this->add_control(
+                'sorting_number_fields_repeater_' . $post_type_key,
+                [
+                    'label' => esc_html__('Sorting Options (Dropdown)', 'cubewp-framework'),
+                    'type' => \Elementor\Controls_Manager::REPEATER,
+                    'fields' => [
+                        [
+                            'name' => 'title',
+                            'label' => esc_html__('Title', 'cubewp-framework'),
+                            'type' => Controls_Manager::TEXT,
+                            'default' => '',
+                            'description' => esc_html__('Enter the title of the sorting option.', 'cubewp-framework'),
+                        ],
+                        [
+                            'name' => 'field',
+                            'label' => esc_html__('Field', 'cubewp-framework'),
+                            'type' => Controls_Manager::SELECT,
+                            'multiple' => false,
+                            'options' => $merged_options,
+                            'default' => 'DESC',
+                        ],
+                        [
+                            'name' => 'filter_types',
+                            'label' => esc_html__('Filter Types', 'cubewp-framework'),
+                            'type' => Controls_Manager::SELECT,
+                            'options' => [
+                                'filters' => esc_html__('Filters', 'cubewp-framework'),
+                                'sorting' => esc_html__('Sorting', 'cubewp-framework'),
+                            ],
+                            'default' => 'filters',
+                            'description' => esc_html__('Choose whether to show filters or sorting options for this field.', 'cubewp-framework'),
+                        ],
+                        [
+                            'name' => 'filter_types_value',
+                            'label' => esc_html__('Order By', 'cubewp-framework'),
+                            'type' => Controls_Manager::SELECT,
+                            'default' => '',
+                            'description' => esc_html__('Choose the order by value for this field.', 'cubewp-framework'),
+                            'options' => [
+                                'DESC' => esc_html__('DESC', 'cubewp-framework'),
+                                'ASC' => esc_html__('ASC', 'cubewp-framework'),
+                            ],
+                            'default' => 'DESC',
+                            'condition' => [
+                                'filter_types' => 'sorting',
+                            ],
+                        ],
+
+                        [
+                            'name' => 'operation',
+                            'label' => esc_html__('Number Operation', 'cubewp-framework'),
+                            'type' => Controls_Manager::SELECT,
+                            'options' => [
+                                '=' => esc_html__('=', 'cubewp-framework'),
+                                '!=' => esc_html__('!=', 'cubewp-framework'),
+                                '>' => esc_html__('>', 'cubewp-framework'),
+                                '<' => esc_html__('<', 'cubewp-framework'),
+                                '>=' => esc_html__('>=', 'cubewp-framework'),
+                                '<=' => esc_html__('<=', 'cubewp-framework'),
+                                'BETWEEN' => esc_html__('BETWEEN', 'cubewp-framework'),
+                                'NOT BETWEEN' => esc_html__('NOT BETWEEN', 'cubewp-framework'),
+                                'NOT IN' => esc_html__('NOT IN', 'cubewp-framework'),
+                                'IN' => esc_html__('IN', 'cubewp-framework'),
+                                'EXISTS' => esc_html__('EXISTS', 'cubewp-framework'),
+                                'NOT EXISTS' => esc_html__('NOT EXISTS', 'cubewp-framework'),
+                                'LIKE' => esc_html__('LIKE', 'cubewp-framework'),
+                                'NOT LIKE' => esc_html__('NOT LIKE', 'cubewp-framework'),
+                            ],
+                            'default' => '=',
+                            'condition' => [
+                                'field!' => ['DESC', 'ASC', 'title', 'rand', 'relevance'],
+                                'filter_types' => 'filters',
+                            ],
+                        ],
+                        [
+                            'name' => 'value',
+                            'label' => esc_html__('Compare With Value', 'cubewp-framework'),
+                            'type' => Controls_Manager::TEXT,
+                            'default' => '',
+                            'description' => esc_html__('Enter the value to compare with the number field.', 'cubewp-framework'),
+                            'condition' => [
+                                'operation' => ['=', '!=', '>', '<', '>=', '<=', 'LIKE', 'NOT LIKE'],
+                                'field!' => ['DESC', 'ASC', 'title', 'rand', 'relevance'],
+                                'filter_types' => 'filters',
+                            ],
+                        ],
+                        [
+                            'name' => 'value_between',
+                            'label' => esc_html__('Compare With Values (Comma Separated)', 'cubewp-framework'),
+                            'type' => Controls_Manager::TEXT,
+                            'default' => '',
+                            'description' => esc_html__('Enter values separated by commas (e.g. 10,50).', 'cubewp-framework'),
+                            'condition' => [
+                                'operation' => ['BETWEEN', 'NOT BETWEEN', 'IN', 'NOT IN'],
+                                'field!' => ['DESC', 'ASC', 'title', 'rand', 'relevance'],
+                                'filter_types' => 'filters',
+                            ],
+                        ],
+                    ],
+                    'default' => [],
+                    'description' => esc_html__('Add multiple sorting options for this post type (displayed as dropdown).', 'cubewp-framework'),
+                    'condition' => [
+                        'filter_type' => 'sorting',
+                        'post_type' => $post_type_key,
+                        'sorting_display_type' => 'dropdown',
+                    ],
+                ]
+            );
+
+            // For Buttons display type: Use a simple field (single select)
+            $this->add_control(
+                'sorting_number_field_button_' . $post_type_key,
+                [
+                    'label' => esc_html__('Sorting Option (Buttons)', 'cubewp-framework'),
+                    'type' => Controls_Manager::SELECT2,
+                    'multiple' => false,
+                    'options' => $merged_options,
+                    'default' => '',
+                    'description' => esc_html__('Select a single field to sort by (displayed as button).', 'cubewp-framework'),
+                    'condition' => [
+                        'filter_type' => 'sorting',
+                        'post_type' => $post_type_key,
+                        'sorting_display_type' => 'buttons',
+                    ],
+                ]
+            );
+            $this->add_control(
+                'sorting_number_field_button_filter_type_' . $post_type_key,
+                [
+                    'label' => esc_html__('Filter Type', 'cubewp-framework'),
+                    'type' => Controls_Manager::SELECT,
+                    'options' => [
+                        'filters' => esc_html__('Filters', 'cubewp-framework'),
+                        'sorting' => esc_html__('Sorting', 'cubewp-framework'),
+                    ],
+                    'default' => 'filters',
+                    'condition' => [
+                        'filter_type' => 'sorting',
+                        'post_type' => $post_type_key,
+                        'sorting_display_type' => 'buttons',
+                    ],
+                ]
+            );
+            $this->add_control(
+                'sorting_number_field_button_filter_type_value_' . $post_type_key,
+                [
+                    'label' => esc_html__('Order By', 'cubewp-framework'),
+                    'type' => Controls_Manager::SELECT,
+                    'options' => [
+                        'DESC' => esc_html__('DESC', 'cubewp-framework'),
+                        'ASC' => esc_html__('ASC', 'cubewp-framework'),
+                    ],
+                    'default' => 'DESC',
+                    'condition' => [
+                        'filter_type' => 'sorting',
+                        'post_type' => $post_type_key,
+                        'sorting_display_type' => 'buttons',
+                        'sorting_number_field_button_filter_type_' . $post_type_key => 'sorting',
+                    ],
+                ]
+            );
+            $this->add_control(
+                'sorting_number_operation_button_' . $post_type_key,
+                [
+                    'label' => esc_html__('Number Operation (Button)', 'cubewp-framework'),
+                    'type' => Controls_Manager::SELECT,
+                    'options' => [
+                        '=' => esc_html__('=', 'cubewp-framework'),
+                        '!=' => esc_html__('!=', 'cubewp-framework'),
+                        '>' => esc_html__('>', 'cubewp-framework'),
+                        '<' => esc_html__('<', 'cubewp-framework'),
+                        '>=' => esc_html__('>=', 'cubewp-framework'),
+                        '<=' => esc_html__('<=', 'cubewp-framework'),
+                        'BETWEEN' => esc_html__('BETWEEN', 'cubewp-framework'),
+                        'NOT BETWEEN' => esc_html__('NOT BETWEEN', 'cubewp-framework'),
+                        'NOT IN' => esc_html__('NOT IN', 'cubewp-framework'),
+                        'IN' => esc_html__('IN', 'cubewp-framework'),
+                        'EXISTS' => esc_html__('EXISTS', 'cubewp-framework'),
+                        'NOT EXISTS' => esc_html__('NOT EXISTS', 'cubewp-framework'),
+                        'LIKE' => esc_html__('LIKE', 'cubewp-framework'),
+                        'NOT LIKE' => esc_html__('NOT LIKE', 'cubewp-framework'),
+                    ],
+                    'default' => '=',
+                    'description' => esc_html__('Select the operation to perform on the number field.', 'cubewp-framework'),
+                    'condition' => [
+                        'filter_type' => 'sorting',
+                        'post_type' => $post_type_key,
+                        'sorting_display_type' => 'buttons',
+                        'sorting_number_field_button_' . $post_type_key . '!' => ['DESC', 'ASC', 'title', 'rand', 'relevance'],
+                        'sorting_number_field_button_filter_type_' . $post_type_key => 'filters',
+                    ],
+                ]
+            );
+            $this->add_control(
+                'sorting_number_value_button_' . $post_type_key,
+                [
+                    'label' => esc_html__('Compare With Value (Button)', 'cubewp-framework'),
+                    'type' => Controls_Manager::TEXT,
+                    'default' => '',
+                    'description' => esc_html__('Enter the value to compare with the number field.', 'cubewp-framework'),
+                    'condition' => [
+                        'filter_type' => 'sorting',
+                        'post_type' => $post_type_key,
+                        'sorting_display_type' => 'buttons',
+                        'sorting_number_operation_button_' . $post_type_key => ['=', '!=', '>', '<', '>=', '<=', 'LIKE', 'NOT LIKE'],
+                        'sorting_number_field_button_' . $post_type_key . '!' => ['DESC', 'ASC', 'title', 'rand', 'relevance'],
+                        'sorting_number_field_button_filter_type_' . $post_type_key => 'filters',
+                    ],
+                ]
+            );
+            $this->add_control(
+                'sorting_number_value_between_button_' . $post_type_key,
+                [
+                    'label' => esc_html__('Compare With Values (Comma Separated, Button)', 'cubewp-framework'),
+                    'type' => Controls_Manager::TEXT,
+                    'default' => '',
+                    'description' => esc_html__('Enter values separated by commas (e.g. 10,50).', 'cubewp-framework'),
+                    'condition' => [
+                        'filter_type' => 'sorting',
+                        'post_type' => $post_type_key,
+                        'sorting_display_type' => 'buttons',
+                        'sorting_number_operation_button_' . $post_type_key => ['BETWEEN', 'NOT BETWEEN', 'IN', 'NOT IN'],
+                        'sorting_number_field_button_' . $post_type_key . '!' => ['DESC', 'ASC', 'title', 'rand', 'relevance'],
+                        'sorting_number_field_button_filter_type_' . $post_type_key => 'filters',
+                    ],
+                ]
+            );
+        }
+
 
         // Button Text Customization (for buttons display type)
         $this->add_control(
@@ -1064,74 +1562,6 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
             ]
         );
 
-        // Button Display Type (for buttons - text or stars)
-        $this->add_control(
-            'sorting_button_display_type',
-            [
-                'label' => esc_html__('Button Display Type', 'cubewp-framework'),
-                'type' => Controls_Manager::SELECT,
-                'default' => 'text',
-                'options' => [
-                    'text' => esc_html__('Text', 'cubewp-framework'),
-                    'stars' => esc_html__('Stars (Icons)', 'cubewp-framework'),
-                ],
-                'description' => esc_html__('Choose how to display rating options in button (text or star icons).', 'cubewp-framework'),
-                'condition' => [
-                    'filter_type' => 'sorting',
-                    'sorting_display_type' => 'buttons',
-                ],
-            ]
-        );
-
-        // Star Rating Display Options (for dropdown)
-        $this->add_control(
-            'rating_display_type',
-            [
-                'label' => esc_html__('Rating Display Type', 'cubewp-framework'),
-                'type' => Controls_Manager::SELECT,
-                'default' => 'text',
-                'options' => [
-                    'text' => esc_html__('Text', 'cubewp-framework'),
-                    'stars' => esc_html__('Stars (Icons)', 'cubewp-framework'),
-                ],
-                'description' => esc_html__('Choose how to display rating options (text or star icons).', 'cubewp-framework'),
-                'condition' => [
-                    'filter_type' => 'sorting',
-                    'sorting_display_type' => 'dropdown',
-                ],
-            ]
-        );
-
-        // Star Color (for both buttons and dropdown)
-        $this->add_control(
-            'rating_star_color',
-            [
-                'label' => esc_html__('Star Color', 'cubewp-framework'),
-                'type' => Controls_Manager::COLOR,
-                'default' => '#FFA500',
-                'selectors' => [
-                    '{{WRAPPER}} .cubewp-rating-star.filled' => 'color: {{VALUE}};',
-                    '{{WRAPPER}} .cubewp-rating-star.filled svg' => 'fill: {{VALUE}};',
-                ],
-                'condition' => [
-                    'filter_type' => 'sorting',
-                ],
-            ]
-        );
-
-        // Enable Best Match
-        $this->add_control(
-            'enable_best_match',
-            [
-                'label' => esc_html__('Enable Best Match', 'cubewp-framework'),
-                'type' => Controls_Manager::SWITCHER,
-                'label_on' => esc_html__('Yes', 'cubewp-framework'),
-                'label_off' => esc_html__('No', 'cubewp-framework'),
-                'return_value' => 'yes',
-                'default' => 'no',
-                'description' => esc_html__('Show "Best Match" option that automatically applies optimal sorting.', 'cubewp-framework'),
-            ]
-        );
 
         $this->end_controls_section();
 
@@ -1397,6 +1827,186 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
 
         $this->end_controls_section();
 
+        // Range Slider UI Style Section (Number min/max)
+        $this->start_controls_section(
+            'section_range_slider_style',
+            [
+                'label' => esc_html__('Range Slider UI', 'cubewp-framework'),
+                'tab'   => Controls_Manager::TAB_STYLE,
+                'condition' => [
+                    'filter_type' => 'filters',
+                ],
+            ]
+        );
+
+        //Flex Direction
+        $this->add_control(
+            'range_slider_flex_direction',
+            [
+                'label' => esc_html__('Flex Direction', 'cubewp-framework'),
+                'type' => Controls_Manager::SELECT,
+                'default' => 'row',
+                'options' => [
+                    'row' => esc_html__('Row', 'cubewp-framework'),
+                    'column' => esc_html__('Column', 'cubewp-framework'),
+                    'column-reverse' => esc_html__('Column Reverse', 'cubewp-framework'),
+                    'row-reverse' => esc_html__('Row Reverse', 'cubewp-framework'),
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-range-number-slider' => 'display: flex; flex-wrap: wrap; flex-direction: {{VALUE}};',
+                ],
+            ]
+        );
+
+        //gap
+        $this->add_responsive_control(
+            'range_slider_gap',
+            [
+                'label' => esc_html__('Gap', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px'],
+                'range' => [
+                    'px' => [
+                        'min' => 0,
+                        'max' => 100,
+                    ],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-range-number-slider' => 'gap: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        //margin
+        $this->add_responsive_control(
+            'range_slider_margin',
+            [
+                'label' => esc_html__('Margin', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em','custom'],
+                'default' => [
+                    'top' => '0',
+                    'right' => '0',
+                    'bottom' => '0',
+                    'left' => '0',
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-range-number-slider' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'range_slider_track_height',
+            [
+                'label' => esc_html__('Track Height', 'cubewp-framework'),
+                'type'  => Controls_Manager::SLIDER,
+                'size_units' => ['px'],
+                'range' => [
+                    'px' => [
+                        'min' => 2,
+                        'max' => 24,
+                    ],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-range-number-slider' => '--cwp-range-track-height: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'range_slider_track_bg',
+            [
+                'label' => esc_html__('Track Color', 'cubewp-framework'),
+                'type'  => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-range-number-slider' => '--cwp-range-track-bg: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'range_slider_range_bg',
+            [
+                'label' => esc_html__('Active Range Color', 'cubewp-framework'),
+                'type'  => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-range-number-slider' => '--cwp-range-range-bg: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'range_slider_handle_size',
+            [
+                'label' => esc_html__('Handle Size', 'cubewp-framework'),
+                'type'  => Controls_Manager::SLIDER,
+                'size_units' => ['px'],
+                'range' => [
+                    'px' => [
+                        'min' => 8,
+                        'max' => 48,
+                    ],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-range-number-slider' => '--cwp-range-handle-size: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'range_slider_handle_bg',
+            [
+                'label' => esc_html__('Handle Background', 'cubewp-framework'),
+                'type'  => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-range-number-slider' => '--cwp-range-handle-bg: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->add_group_control(
+            \Elementor\Group_Control_Border::get_type(),
+            [
+                'name' => 'range_slider_handle_border',
+                'label' => esc_html__('Handle Border', 'cubewp-framework'),
+                'selector' => '{{WRAPPER}} .cwp-range-number-slider-ui .ui-slider-handle',
+            ]
+        );
+
+        $this->add_responsive_control(
+            'range_slider_handle_radius',
+            [
+                'label' => esc_html__('Handle Border Radius', 'cubewp-framework'),
+                'type'  => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%'],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-range-number-slider-ui .ui-slider-handle' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'range_slider_value_color',
+            [
+                'label' => esc_html__('Value Color', 'cubewp-framework'),
+                'type'  => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-range-number-slider' => '--cwp-range-value-color: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->add_group_control(
+            \Elementor\Group_Control_Typography::get_type(),
+            [
+                'name'     => 'range_slider_value_typography',
+                'selector' => '{{WRAPPER}} .cwp-range-number-slider-values',
+            ]
+        );
+
+        $this->end_controls_section();
+
         // Field Icon Style Section
         $this->start_controls_section(
             'section_field_icon_style',
@@ -1536,6 +2146,270 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
 
         $this->end_controls_section();
         $this->start_controls_section(
+            'section_switch_style',
+            [
+                'label' => esc_html__('Switch Style', 'cubewp-framework'),
+                'tab' => Controls_Manager::TAB_STYLE,
+                'condition' => [
+                    'filter_type' => 'filters',
+                ],
+
+            ]
+        );
+
+        // Control: Display Flex
+        $this->add_control(
+            'switch_display_flex',
+            [
+                'label' => esc_html__('Display Flex', 'cubewp-framework'),
+                'type' => Controls_Manager::SWITCHER,
+                'label_on' => esc_html__('Yes', 'cubewp-framework'),
+                'label_off' => esc_html__('No', 'cubewp-framework'),
+                'return_value' => 'flex',
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-switch-container' => 'display: {{VALUE}};',
+                ],
+                'selectors_dictionary' => [
+                    'flex' => 'flex',
+                    '' => 'block',
+                ],
+            ]
+        );
+
+        // Control: Flex Direction
+        $this->add_responsive_control(
+            'switch_flex_direction',
+            [
+                'label' => esc_html__('Flex Direction', 'cubewp-framework'),
+                'type' => Controls_Manager::CHOOSE,
+                'options' => [
+                    'row' => [
+                        'title' => esc_html__('Row', 'cubewp-framework'),
+                        'icon' => 'eicon-h-align-left',
+                    ],
+                    'row-reverse' => [
+                        'title' => esc_html__('Row Reverse', 'cubewp-framework'),
+                        'icon' => 'eicon-h-align-right',
+                    ],
+                    'column' => [
+                        'title' => esc_html__('Column', 'cubewp-framework'),
+                        'icon' => 'eicon-v-align-top',
+                    ],
+                    'column-reverse' => [
+                        'title' => esc_html__('Column Reverse', 'cubewp-framework'),
+                        'icon' => 'eicon-v-align-bottom',
+                    ],
+                ],
+                'default' => 'row',
+                'toggle' => false,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-switch-container' => 'flex-direction: {{VALUE}};',
+                ],
+                'condition' => [
+                    'switch_display_flex' => 'flex',
+                ],
+            ]
+        );
+
+        // Control: Justify Content
+        $this->add_responsive_control(
+            'switch_justify_content',
+            [
+                'label' => esc_html__('Justify Content', 'cubewp-framework'),
+                'type' => Controls_Manager::SELECT,
+                'options' => [
+                    'flex-start'    => esc_html__('Start', 'cubewp-framework'),
+                    'center'        => esc_html__('Center', 'cubewp-framework'),
+                    'flex-end'      => esc_html__('End', 'cubewp-framework'),
+                    'space-between' => esc_html__('Space Between', 'cubewp-framework'),
+                    'space-around'  => esc_html__('Space Around', 'cubewp-framework'),
+                    'space-evenly'  => esc_html__('Space Evenly', 'cubewp-framework'),
+                ],
+                'default' => 'flex-start',
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-switch-container' => 'justify-content: {{VALUE}};',
+                ],
+                'condition' => [
+                    'switch_display_flex' => 'flex',
+                ],
+            ]
+        );
+
+        // Border Control for .cwp-switch .cwp-switch-slider
+        $this->add_group_control(
+            \Elementor\Group_Control_Border::get_type(),
+            [
+                'name' => 'switch_slider_border',
+                'label' => esc_html__('Switch Border', 'cubewp-framework'),
+                'selector' => '{{WRAPPER}} .cwp-switch .cwp-switch-slider',
+            ]
+        );
+
+        // Border Radius Control for .cwp-switch .cwp-switch-slider
+        $this->add_responsive_control(
+            'switch_slider_border_radius',
+            [
+                'label'      => esc_html__('Switch Border Radius', 'cubewp-framework'),
+                'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%'],
+                'selectors'  => [
+                    '{{WRAPPER}} .cwp-switch .cwp-switch-slider' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        // Box Shadow Control for .cwp-switch .cwp-switch-slider
+        $this->add_group_control(
+            \Elementor\Group_Control_Box_Shadow::get_type(),
+            [
+                'name' => 'switch_slider_box_shadow',
+                'label' => esc_html__('Switch Box Shadow', 'cubewp-framework'),
+                'selector' => '{{WRAPPER}} .cwp-switch .cwp-switch-slider',
+            ]
+        );
+
+        // Border Control for .cwp-switch .cwp-switch-slider:before
+        $this->add_group_control(
+            \Elementor\Group_Control_Border::get_type(),
+            [
+                'name' => 'switch_slider_before_border',
+                'label' => esc_html__('Slider Handle Border', 'cubewp-framework'),
+                'selector' => '{{WRAPPER}} .cwp-switch .cwp-switch-slider:before',
+            ]
+        );
+
+        // Border Radius Control for .cwp-switch .cwp-switch-slider:before
+        $this->add_responsive_control(
+            'switch_slider_before_border_radius',
+            [
+                'label'      => esc_html__('Slider Handle Border Radius', 'cubewp-framework'),
+                'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%'],
+                'selectors'  => [
+                    '{{WRAPPER}} .cwp-switch .cwp-switch-slider:before' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        // Box Shadow Control for .cwp-switch .cwp-switch-slider:before
+        $this->add_group_control(
+            \Elementor\Group_Control_Box_Shadow::get_type(),
+            [
+                'name' => 'switch_slider_before_box_shadow',
+                'label' => esc_html__('Slider Handle Box Shadow', 'cubewp-framework'),
+                'selector' => '{{WRAPPER}} .cwp-switch .cwp-switch-slider:before',
+            ]
+        );
+
+        // Background Color Controls for Switch
+        $this->start_controls_tabs('switch_slider_bg_color_tabs');
+
+        // Normal background tab
+        $this->start_controls_tab(
+            'switch_slider_bg_color_normal_tab',
+            [
+                'label' => esc_html__('Normal', 'cubewp-framework'),
+            ]
+        );
+        $this->add_control(
+            'switch_slider_bg_color_normal',
+            [
+                'label' => esc_html__('Background Color', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-switch .cwp-switch-slider' => 'background-color: {{VALUE}};',
+                ],
+            ]
+        );
+        $this->add_control(
+            'switch_slider_bg_color_normal_slider',
+            [
+                'label' => esc_html__('Handle Background Color', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-switch .cwp-switch-slider:before' => 'background-color: {{VALUE}};',
+                ],
+            ]
+        );
+        $this->add_control(
+            'switch_slider_bg_color_normal_text_handle',
+            [
+                'label' => esc_html__('Handle Text Color', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'default' => '',
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-switch .cwp-switch-text-no' => 'color: {{VALUE}};',
+                ],
+            ]
+        );
+        $this->add_control(
+            'switch_slider_bg_color_normal_text_main',
+            [
+                'label' => esc_html__('Main Text Color', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'default' => '',
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-switch .cwp-switch-text-yes' => 'color: {{VALUE}};',
+                ],
+            ]
+        );
+        $this->end_controls_tab();
+
+        // Active (Checked) background tab
+        $this->start_controls_tab(
+            'switch_slider_bg_color_active_tab',
+            [
+                'label' => esc_html__('Active', 'cubewp-framework'),
+            ]
+        );
+        $this->add_control(
+            'switch_slider_bg_color_active',
+            [
+                'label' => esc_html__('Active Background Color', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-switch .cwp-switch-field:checked ~ .cwp-switch-slider' => 'background-color: {{VALUE}};',
+                ],
+            ]
+        );
+        $this->add_control(
+            'switch_slider_bg_color_active_handle',
+            [
+                'label' => esc_html__('Handle Active Background Color', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-switch .cwp-switch-field:checked ~ .cwp-switch-slider:before' => 'background-color: {{VALUE}};',
+                ],
+            ]
+        );
+        $this->add_control(
+            'switch_slider_bg_color_active_text_handle',
+            [
+                'label' => esc_html__('Handle Text Color', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'default' => '',
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-switch .cwp-switch-field:checked ~ .cwp-switch-text-yes' => 'color: {{VALUE}};',
+                ],
+            ]
+        );
+        $this->add_control(
+            'switch_slider_bg_color_active_text_main',
+            [
+                'label' => esc_html__('Main Text Color', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'default' => '',
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-switch .cwp-switch-field:checked ~ .cwp-switch-text-no' => 'color: {{VALUE}};',
+                ],
+            ]
+        );
+        $this->end_controls_tab();
+
+        $this->end_controls_tabs();
+
+        $this->end_controls_section();
+        $this->start_controls_section(
             'section_label_style',
             [
                 'label' => esc_html__('Label Style', 'cubewp-framework'),
@@ -1665,6 +2539,19 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 ],
             ]
         );
+
+        $this->add_responsive_control(
+            'label_zindex',
+            [
+                'label'      => esc_html__('Z-Index', 'cubewp-framework'),
+                'type'       => Controls_Manager::NUMBER,
+                'default'    => 1,
+                'selectors'  => [
+                    '{{WRAPPER}} .cubewp-filter-builder-field-container label' => 'z-index: {{VALUE}};',
+                ],
+            ]
+        );
+
         $this->add_responsive_control(
             'label_position_top',
             [
@@ -1732,6 +2619,26 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
 
         // Start tabs for Normal / Hover
         $this->start_controls_tabs('tabs_button_style');
+
+        $this->add_responsive_control(
+            'button_width',
+            [
+                'label' => esc_html__('Width (px)', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::SLIDER,
+                'size_units' => ['px', '%', 'em'],
+                'range' => [
+                    'px' => [
+                        'min' => 0,
+                        'max' => 10000,
+                        'step' => 1,
+                    ],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-filter-button, {{WRAPPER}} .cubewp-business-hours-buttons .cubewp-business-hours-btn' => 'width: {{SIZE}}{{UNIT}} !important;',
+                ],
+            ]
+        );
+
 
         // Normal Tab
         $this->start_controls_tab(
@@ -1826,6 +2733,98 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 'name' => 'button_shadow',
                 'label' => esc_html__('Shadow', 'cubewp-framework'),
                 'selector' => '{{WRAPPER}} .cubewp-filter-button,{{WRAPPER}} .cubewp-business-hours-buttons .cubewp-business-hours-btn',
+            ]
+        );
+
+        //Button Text & Icon Wrapper
+        //Flex Direction
+        $this->add_control(
+            'button_text_icon_flex_direction',
+            [
+                'label' => esc_html__('Flex Direction', 'cubewp-framework'),
+                'type' => Controls_Manager::SELECT,
+                'options' => [
+                    'row' => esc_html__('Row', 'cubewp-framework'),
+                    'column' => esc_html__('Column', 'cubewp-framework'),
+                    'column-reverse' => esc_html__('Column Reverse', 'cubewp-framework'),
+                    'row-reverse' => esc_html__('Row Reverse', 'cubewp-framework'),
+                ],
+                'default' => 'row',
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-button-content-wrapper' => 'flex-direction: {{VALUE}};',
+                ],
+            ]
+        );
+
+        //Justify Content
+        $this->add_control(
+            'button_text_icon_justify_content',
+            [
+                'label' => esc_html__('Justify Content', 'cubewp-framework'),
+                'type' => Controls_Manager::SELECT,
+                'options' => [
+                    'flex-start' => esc_html__('Flex Start', 'cubewp-framework'),
+                    'flex-end' => esc_html__('Flex End', 'cubewp-framework'),
+                    'center' => esc_html__('Center', 'cubewp-framework'),
+                    'space-between' => esc_html__('Space Between', 'cubewp-framework'),
+                    'space-around' => esc_html__('Space Around', 'cubewp-framework'),
+                    'space-evenly' => esc_html__('Space Evenly', 'cubewp-framework'),
+                ],
+                'default' => 'flex-start',
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-button-content-wrapper' => 'justify-content: {{VALUE}};',
+                ],
+            ]
+        );
+
+        //Align Items
+        $this->add_control(
+            'button_text_icon_align_items',
+            [
+                'label' => esc_html__('Align Items', 'cubewp-framework'),
+                'type' => Controls_Manager::SELECT,
+                'options' => [
+                    'flex-start' => esc_html__('Flex Start', 'cubewp-framework'),
+                    'flex-end' => esc_html__('Flex End', 'cubewp-framework'),
+                    'center' => esc_html__('Center', 'cubewp-framework'),
+                    'stretch' => esc_html__('Stretch', 'cubewp-framework'),
+                    'baseline' => esc_html__('Baseline', 'cubewp-framework'),
+                ],
+                'default' => 'center',
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-button-content-wrapper' => 'align-items: {{VALUE}};',
+                ],
+            ]
+        );
+
+        //Gap
+        $this->add_responsive_control(
+            'button_text_icon_gap',
+            [
+                'label' => esc_html__('Gap', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', 'em', 'rem'],
+                'range' => [
+                    'px' => [
+                        'min' => 0,
+                        'max' => 50,
+                    ],
+                    'em' => [
+                        'min' => 0,
+                        'max' => 5, 
+                    ],
+                    'rem' => [
+                        'min' => 0,
+                        'max' => 5,
+                    ],
+                ],
+                'default' => [
+                    'size' => 16,
+                    'unit' => 'px',
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-button-content-wrapper' => 'gap: {{SIZE}}{{UNIT}};',
+                ],
             ]
         );
 
@@ -2047,6 +3046,7 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
 
         $this->end_controls_section();
 
+
         // Input Style Section
         $this->start_controls_section(
             'section_input_style',
@@ -2099,6 +3099,35 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
             ]
         );
 
+        $this->add_control(
+            'input_hover_color',
+            [
+                'label' => esc_html__('Text Hover Color', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-filter-builder-field:hover input[type="text"]' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .cubewp-filter-builder-field:hover input[type="number"]' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .cubewp-filter-builder-field:hover input[type="email"]' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .cubewp-filter-builder-field:hover input[type="search"]' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .cubewp-filter-builder-field:hover input[type="url"]' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .cubewp-filter-builder-field:hover input[type="tel"]' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .cubewp-filter-builder-field:hover input[type="google_address"]' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .cubewp-filter-builder-field:hover select' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .cubewp-filter-builder-field:hover textarea' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .cwp-search-field:hover input[type="text"]' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .cwp-search-field:hover input[type="number"]' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .cwp-search-field:hover input[type="email"]' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .cwp-search-field:hover input[type="search"]' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .cwp-search-field:hover input[type="url"]' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .cwp-search-field:hover input[type="tel"]' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .cwp-search-field:hover input[type="google_address"]' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .cwp-search-field:hover select' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .cwp-search-field:hover textarea' => 'color: {{VALUE}};',
+
+                ],
+            ]
+        );
+
         // Placeholder Typography
         $this->add_group_control(
             Group_Control_Typography::get_type(),
@@ -2137,6 +3166,36 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
             ]
         );
 
+        // Select Options Background Color
+        $this->add_control(
+            'select_option_bg_color',
+            [
+                'label' => esc_html__('Select Options Background Color', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-filter-builder-field select option' => 'background-color: {{VALUE}};',
+                    '{{WRAPPER}} .cwp-search-field select option' => 'background-color: {{VALUE}};',
+                    // For select2 dropdown
+                    '{{WRAPPER}} .select2-container .select2-dropdown, {{WRAPPER}} .select2-container .select2-results__option' => 'background-color: {{VALUE}};',
+                ],
+            ]
+        );
+
+        // Select Options Text Color
+        $this->add_control(
+            'select_option_text_color',
+            [
+                'label' => esc_html__('Select Options Text Color', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-filter-builder-field select option' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .cwp-search-field select option' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .select2-container .select2-results__option' => 'color: {{VALUE}};',
+                ],
+            ]
+        );
+
+
         // Input Background Color
         $this->add_group_control(
             Group_Control_Background::get_type(),
@@ -2145,6 +3204,36 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 'label' => esc_html__('Background', 'cubewp-framework'),
                 'types' => ['classic', 'gradient'],
                 'selector' => '{{WRAPPER}} .cwp-search-field .select2-container span,{{WRAPPER}} .cubewp-filter-builder-field input[type="text"], {{WRAPPER}} .cubewp-filter-builder-field input[type="number"], {{WRAPPER}} .cubewp-filter-builder-field input[type="email"], {{WRAPPER}} .cubewp-filter-builder-field input[type="search"], {{WRAPPER}} .cubewp-filter-builder-field input[type="url"], {{WRAPPER}} .cubewp-filter-builder-field input[type="tel"], {{WRAPPER}} .cubewp-filter-builder-field input[type="google_address"], {{WRAPPER}} .cubewp-filter-builder-field select, {{WRAPPER}} .cubewp-filter-builder-field textarea, {{WRAPPER}} .cwp-search-field input[type="text"], {{WRAPPER}} .cwp-search-field input[type="number"], {{WRAPPER}} .cwp-search-field input[type="email"], {{WRAPPER}} .cwp-search-field input[type="search"], {{WRAPPER}} .cwp-search-field input[type="url"], {{WRAPPER}} .cwp-search-field input[type="tel"], {{WRAPPER}} .cwp-search-field input[type="google_address"], {{WRAPPER}} .cwp-search-field select, {{WRAPPER}} .cwp-search-field textarea',
+            ]
+        );
+
+        $this->add_control(
+            'input_hover_background',
+            [
+                'label' => esc_html__('Hover Background', 'cubewp-framework'),
+                'type'  => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-search-field .select2-container span:hover,
+            {{WRAPPER}} .cubewp-filter-builder-field:hover input[type="text"],
+            {{WRAPPER}} .cubewp-filter-builder-field:hover input[type="number"],
+            {{WRAPPER}} .cubewp-filter-builder-field:hover input[type="email"],
+            {{WRAPPER}} .cubewp-filter-builder-field:hover input[type="search"],
+            {{WRAPPER}} .cubewp-filter-builder-field:hover input[type="url"],
+            {{WRAPPER}} .cubewp-filter-builder-field:hover input[type="tel"],
+            {{WRAPPER}} .cubewp-filter-builder-field:hover input[type="google_address"],
+            {{WRAPPER}} .cubewp-filter-builder-field:hover select,
+            {{WRAPPER}} .cubewp-filter-builder-field:hover textarea,
+            {{WRAPPER}} .cwp-search-field:hover input[type="text"],
+            {{WRAPPER}} .cwp-search-field:hover input[type="number"],
+            {{WRAPPER}} .cwp-search-field:hover input[type="email"],
+            {{WRAPPER}} .cwp-search-field:hover input[type="search"],
+            {{WRAPPER}} .cwp-search-field:hover input[type="url"],
+            {{WRAPPER}} .cwp-search-field:hover input[type="tel"],
+            {{WRAPPER}} .cwp-search-field:hover input[type="google_address"],
+            {{WRAPPER}} .cwp-search-field:hover select,
+            {{WRAPPER}} .cwp-search-field:hover textarea'
+                    => 'background-color: {{VALUE}};',
+                ],
             ]
         );
 
@@ -2502,16 +3591,22 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
             ]
         );
         // Control for icon right position
+        // Right offset (px, %)
         $this->add_control(
             'custom_select_icon_right',
             [
-                'label' => esc_html__('Icon Right Offset (px)', 'cubewp-framework'),
+                'label' => esc_html__('Icon Right Offset', 'cubewp-framework'),
                 'type' => \Elementor\Controls_Manager::SLIDER,
-                'size_units' => ['px'],
+                'size_units' => ['px', '%'],
                 'range' => [
                     'px' => [
                         'min' => 0,
                         'max' => 50,
+                        'step' => 1,
+                    ],
+                    '%'  => [
+                        'min' => 0,
+                        'max' => 100,
                         'step' => 1,
                     ],
                 ],
@@ -2521,6 +3616,70 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 ],
                 'selectors' => [
                     '{{WRAPPER}} .cubewp-filter-builder-field-container::after' => 'right: {{SIZE}}{{UNIT}} !important;',
+                ],
+                'condition' => [
+                    'enable_custom_select_icon' => 'yes',
+                    'custom_select_icon_for_dropdown[url]!' => '',
+                ]
+            ]
+        );
+        // Left offset (px, %)
+        $this->add_control(
+            'custom_select_icon_left',
+            [
+                'label' => esc_html__('Icon Left Offset', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::SLIDER,
+                'size_units' => ['px', '%'],
+                'range' => [
+                    'px' => [
+                        'min' => 0,
+                        'max' => 50,
+                        'step' => 1,
+                    ],
+                    '%'  => [
+                        'min' => 0,
+                        'max' => 100,
+                        'step' => 1,
+                    ],
+                ],
+                'default' => [
+                    'size' => '',
+                    'unit' => 'px',
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-filter-builder-field-container::after' => 'left: {{SIZE}}{{UNIT}} !important;',
+                ],
+                'condition' => [
+                    'enable_custom_select_icon' => 'yes',
+                    'custom_select_icon_for_dropdown[url]!' => '',
+                ]
+            ]
+        );
+        // Bottom offset (px, %)
+        $this->add_control(
+            'custom_select_icon_bottom',
+            [
+                'label' => esc_html__('Icon Bottom Offset', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::SLIDER,
+                'size_units' => ['px', '%'],
+                'range' => [
+                    'px' => [
+                        'min' => -20,
+                        'max' => 60,
+                        'step' => 1,
+                    ],
+                    '%'  => [
+                        'min' => 0,
+                        'max' => 100,
+                        'step' => 1,
+                    ],
+                ],
+                'default' => [
+                    'size' => '',
+                    'unit' => 'px',
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-filter-builder-field-container::after' => 'bottom: {{SIZE}}{{UNIT}} !important;',
                 ],
                 'condition' => [
                     'enable_custom_select_icon' => 'yes',
@@ -3157,6 +4316,16 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                     'filter_type' => 'filters',
                     'field_display_type' => 'popup',
                 ],
+            ]
+        );
+
+        // Custom HTML: Notice that all these settings apply for both Dropdown and Popup
+        $this->add_control(
+            'popup_dropdown_settings_notice',
+            [
+                'type' => \Elementor\Controls_Manager::RAW_HTML,
+                'raw' => '<div style="margin-bottom: 15px; color: #1e87f0;"><strong>' . esc_html__('Note:') . '</strong> ' . esc_html__('All these settings will apply to both Dropdown and Popup display modes.', 'cubewp-framework') . '</div>',
+                'content_classes' => 'elementor-panel-alert elementor-panel-alert-info',
             ]
         );
 
@@ -3948,6 +5117,22 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 ],
             ]
         );
+        // Popup Footer
+        $this->add_control(
+            'enable_popup_footer',
+            [
+                'label' => esc_html__('Enable Footer', 'cubewp-framework'),
+                'type' => Controls_Manager::SELECT,
+                'options' => [
+                    'block' => esc_html__('Yes', 'cubewp-framework'),
+                    'none' => esc_html__('No', 'cubewp-framework'),
+                ],
+                'default' => 'yes',
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-filter-popup-footer' => 'display: {{VALUE}} !important;',
+                ],
+            ]
+        );
 
         // Popup Footer
         $this->add_control(
@@ -3956,6 +5141,9 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 'label' => esc_html__('Footer', 'cubewp-framework'),
                 'type' => Controls_Manager::HEADING,
                 'separator' => 'before',
+                'condition' => [
+                    'enable_popup_footer' => 'block',
+                ],
             ]
         );
 
@@ -3966,8 +5154,12 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 'label' => esc_html__('Background', 'cubewp-framework'),
                 'types' => ['classic', 'gradient'],
                 'selector' => '{{WRAPPER}} .cubewp-filter-popup-footer',
+                'condition' => [
+                    'enable_popup_footer' => 'block',
+                ],
             ]
         );
+
 
         $this->add_responsive_control(
             'popup_footer_padding',
@@ -3978,6 +5170,9 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 'selectors' => [
                     '{{WRAPPER}} .cubewp-filter-popup-footer' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
                 ],
+                'condition' => [
+                    'enable_popup_footer' => 'block',
+                ],
             ]
         );
 
@@ -3987,6 +5182,9 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 'name' => 'popup_footer_border',
                 'label' => esc_html__('Border', 'cubewp-framework'),
                 'selector' => '{{WRAPPER}} .cubewp-filter-popup-footer',
+                'condition' => [
+                    'enable_popup_footer' => 'block',
+                ],
             ]
         );
 
@@ -3997,6 +5195,9 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 'label' => esc_html__('Apply Button', 'cubewp-framework'),
                 'type' => Controls_Manager::HEADING,
                 'separator' => 'before',
+                'condition' => [
+                    'enable_popup_footer' => 'block',
+                ],
             ]
         );
 
@@ -4007,6 +5208,9 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
             'popup_apply_button_normal',
             [
                 'label' => esc_html__('Normal', 'cubewp-framework'),
+                'condition' => [
+                    'enable_popup_footer' => 'block',
+                ],
             ]
         );
 
@@ -4018,6 +5222,9 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 'default' => '#ffffff',
                 'selectors' => [
                     '{{WRAPPER}} .cubewp-filter-popup-apply' => 'color: {{VALUE}};',
+                ],
+                'condition' => [
+                    'enable_popup_footer' => 'block',
                 ],
             ]
         );
@@ -4059,6 +5266,9 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 'selectors' => [
                     '{{WRAPPER}} .cubewp-filter-popup-apply' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
                 ],
+                'condition' => [
+                    'enable_popup_footer' => 'block',
+                ],
             ]
         );
 
@@ -4068,6 +5278,9 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 'name' => 'popup_apply_button_border',
                 'label' => esc_html__('Border', 'cubewp-framework'),
                 'selector' => '{{WRAPPER}} .cubewp-filter-popup-apply',
+                'condition' => [
+                    'enable_popup_footer' => 'block',
+                ],
             ]
         );
 
@@ -4099,6 +5312,9 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
             'popup_apply_button_hover',
             [
                 'label' => esc_html__('Hover', 'cubewp-framework'),
+                'condition' => [
+                    'enable_popup_footer' => 'block',
+                ],
             ]
         );
 
@@ -4120,6 +5336,9 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 'label' => esc_html__('Background', 'cubewp-framework'),
                 'types' => ['classic', 'gradient'],
                 'selector' => '{{WRAPPER}} .cubewp-filter-popup-apply:hover',
+                'condition' => [
+                    'enable_popup_footer' => 'block',
+                ],
             ]
         );
 
@@ -4129,6 +5348,9 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 'name' => 'popup_apply_button_hover_border',
                 'label' => esc_html__('Border', 'cubewp-framework'),
                 'selector' => '{{WRAPPER}} .cubewp-filter-popup-apply:hover',
+                'condition' => [
+                    'enable_popup_footer' => 'block',
+                ],
             ]
         );
 
@@ -4150,6 +5372,9 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 'name' => 'popup_apply_button_hover_box_shadow',
                 'label' => esc_html__('Box Shadow', 'cubewp-framework'),
                 'selector' => '{{WRAPPER}} .cubewp-filter-popup-apply:hover',
+                'condition' => [
+                    'enable_popup_footer' => 'block',
+                ],
             ]
         );
 
@@ -4551,6 +5776,21 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 ],
             ]
         );
+        $this->add_control(
+            'sorting_dropdown_toggle_icon_color_hover',
+            [
+                'label' => esc_html__('Icon Color Hover', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-sorting-dropdown-toggle:hover .cubewp-sorting-dropdown-icon' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .cubewp-sorting-dropdown-toggle:hover .cubewp-sorting-dropdown-icon svg' => 'fill: {{VALUE}};',
+                ],
+                'condition' => [
+                    'filter_type' => 'sorting',
+                    'sorting_display_type' => 'dropdown',
+                ],
+            ]
+        );
 
         $this->add_responsive_control(
             'sorting_dropdown_toggle_icon_spacing',
@@ -4618,20 +5858,49 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 ],
             ]
         );
-
-        $this->add_group_control(
-            Group_Control_Background::get_type(),
+        $this->add_control(
+            'sorting_dropdown_toggle_color_hover',
             [
-                'name' => 'sorting_dropdown_toggle_background',
-                'label' => esc_html__('Background', 'cubewp-framework'),
-                'types' => ['classic', 'gradient'],
-                'selector' => '{{WRAPPER}} .cubewp-sorting-dropdown-toggle',
+                'label' => esc_html__('Text Color Hover', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-sorting-dropdown-toggle:hover' => 'color: {{VALUE}};',
+                ],
                 'condition' => [
                     'filter_type' => 'sorting',
                     'sorting_display_type' => 'dropdown',
                 ],
             ]
         );
+        $this->add_control(
+            'sorting_dropdown_toggle_background',
+            [
+                'label' => esc_html__('Background Color', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-sorting-dropdown-toggle' => 'background-color: {{VALUE}};',
+                ],
+                'condition' => [
+                    'filter_type' => 'sorting',
+                    'sorting_display_type' => 'dropdown',
+                ],
+            ]
+        );
+        $this->add_control(
+            'sorting_dropdown_toggle_background_hover',
+            [
+                'label' => esc_html__('Background Color Hover', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-sorting-dropdown-toggle:hover' => 'background-color: {{VALUE}};',
+                ],
+                'condition' => [
+                    'filter_type' => 'sorting',
+                    'sorting_display_type' => 'dropdown',
+                ],
+            ]
+        );
+
 
         $this->add_group_control(
             Group_Control_Typography::get_type(),
@@ -4642,6 +5911,17 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 'condition' => [
                     'filter_type' => 'sorting',
                     'sorting_display_type' => 'dropdown',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'sorting_dropdown_toggle_border_hover',
+            [
+                'label'    => esc_html__('Hover Border Color', 'cubewp-framework'),
+                'type'     => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-sorting-dropdown-toggle:hover' => 'border-color: {{VALUE}};',
                 ],
             ]
         );
@@ -4727,6 +6007,67 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 'condition' => [
                     'filter_type' => 'sorting',
                     'sorting_display_type' => 'dropdown',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'sorting_dropdown_menu_min_width',
+            [
+                'label' => esc_html__('Minimum Width', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', '%', 'em'],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-sorting-dropdown-menu' => 'min-width: {{SIZE}}{{UNIT}};',
+                ],
+                'default' => [
+                    'unit' => 'px',
+                    'size' => 150,
+                ],
+                'condition' => [
+                    'filter_type' => 'sorting',
+                    'sorting_display_type' => 'dropdown',
+                ],
+            ]
+        );
+        $this->add_responsive_control(
+            'sorting_dropdown_menu_layout_p',
+            [
+                'label' => esc_html__('Open Layout', 'cubewp-framework'),
+                'type' => Controls_Manager::SELECT,
+                'options' => [
+                    'flex' => esc_html__('Flex', 'cubewp-framework'),
+                    'block' => esc_html__('block', 'cubewp-framework'),
+                ],
+                'selectors' => [
+                    'body {{WRAPPER}} .cubewp-sorting-dropdown-menu.open' => 'display:{{VALUE}} !important;',
+                ],
+                'default' =>  'block',
+                'condition' => [
+                    'filter_type' => 'sorting',
+                    'sorting_display_type' => 'dropdown',
+                ],
+            ]
+        );
+
+
+        $this->add_responsive_control(
+            'sorting_dropdown_menu_layout_gap',
+            [
+                'label' => esc_html__('Gap', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', '%', 'em'],
+                'default' => [
+                    'unit' => 'px',
+                    'size' => 150,
+                ],
+                'selectors' => [
+                    'body {{WRAPPER}}  .cubewp-sorting-dropdown-menu.open' => 'flex-direction: row;gap: {{SIZE}}{{UNIT}};',
+                ],
+                'condition' => [
+                    'filter_type' => 'sorting',
+                    'sorting_display_type' => 'dropdown',
+                    'sorting_dropdown_menu_layout_p' => 'flex',
                 ],
             ]
         );
@@ -4951,6 +6292,177 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
         );
 
         $this->end_controls_section();
+
+
+        $this->start_controls_section(
+            'section_google_address_button_style',
+            [
+                'label' => esc_html__('Near Me Slider', 'cubewp-framework'),
+                'tab' => Controls_Manager::TAB_STYLE,
+            ]
+        );
+
+        // Container Styles: .cubewp-google-address-filter-container.active .cubewp-filter-builder-field .cwp-address-range.cwp-hide
+        $this->add_control(
+            'google_address_range_container_heading',
+            [
+                'label' => esc_html__('Range Container', 'cubewp-framework'),
+                'type' => Controls_Manager::HEADING,
+                'separator' => 'before',
+            ]
+        );
+
+        // Padding
+        $this->add_responsive_control(
+            'google_address_range_container_padding',
+            [
+                'label' => esc_html__('Padding', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', 'em', '%'],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-google-address-filter-container.active .cubewp-filter-builder-field .cwp-address-range' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+        // Margin
+        $this->add_responsive_control(
+            'google_address_range_container_margin',
+            [
+                'label' => esc_html__('Margin', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', 'em', '%'],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-google-address-filter-container.active .cubewp-filter-builder-field .cwp-address-range' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+        // Border
+        $this->add_group_control(
+            Group_Control_Border::get_type(),
+            [
+                'name' => 'google_address_range_container_border',
+                'selector' => '{{WRAPPER}} .cubewp-google-address-filter-container.active .cubewp-filter-builder-field .cwp-address-range',
+            ]
+        );
+        // Border Radius
+        $this->add_responsive_control(
+            'google_address_range_container_border_radius',
+            [
+                'label' => esc_html__('Border Radius', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%'],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-google-address-filter-container.active .cubewp-filter-builder-field .cwp-address-range' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+        // Box Shadow
+        $this->add_group_control(
+            Group_Control_Box_Shadow::get_type(),
+            [
+                'name' => 'google_address_range_container_box_shadow',
+                'selector' => '{{WRAPPER}} .cubewp-google-address-filter-container.active .cubewp-filter-builder-field .cwp-address-range',
+            ]
+        );
+
+        // Input Range Styling .cwp-address-range .range
+        $this->add_control(
+            'google_address_range_slider_heading',
+            [
+                'label' => esc_html__('Range Input', 'cubewp-framework'),
+                'type' => Controls_Manager::HEADING,
+                'separator' => 'before',
+            ]
+        );
+        $this->add_control(
+            'google_address_range_slider_bg_color',
+            [
+                'label' => esc_html__('Slider Track Color', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-address-range .range' => 'background-color: {{VALUE}};',
+                ],
+            ]
+        );
+        $this->add_control(
+            'google_address_range_slider_height',
+            [
+                'label' => esc_html__('Slider Height', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px'],
+                'range' => [
+                    'px' => [
+                        'min' => 2,
+                        'max' => 32,
+                    ],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-address-range .range' => 'height: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+        $this->add_control(
+            'google_address_range_slider_margin',
+            [
+                'label' => esc_html__('Slider Margin', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', 'em', '%'],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-address-range .range' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        // Range Paragraph Styling .cwp-address-range p
+        $this->add_control(
+            'google_address_range_paragraph_heading',
+            [
+                'label' => esc_html__('Description Text', 'cubewp-framework'),
+                'type' => Controls_Manager::HEADING,
+                'separator' => 'before',
+            ]
+        );
+        $this->add_control(
+            'google_address_range_paragraph_color',
+            [
+                'label' => esc_html__('Text Color', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-address-range p' => 'color: {{VALUE}};',
+                ],
+            ]
+        );
+        $this->add_group_control(
+            Group_Control_Typography::get_type(),
+            [
+                'name' => 'google_address_range_paragraph_typography',
+                'selector' => '{{WRAPPER}} .cwp-address-range p',
+            ]
+        );
+        $this->add_control(
+            'google_address_range_paragraph_margin',
+            [
+                'label' => esc_html__('Text Margin', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', 'em', '%'],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-address-range p' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+        $this->add_control(
+            'google_address_range_paragraph_padding',
+            [
+                'label' => esc_html__('Text Padding', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', 'em', '%'],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-address-range p' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->end_controls_section();
     }
 
 
@@ -5006,6 +6518,43 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
 
         return $taxonomies_options;
     }
+
+    protected function get_term_meta_key_options($post_type = '')
+	{
+		$options = array('' => esc_html__('Select Term Meta Key', 'cubewp-frontend'));
+
+		if (empty($post_type) || !function_exists('CWP')) {
+			return $options;
+		}
+
+		// Get all taxonomies for this post type
+		$taxonomies = get_object_taxonomies($post_type, 'objects');
+		if (empty($taxonomies) || !is_array($taxonomies)) {
+			return $options;
+		}
+
+		// Get taxonomy custom fields from CubeWP
+		$tax_custom_fields = CWP()->get_custom_fields('taxonomy');
+
+		if (!empty($tax_custom_fields) && is_array($tax_custom_fields)) {
+			foreach ($taxonomies as $taxonomy) {
+				$taxonomy_name = $taxonomy->name;
+				
+				// Check if this taxonomy has custom fields
+				if (isset($tax_custom_fields[$taxonomy_name]) && !empty($tax_custom_fields[$taxonomy_name])) {
+					foreach ($tax_custom_fields[$taxonomy_name] as $field) {
+						// Only include taxonomy type fields (which can store term relationships)
+						if (isset($field['type']) && $field['type'] === 'taxonomy' && isset($field['slug']) && isset($field['name'])) {
+							$field_label = !empty($field['label']) ? $field['label'] : $field['name'];
+							$options[$field['slug']] = $field_label . ' (' . $taxonomy->label . ')';
+						}
+					}
+				}
+			}
+		}
+
+		return $options;
+	}
 
     /**
      * Get custom fields for a post type
@@ -5124,17 +6673,35 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
     /**
      * Render widget output on the frontend
      */
+
     protected function render()
     {
+
+
+
         // Enqueue necessary scripts and styles
         $this->enqueue_filter_scripts();
 
         $settings = $this->get_settings_for_display();
         $filter_type = isset($settings['filter_type']) ? $settings['filter_type'] : 'filters';
+        $show_data_for = isset($settings['show_data_for']) ? $settings['show_data_for'] : 'mobile_desktop';
         $post_type = isset($settings['post_type']) ? $settings['post_type'] : 'post';
         $display_type = isset($settings['field_display_type']) ? $settings['field_display_type'] : 'simple';
         $field_type_selection = isset($settings['field_type_selection']) ? $settings['field_type_selection'] : 'custom_fields';
+        $allow_near_me_option = isset($settings['allow_near_me_option' . $post_type]) ? $settings['allow_near_me_option' . $post_type] : 'no';
 
+
+        if (!cubewp_is_elementor_editing()) {
+            if ($show_data_for == 'mobile') {
+                if (!wp_is_mobile()) {
+                    return;
+                }
+            } elseif ($show_data_for == 'desktop') {
+                if (wp_is_mobile()) {
+                    return;
+                }
+            }
+        }
         // If sorting is selected, render sorting instead of filters
         if ($filter_type === 'sorting') {
             $this->render_sorting($settings, $post_type);
@@ -5185,11 +6752,15 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
         $field_name = '';
         $taxonomy_name = '';
         $taxonomy_display_type = isset($settings['taxonomy_display_type_' . $post_type]) ? $settings['taxonomy_display_type_' . $post_type] : 'checkbox';
+        $taxonomy_placeholder = isset($settings['taxonomy_display_type_placeholder' . $post_type]) ? $settings['taxonomy_display_type_placeholder' . $post_type] : '';
+      
         $is_business_hours = false;
+        $is_google_address = false;
         $business_hours_options = [];
         $business_hours_button_text = '';
         $business_hours_button_icon = '';
         $business_hours_button_inner_text = '';
+
 
         if ($display_type === 'simple') {
             if ($field_type_selection === 'custom_fields') {
@@ -5222,6 +6793,18 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                         $business_hours_button_inner_text = isset($settings[$business_hours_button_inner_text_key]) ? $settings[$business_hours_button_inner_text_key] : esc_html__('Business Hours', 'cubewp-framework');
                         $business_hours_button_text = isset($settings[$business_hours_button_text_key]) ? $settings[$business_hours_button_text_key] : esc_html__('Filter by Hours', 'cubewp-framework');
                     }
+
+                    $is_google_address = $this->is_google_address_field($field_name, $post_type);
+                    if ($is_google_address) {
+                        $business_hours_options_key = 'business_hours_filter_' . $post_type;
+                        $business_hours_options = isset($settings[$business_hours_options_key]) ? $settings[$business_hours_options_key] : 'open_now';
+                        $business_hours_button_text_key = 'business_hours_button_text_' . $post_type;
+                        $business_hours_button_icon_key = 'business_hours_button_icon_' . $post_type;
+                        $business_hours_button_inner_text_key = 'business_hours_button_inner_text_' . $post_type;
+                        $business_hours_button_icon = isset($settings[$business_hours_button_icon_key]) ? $settings[$business_hours_button_icon_key] : 'fa fa-clock';
+                        $business_hours_button_inner_text = isset($settings[$business_hours_button_inner_text_key]) ? $settings[$business_hours_button_inner_text_key] : esc_html__('Business Hours', 'cubewp-framework');
+                        $business_hours_button_text = isset($settings[$business_hours_button_text_key]) ? $settings[$business_hours_button_text_key] : esc_html__('Filter by Hours', 'cubewp-framework');
+                    }
                 }
             } else {
                 $taxonomy_name_key = 'taxonomy_name_' . $post_type;
@@ -5241,7 +6824,6 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 }
             }
         }
-
         // Validate that fields are selected based on display type
         $has_fields = false;
         if ($display_type === 'popup') {
@@ -5266,6 +6848,10 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
         // Check if custom checkbox/radio styling is enabled
         $enable_custom_checkbox_radio = isset($settings['enable_custom_checkbox_radio']) && $settings['enable_custom_checkbox_radio'] === 'yes';
 
+        // Check convert settings for adding classes
+        $convert_simple_to_accordion = isset($settings['convert_simple_to_accordion']) ? $settings['convert_simple_to_accordion'] : 'no';
+        $convert_popup_to_dropdown = isset($settings['convert_popup_to_dropdown']) ? $settings['convert_popup_to_dropdown'] : 'no';
+
         // Add class to widget wrapper if custom styling is enabled
 
 
@@ -5279,9 +6865,15 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
             $class_checkbox_enabled .= 'cubewp-custom-checkbox-radio-enabled';
         }
 
+        // Add accordion class if convert simple to accordion is enabled
+        $additional_classes = '';
+        if ($display_type === 'simple' && $convert_simple_to_accordion === 'yes') {
+            $additional_classes .= ' cubewp-filter-accordion-mode';
+        }
+
         // Prepare data attributes for custom icons
         $data_attrs = '';
-        echo '<div class="cubewp-filter-builder-container ' . esc_attr($class_checkbox_enabled) . '" id="' . esc_attr($widget_id) . '" data-post-type="' . esc_attr($post_type) . '" data-widget-id="' . esc_attr($this->get_id()) . '"' . $data_attrs . '>';
+        echo '<div class="cubewp-filter-builder-container ' . esc_attr($class_checkbox_enabled) . esc_attr($additional_classes) . '" id="' . esc_attr($widget_id) . '" data-post-type="' . esc_attr($post_type) . '" data-widget-id="' . esc_attr($this->get_id()) . '"' . $data_attrs . '>';
 
         // Render based on display type
         switch ($display_type) {
@@ -5300,8 +6892,20 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                     // Get custom label for taxonomy
                     $taxonomy_label_key = 'taxonomy_label_' . $post_type;
                     $custom_taxonomy_label = isset($settings[$taxonomy_label_key]) ? $settings[$taxonomy_label_key] : '';
-                    $this->render_simple_taxonomy($taxonomy_name, $post_type, $taxonomy_display_type, $custom_taxonomy_label);
+                    
+                    // Get conditional taxonomy settings for simple display type
+                    $enable_conditional_key = 'enable_conditional_taxonomy_' . $post_type;
+                    $conditional_taxonomy_key = 'conditional_taxonomy_' . $post_type;
+                    $conditional_term_meta_key_key = 'conditional_term_meta_key_' . $post_type;
+                    
+                    $enable_conditional = isset($settings[$enable_conditional_key]) ? $settings[$enable_conditional_key] : 'no';
+                    $conditional_taxonomy = isset($settings[$conditional_taxonomy_key]) ? $settings[$conditional_taxonomy_key] : '';
+                    $conditional_term_meta_key = isset($settings[$conditional_term_meta_key_key]) ? $settings[$conditional_term_meta_key_key] : '';
+                    
+                    
+                    $this->render_simple_taxonomy($field_icon, $taxonomy_name, $post_type, $taxonomy_display_type, $custom_taxonomy_label, $taxonomy_placeholder, $enable_conditional, $conditional_taxonomy, $conditional_term_meta_key);
                 } elseif ($is_business_hours && !empty($business_hours_options)) {
+
                     // Pass the single option directly (render function handles both formats)
                     // Get icon position for simple display type
                     $business_hours_button_icon_position_key = 'business_hours_button_icon_position_' . $post_type;
@@ -5316,13 +6920,34 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                         'business_hours_button_icon_position' => $business_hours_button_icon_position,
                         'widget_id' => $this->get_id(),
                     );
-                   
+
                     $this->render_business_hours_filter($array_settings);
+                } elseif ($is_google_address && !empty($is_google_address) && $allow_near_me_option === 'yes') {
+                    // Pass the single option directly (render function handles both formats)
+                    // Get icon position for simple display type
+                    $business_hours_button_icon_position_key = 'business_hours_button_icon_position_' . $post_type;
+                    $business_hours_button_icon_position = isset($settings[$business_hours_button_icon_position_key]) ? $settings[$business_hours_button_icon_position_key] : (is_rtl() ? 'right' : 'left');
+                    $array_settings = array(
+                        'field_name' => $field_name,
+                        'post_type' => $post_type,
+                        'options' => $business_hours_options,
+                        'button_text' => $business_hours_button_text,
+                        'business_hours_button_inner_text' => $business_hours_button_inner_text,
+                        'business_hours_button_icon' => $business_hours_button_icon,
+                        'business_hours_button_icon_position' => $business_hours_button_icon_position,
+                        'widget_id' => $this->get_id(),
+                    );
+                    echo '<div class="cubewp-google-address-filter-container">';
+                    $this->render_google_address_filter($array_settings);
+                    $field_label_key = 'field_label_' . $post_type;
+                    $custom_field_label = isset($settings[$field_label_key]) ? $settings[$field_label_key] : '';
+                    $this->render_simple_field($field_name, $post_type, $field_icon, $custom_field_label, $taxonomy_placeholder);
+                    echo '</div>';
                 } else {
                     // Get custom label for custom field
                     $field_label_key = 'field_label_' . $post_type;
                     $custom_field_label = isset($settings[$field_label_key]) ? $settings[$field_label_key] : '';
-                    $this->render_simple_field($field_name, $post_type, $field_icon, $custom_field_label);
+                    $this->render_simple_field($field_name, $post_type, $field_icon, $custom_field_label, $taxonomy_placeholder);
                 }
                 break;
 
@@ -5354,6 +6979,8 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                     'popup_header_text' => $popup_header_text,
                     'popup_position' => $popup_position,
                     'popup_show_close_button' => $popup_show_close_button,
+                    'convert_popup_to_dropdown' => $convert_popup_to_dropdown,
+                    'allow_near_me_option' => $allow_near_me_option,
                 );
                 $this->render_popup_field($array_settings);
                 break;
@@ -5382,7 +7009,7 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
     /**
      * Render simple field
      */
-    private function render_simple_field($field_name, $post_type, $field_icon = [], $custom_label = '')
+    private function render_simple_field($field_name, $post_type, $field_icon = [], $custom_label = '', $placeholder = '')
     {
         // Wrap field output with prefix classes
         echo '<div class="cubewp-filter-builder-field" data-field-name="' . esc_attr($field_name) . '">';
@@ -5396,6 +7023,40 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
         }
 
         $cwp_search_filters = CWP()->get_form('search_filters');
+
+
+        if (!empty($custom_label)) {
+            $custom_label = $custom_label;
+        } else {
+            $custom_label = '';
+        }
+        if (!empty($placeholder)) {
+            $placeholder = $placeholder;
+        } else {
+            $placeholder = '';
+        }
+
+
+        $range_overrides = [];
+        $settings = $this->get_settings_for_display();
+        $slider_override_key = 'number_range_slider_ui_' . $post_type;
+        if (isset($settings[$slider_override_key]) && $settings[$slider_override_key] !== 'inherit') {
+            $range_overrides['range_slider_ui'] = ($settings[$slider_override_key] === 'yes') ? '1' : '0';
+
+            $min_key = 'number_range_min_' . $post_type;
+            $max_key = 'number_range_max_' . $post_type;
+            $step_key = 'number_range_step_' . $post_type;
+
+            if (isset($settings[$min_key]) && $settings[$min_key] !== '' && $settings[$min_key] !== null) {
+                $range_overrides['min'] = $settings[$min_key];
+            }
+            if (isset($settings[$max_key]) && $settings[$max_key] !== '' && $settings[$max_key] !== null) {
+                $range_overrides['max'] = $settings[$max_key];
+            }
+            if (isset($settings[$step_key]) && $settings[$step_key] !== '' && $settings[$step_key] !== null) {
+                $range_overrides['step'] = $settings[$step_key];
+            }
+        }
 
         if (!empty($cwp_search_filters[$post_type]['fields']) && isset($cwp_search_filters[$post_type]['fields'][$field_name])) {
             $search_filter = $cwp_search_filters[$post_type]['fields'][$field_name];
@@ -5411,51 +7072,21 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
             if (!empty($custom_label)) {
                 $search_filter['label'] = $custom_label;
             }
+            if (!empty($placeholder)) {
+                $search_filter['placeholder'] = $placeholder;
+            }
+
+            if (!empty($range_overrides)) {
+                $search_filter = array_merge($search_filter, $range_overrides);
+            }
 
             $field_output = CubeWp_Frontend_Search_Filter::get_filters_content($search_filter, $field_name);
             $field_output = str_replace('cwp-field-container', 'cubewp-filter-builder-field-container cwp-field-container', $field_output);
             $field_output = str_replace('cwp-search-field', 'cubewp-filter-builder-search-field cwp-search-field', $field_output);
-
-            // Replace label in output if custom label is provided
-            if (!empty($custom_label) && !empty($original_label)) {
-                // Escape both labels for HTML comparison
-                $original_escaped = esc_html($original_label);
-                $custom_escaped = esc_html($custom_label);
-
-                // Strategy 1: Replace entire label tag content (most common case)
-                $field_output = preg_replace(
-                    '/(<label[^>]*>)([^<]*)' . preg_quote($original_escaped, '/') . '([^<]*)(<\/label>)/i',
-                    '$1$2' . $custom_escaped . '$3$4',
-                    $field_output
-                );
-
-                // Strategy 2: Replace simple label tag
-                $field_output = preg_replace(
-                    '/<label[^>]*>' . preg_quote($original_escaped, '/') . '<\/label>/i',
-                    '<label>' . $custom_escaped . '</label>',
-                    $field_output
-                );
-
-                // Strategy 3: Replace text content between tags (for any tag, not just label)
-                $field_output = preg_replace(
-                    '/(>)([^<]*)' . preg_quote($original_escaped, '/') . '([^<]*)(<)/i',
-                    '$1$2' . $custom_escaped . '$3$4',
-                    $field_output
-                );
-
-                // Strategy 4: Direct string replacement (fallback)
-                $field_output = str_replace($original_escaped, $custom_escaped, $field_output);
-
-                // Strategy 5: Also try with unescaped version (in case label wasn't escaped)
-                if ($original_label !== $original_escaped) {
-                    $field_output = str_replace($original_label, $custom_label, $field_output);
-                }
-            }
-
             echo $field_output;
         } else {
             // Try to render field directly
-            $this->render_field_directly($field_name, $post_type);
+            $this->render_field_directly($field_name, $post_type, $custom_label, $placeholder, $range_overrides);
         }
 
         echo '</div>';
@@ -5464,6 +7095,9 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
 
 
 
+    /**
+     * Render popup field (popup with multiple fields)
+     */
     /**
      * Render popup field (popup with multiple fields)
      */
@@ -5483,10 +7117,16 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
         $popup_header_text = isset($array_settings['popup_header_text']) ? $array_settings['popup_header_text'] : '';
         $popup_position = isset($array_settings['popup_position']) ? $array_settings['popup_position'] : 'center';
         $popup_show_close_button = isset($array_settings['popup_show_close_button']) ? $array_settings['popup_show_close_button'] : 'yes';
+        $convert_popup_to_dropdown = isset($array_settings['convert_popup_to_dropdown']) ? $array_settings['convert_popup_to_dropdown'] : 'no';
         $unique_id = 'cubewp-filter-popup-' . $widget_id;
         $popup_id = 'cubewp-filter-popup-content-' . $widget_id;
+        // Add dropdown class if convert popup to dropdown is enabled
+        $popup_wrapper_class = 'cubewp-filter-popup-wrapper';
+        if ($convert_popup_to_dropdown === 'yes') {
+            $popup_wrapper_class .= ' cubewp-filter-dropdown-mode';
+        }
 
-        echo '<div class="cubewp-filter-popup-wrapper">';
+        echo '<div class="' . $popup_wrapper_class . '">';
         echo '<button type="button" class="cubewp-filter-popup-button" data-target="' . esc_attr($popup_id) . '">';
         echo '<span class="cubewp-button-content-wrapper cubewp-icon-' . esc_attr($button_icon_position) . '">';
 
@@ -5529,16 +7169,23 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
         if (!empty($popup_fields) && is_array($popup_fields)) {
             foreach ($popup_fields as $popup_field) {
                 $popup_field_type = isset($popup_field['popup_field_type']) ? $popup_field['popup_field_type'] : 'custom_fields';
+                $taxonomy_placeholder = isset($popup_field['popup_taxonomy_display_placeholder']) ? $popup_field['popup_taxonomy_display_placeholder'] : '';
 
                 echo '<div class="cubewp-popup-field-wrapper">';
-
 
                 if ($popup_field_type === 'taxonomies') {
                     $popup_taxonomy_name = isset($popup_field['popup_taxonomy_name']) ? $popup_field['popup_taxonomy_name'] : '';
                     $popup_taxonomy_display = isset($popup_field['popup_taxonomy_display']) ? $popup_field['popup_taxonomy_display'] : 'checkbox';
                     $popup_taxonomy_label = isset($popup_field['popup_taxonomy_label']) ? $popup_field['popup_taxonomy_label'] : '';
+                    
+                    // Get conditional taxonomy settings for popup display type
+                    $popup_enable_conditional = isset($popup_field['popup_enable_conditional_taxonomy']) ? $popup_field['popup_enable_conditional_taxonomy'] : 'no';
+                    $popup_conditional_taxonomy = isset($popup_field['popup_conditional_taxonomy']) ? $popup_field['popup_conditional_taxonomy'] : '';
+                    $popup_conditional_term_meta_key = isset($popup_field['popup_conditional_term_meta_key']) ? $popup_field['popup_conditional_term_meta_key'] : '';
+                    
                     if (!empty($popup_taxonomy_name)) {
-                        $this->render_simple_taxonomy($popup_taxonomy_name, $post_type, $popup_taxonomy_display, $popup_taxonomy_label);
+                        $field_icon = '';
+                        $this->render_simple_taxonomy($field_icon, $popup_taxonomy_name, $post_type, $popup_taxonomy_display, $popup_taxonomy_label, $taxonomy_placeholder, $popup_enable_conditional, $popup_conditional_taxonomy, $popup_conditional_term_meta_key);
                     }
                 } else {
                     $popup_field_name = isset($popup_field['popup_field_name']) ? $popup_field['popup_field_name'] : '';
@@ -5564,9 +7211,41 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                             );
                             $this->render_business_hours_filter($array_settings);
                         } else {
-                            $popup_field_label = isset($popup_field['popup_field_label']) ? $popup_field['popup_field_label'] : '';
-                            $popup_field_icon = isset($popup_field['popup_field_icon']) ? $popup_field['popup_field_icon'] : [];
-                            $this->render_simple_field($popup_field_name, $post_type, $popup_field_icon, $popup_field_label);
+                            // Check if this is a google address field
+                            $is_google_address = $this->is_google_address_field($popup_field_name, $post_type);
+                            // Get allow_near_me_option from the repeater field (per-field setting)
+                            $popup_allow_near_me_option = isset($popup_field['popup_allow_near_me_option']) ? $popup_field['popup_allow_near_me_option'] : 'no';
+
+                            if ($is_google_address && $popup_allow_near_me_option === 'yes') {
+                                // Get settings for google address Near Me button
+                                $business_hours_button_text = isset($popup_field['popup_business_hours_button_text']) ? $popup_field['popup_business_hours_button_text'] : esc_html__('Near Me', 'cubewp-framework');
+                                $business_hours_button_inner_text = isset($popup_field['popup_business_hours_button_inner_text']) ? $popup_field['popup_business_hours_button_inner_text'] : esc_html__('Near Me', 'cubewp-framework');
+                                $business_hours_button_icon = isset($popup_field['popup_business_hours_button_icon']) ? $popup_field['popup_business_hours_button_icon'] : [];
+                                $business_hours_button_icon_position = isset($popup_field['popup_business_hours_button_icon_position']) ? $popup_field['popup_business_hours_button_icon_position'] : 'left';
+                                $business_hours_options = isset($popup_field['popup_business_hours_filter']) ? $popup_field['popup_business_hours_filter'] : 'open_now';
+
+                                $google_address_settings = array(
+                                    'field_name' => $popup_field_name,
+                                    'post_type' => $post_type,
+                                    'options' => $business_hours_options,
+                                    'button_text' => $business_hours_button_text,
+                                    'business_hours_button_inner_text' => $business_hours_button_inner_text,
+                                    'business_hours_button_icon' => $business_hours_button_icon,
+                                    'business_hours_button_icon_position' => $business_hours_button_icon_position,
+                                    'widget_id' => $this->get_id(),
+                                );
+
+                                echo '<div class="cubewp-google-address-filter-container">';
+                                $this->render_google_address_filter($google_address_settings);
+                                $popup_field_label = isset($popup_field['popup_field_label']) ? $popup_field['popup_field_label'] : '';
+                                $popup_field_icon = isset($popup_field['popup_field_icon']) ? $popup_field['popup_field_icon'] : [];
+                                $this->render_simple_field($popup_field_name, $post_type, $popup_field_icon, $popup_field_label, $taxonomy_placeholder);
+                                echo '</div>';
+                            } else {
+                                $popup_field_label = isset($popup_field['popup_field_label']) ? $popup_field['popup_field_label'] : '';
+                                $popup_field_icon = isset($popup_field['popup_field_icon']) ? $popup_field['popup_field_icon'] : [];
+                                $this->render_simple_field($popup_field_name, $post_type, $popup_field_icon, $popup_field_label, $taxonomy_placeholder);
+                            }
                         }
                     }
                 }
@@ -5597,13 +7276,26 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
         echo '</div>';
     }
 
+
     /**
      * Render simple taxonomy field
      */
-    private function render_simple_taxonomy($taxonomy_name, $post_type, $display_type = 'checkbox', $custom_label = '')
+    private function render_simple_taxonomy($field_icon, $taxonomy_name, $post_type, $display_type = 'checkbox', $custom_label = '', $taxonomy_placeholder = 'Select Option', $enable_conditional = 'no', $conditional_taxonomy = '', $conditional_term_meta_key = '')
     {
-        echo '<div class="cubewp-filter-builder-field" data-field-name="' . esc_attr($taxonomy_name) . '">';
+        $container_attrs = '';
+        // Add conditional taxonomy attributes if enabled
+        if ($enable_conditional === 'yes' && !empty($conditional_taxonomy)) {
+            $container_attrs .= ' data-conditional-taxonomy="' . esc_attr($conditional_taxonomy) . '"' .
+                ' data-conditional-term-meta-key="' . esc_attr($conditional_term_meta_key) . '"' .
+                ' data-conditional-taxonomy-field="taxonomy_' . esc_attr($conditional_taxonomy) . '" style="display:none;"';
+        }
 
+        echo '<div class="cubewp-filter-builder-field" data-field-name="' . esc_attr($taxonomy_name) . '" ' . $container_attrs . '>';
+        if (!empty($field_icon['value'])) {
+            echo '<span class="cubewp-field-icon">';
+            \Elementor\Icons_Manager::render_icon($field_icon, ['aria-hidden' => 'true']);
+            echo '</span>';
+        }
         $taxonomies = get_object_taxonomies($post_type, 'objects');
         if (isset($taxonomies[$taxonomy_name])) {
             $taxonomy = $taxonomies[$taxonomy_name];
@@ -5628,10 +7320,11 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
             $search_filter = [
                 'label' => $field_label,
                 'name' => $taxonomy->name,
+                'placeholder' => $taxonomy_placeholder,
                 'type' => 'taxonomy',
                 'display_ui' => $cubewp_display_type,
                 'appearance' => $cubewp_display_type,
-                'select2_ui' => $cubewp_display_type === 'select' ? true : false,
+                'select2_ui' => $display_type === 'select2',
             ];
 
             // Add data attribute for radio handling
@@ -5660,23 +7353,6 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
         echo '</div>';
     }
 
-    /**
-     * Render button taxonomy field
-     */
-    private function render_button_taxonomy($taxonomy_name, $post_type, $display_type, $button_text, $index)
-    {
-        $unique_id = 'cubewp-filter-button-' . $index;
-        $field_container_id = 'cubewp-filter-field-' . $index;
-
-        echo '<div class="cubewp-filter-button-wrapper">';
-        echo '<button type="button" class="cubewp-filter-button cubewp-filter-builder-btn" id="' . esc_attr($unique_id) . '" data-target="' . esc_attr($field_container_id) . '">';
-        echo esc_html($button_text);
-        echo '</button>';
-        echo '<div class="cubewp-filter-field-container" id="' . esc_attr($field_container_id) . '" style="display: none;">';
-        $this->render_simple_taxonomy($taxonomy_name, $post_type, $display_type, '');
-        echo '</div>';
-        echo '</div>';
-    }
 
     /**
      * Check if a field is a business hours field
@@ -5698,6 +7374,25 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
     }
 
     /**
+     * Check if a field is a google address field
+     */
+    private function is_google_address_field($field_name, $post_type)
+    {
+        if (empty($field_name)) {
+            return false;
+        }
+
+        $all_custom_fields = CWP()->get_custom_fields('post_types');
+        if (isset($all_custom_fields[$field_name])) {
+            $field_data = $all_custom_fields[$field_name];
+            $field_type = isset($field_data['type']) ? $field_data['type'] : '';
+            return $field_type === 'google_address';
+        }
+
+        return false;
+    }
+
+    /**
      * Render business hours filter buttons
      */
     private function render_business_hours_filter($array_settings)
@@ -5708,7 +7403,7 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
         $button_text = isset($array_settings['button_text']) ? $array_settings['button_text'] : '';
         $business_hours_button_inner_text = isset($array_settings['business_hours_button_inner_text']) ? $array_settings['business_hours_button_inner_text'] : '';
         $business_hours_button_icon = isset($array_settings['business_hours_button_icon']) ? $array_settings['business_hours_button_icon'] : [];
-        $icon_position = isset($array_settings['icon_position']) ? $array_settings['icon_position'] : 'left';
+        $icon_position = isset($array_settings['business_hours_button_icon_position']) ? $array_settings['business_hours_button_icon_position'] : 'left';
         $index = isset($array_settings['widget_id']) ? $array_settings['widget_id'] : '';
         // Handle both array (legacy/converted) and string (single select) formats
         if (is_array($options)) {
@@ -5760,6 +7455,82 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
         if ($has_icon) {
             echo '<span class="cubewp-button-content-wrapper">';
 
+            echo '<span class="cubewp-button-icon">';
+            if (class_exists('\Elementor\Icons_Manager')) {
+                \Elementor\Icons_Manager::render_icon($business_hours_button_icon, ['aria-hidden' => 'true']);
+            }
+            echo '</span>';
+            // Button text
+            if (!empty($button_text)) {
+                echo '<span class="cubewp-button-text">' . esc_html($button_text) . '</span>';
+            }
+
+
+
+            echo '</span>';
+        } else {
+            // No icon, just text
+            echo esc_html($button_text);
+        }
+
+        echo '</button>';
+
+        echo '</div>';
+        // Hidden input to store the selected filter value - make it unique per widget instance
+        // Use widget ID in the name to ensure uniqueness when multiple widgets use the same field
+        $unique_input_name = $field_name . '_status';
+        echo '<input type="hidden" name="' . esc_attr($unique_input_name) . '" class="cubewp-business-hours-status" data-widget-id="' . esc_attr($index) . '" data-field-name="' . esc_attr($field_name) . '" value="">';
+        echo '</div>';
+        echo '</div>';
+    }
+    /**
+     * Render google address filter buttons
+     */
+    private function render_google_address_filter($array_settings)
+    {
+        $field_name = isset($array_settings['field_name']) ? $array_settings['field_name'] : '';
+        $post_type = isset($array_settings['post_type']) ? $array_settings['post_type'] : '';
+        $button_text = isset($array_settings['button_text']) ? $array_settings['button_text'] : '';
+        $business_hours_button_inner_text = isset($array_settings['business_hours_button_inner_text']) ? $array_settings['business_hours_button_inner_text'] : '';
+        $business_hours_button_icon = isset($array_settings['business_hours_button_icon']) ? $array_settings['business_hours_button_icon'] : [];
+        $icon_position = isset($array_settings['icon_position']) ? $array_settings['icon_position'] : 'left';
+        $index = isset($array_settings['widget_id']) ? $array_settings['widget_id'] : '';
+        // Handle both array (legacy/converted) and string (single select) formats
+
+
+        $unique_id = 'cubewp-google-address-' . $index;
+
+        echo '<div class="cubewp-filter-builder-field cubewp-google-address-filter" data-field-name="' . esc_attr($field_name) . '" data-post-type="' . esc_attr($post_type) . '">';
+        echo '<div class="cubewp-filter-builder-field-container cwp-field-container">';
+        echo '<label class="cubewp-filter-builder-label">' . esc_html($button_text) . '</label>';
+        echo '<div class="cubewp-business-hours-buttons" id="' . esc_attr($unique_id) . '">';
+
+
+        // Render single button for the selected option
+        $option_id = $unique_id . '-' . 'near_me';
+
+        // Use icon position from parameter, fallback to settings if not provided
+        if (empty($icon_position)) {
+            $settings = $this->get_settings_for_display();
+            $icon_position_key = 'business_hours_button_icon_position_' . $post_type;
+            $icon_position = isset($settings[$icon_position_key]) ? $settings[$icon_position_key] : (is_rtl() ? 'right' : 'left');
+        }
+
+        // Build button classes
+        $button_classes = 'cubewp-business-hours-btn google-address-btn';
+        if (!empty($business_hours_button_icon) && isset($business_hours_button_icon['value']) && !empty($business_hours_button_icon['value'])) {
+            $button_classes .= ' cubewp-icon-' . esc_attr($icon_position);
+        }
+
+        echo '<button type="button" class="' . esc_attr($button_classes) . '" id="' . esc_attr($option_id) . '" data-filter-type="' . esc_attr('near_me') . '" data-field-name="' . esc_attr($field_name) . '">';
+
+        // Build button content wrapper
+        $has_icon = !empty($business_hours_button_icon) && isset($business_hours_button_icon['value']) && !empty($business_hours_button_icon['value']);
+        $button_text = !empty($business_hours_button_inner_text) ? $business_hours_button_inner_text : $button_text;
+
+        if ($has_icon) {
+            echo '<span class="cubewp-button-content-wrapper">';
+
             // Icon on left
             if ($icon_position === 'left') {
                 echo '<span class="cubewp-button-icon">';
@@ -5792,10 +7563,6 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
         echo '</button>';
 
         echo '</div>';
-        // Hidden input to store the selected filter value - make it unique per widget instance
-        // Use widget ID in the name to ensure uniqueness when multiple widgets use the same field
-        $unique_input_name = $field_name . '_status';
-        echo '<input type="hidden" name="' . esc_attr($unique_input_name) . '" class="cubewp-business-hours-status" data-widget-id="' . esc_attr($index) . '" data-field-name="' . esc_attr($field_name) . '" value="">';
         echo '</div>';
         echo '</div>';
     }
@@ -5803,14 +7570,15 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
     /**
      * Render field directly (fallback when not in form builder)
      */
-    private function render_field_directly($field_name, $post_type)
+    private function render_field_directly($field_name, $post_type, $custom_label, $placeholder, $overrides = [])
     {
         // Check if it's a taxonomy
         $taxonomies = get_object_taxonomies($post_type, 'objects');
         if (isset($taxonomies[$field_name])) {
             $taxonomy = $taxonomies[$field_name];
             $search_filter = [
-                'label' => $taxonomy->label,
+                'label' => $custom_label,
+                'placeholder' => $placeholder,
                 'name' => $taxonomy->name,
                 'type' => 'taxonomy',
                 'display_ui' => 'checkbox',
@@ -5825,10 +7593,12 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
 
         // Check if it's keyword
         if ($field_name === 'keyword') {
+            $custom_label = !empty($custom_label) ? $custom_label : esc_html__('Keyword', 'cubewp-framework');
+            $placeholder = !empty($placeholder) ? $placeholder : esc_html__('Search...', 'cubewp-framework');
             echo '<div class="cubewp-filter-builder-field-container cwp-field-container">';
-            echo '<label class="cubewp-filter-builder-label">' . esc_html__('Keyword', 'cubewp-framework') . '</label>';
-            $keyword_value = isset($_GET['keyword']) ? sanitize_text_field(wp_unslash($_GET['keyword'])) : '';
-            echo '<input type="text" name="s" class="cubewp-filter-builder-input" value="' . esc_attr($keyword_value) . '" placeholder="' . esc_attr__('Search...', 'cubewp-framework') . '" />';
+            echo '<label class="cubewp-filter-builder-label">' . esc_html($custom_label) . '</label>';
+            $keyword_value = isset($_GET['keyword']) && !empty($_GET['keyword']) ? sanitize_text_field(wp_unslash($_GET['keyword'])) : '';
+            echo '<input type="text" name="s" class="cubewp-filter-builder-input" value="' . esc_attr($keyword_value) . '" placeholder="' . esc_attr($placeholder) . '" />';
             echo '</div>';
             return;
         }
@@ -5836,13 +7606,23 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
         // Try to get custom field
         $field_options = get_field_options($field_name);
         if (!empty($field_options)) {
+            // Merge Search Filters form-builder settings (e.g. range_slider_ui)
+            $cwp_search_filters = CWP()->get_form('search_filters');
+            if (isset($cwp_search_filters[$post_type]['fields'][$field_name]) && is_array($cwp_search_filters[$post_type]['fields'][$field_name])) {
+                $field_options = array_merge($field_options, $cwp_search_filters[$post_type]['fields'][$field_name]);
+            }
+
+            if (!empty($overrides) && is_array($overrides)) {
+                $field_options = array_merge($field_options, $overrides);
+            }
+
             $field_type = isset($field_options['type']) ? $field_options['type'] : '';
             $fieldOptions = array_merge($field_options, [
                 'label' => isset($field_options['label']) ? $field_options['label'] : $field_name,
                 'name' => $field_name,
                 'class' => 'cubewp-filter-builder-input',
                 'container_class' => 'cubewp-filter-builder-field-container',
-                'placeholder' => '',
+                'placeholder' => $placeholder,
             ]);
 
             if (isset($_GET[$field_name]) && !empty($_GET[$field_name])) {
@@ -5854,6 +7634,11 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
             $field_output = str_replace('cwp-field-container', 'cubewp-filter-builder-field-container cwp-field-container', $field_output);
             $field_output = str_replace('cwp-search-field', 'cubewp-filter-builder-search-field cwp-search-field', $field_output);
             echo $field_output;
+        } else {
+            $field_output = apply_filters("cubewp/search_filter_builder/{$field_name}/field", '', $field_name, $post_type);
+            if(!empty($field_output)) {
+                echo $field_output;
+            }
         }
     }
 
@@ -5870,528 +7655,6 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
         CubeWp_Enqueue::enqueue_style('frontend-fields');
         CubeWp_Enqueue::enqueue_script('cwp-frontend-fields');
         new CubeWp_Frontend();
-
-        // Add custom CSS and UI JS for filter builder
-        $filter_css = $this->get_filter_builder_css();
-        if (!empty($filter_css)) {
-            wp_add_inline_style('frontend-fields', $filter_css);
-        }
-        $filter_js = $this->get_filter_builder_js();
-        if (!empty($filter_js)) {
-            wp_add_inline_script('cwp-filter-builder', $filter_js);
-        }
-    }
-
-    /**
-     * Get custom CSS for filter builder
-     */
-    private function get_filter_builder_css()
-    {
-        $settings = $this->get_settings_for_display();
-
-
-        $css = '
-        .cubewp-filter-builder-container {
-            position: relative;
-        }
-        
-        /* Custom Icon Support for Checkbox/Radio */
-        .cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-checkbox-container .cwp-field-checkbox input[type="checkbox"]:checked + label::after,
-        .cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-radio-container .cwp-field-radio input[type="radio"]:checked + label::after {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-checkbox-container .cwp-field-checkbox input[type="checkbox"]:checked + label::after i,
-        .cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-checkbox-container .cwp-field-checkbox input[type="checkbox"]:checked + label::after svg,
-        .cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-radio-container .cwp-field-radio input[type="radio"]:checked + label::after i,
-        .cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled .cwp-field-radio-container .cwp-field-radio input[type="radio"]:checked + label::after svg {
-            display: inline-block;
-            line-height: 1;
-        }
-        .cubewp-filter-button-wrapper {
-            margin-bottom: 15px;
-        }
-        .cubewp-filter-button {
-            cursor: pointer;
-            border: 1px solid #ddd;
-            padding: 10px 20px;
-            background: #fff;
-            border-radius: 4px;
-            transition: all 0.3s;
-        }
-        .cubewp-filter-button:hover {
-            background: #f5f5f5;
-        }
-        .cubewp-filter-field-container {
-            margin-top: 15px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background: #fff;
-        }
-      
-       
-        .cubewp-filter-popup-wrapper {
-            position: relative;
-        }
-        .cubewp-filter-popup-button {
-            cursor: pointer;
-            border: 1px solid #ddd;
-            padding: 10px 20px;
-            background: #fff;
-            border-radius: 4px;
-        }
-        .cubewp-filter-popup-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 9998;
-            display: none;
-            overflow: hidden;
-        }
-        .cubewp-filter-popup-overlay.active {
-            display: block;
-        }
-        .cubewp-filter-popup-content {
-            position: fixed;
-            z-index: 9999;
-            display: none;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .cubewp-filter-popup-content.active {
-            display: flex;
-        }
-        /* Center Position (Default) */
-        .cubewp-filter-popup-content.cubewp-popup-position-center {
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        /* Top Position */
-        
-        .cubewp-filter-popup-header {
-            padding: 20px;
-            border-bottom: 1px solid #ddd;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .cubewp-filter-popup-header h3 {
-            margin: 0;
-        }
-        .cubewp-filter-popup-close {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            line-height: 30px;
-        }
-        .cubewp-filter-popup-body {
-            padding: 20px;
-            overflow-y: auto;
-            flex: 1;
-        }
-        .cubewp-filter-popup-footer {
-            padding: 20px;
-            border-top: 1px solid #ddd;
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-        .cubewp-filter-popup-apply {
-            padding: 10px 20px;
-            background: #0073aa;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .cubewp-filter-popup-apply:hover {
-            background: #005a87;
-        }
-        .cubewp-business-hours-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 0;
-        }
-        .cubewp-business-hours-btn {
-            padding: 8px 16px;
-            border: 1px solid #ddd;
-            background: #fff;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 14px;
-        }
-        .cubewp-business-hours-btn:hover {
-            background: #f5f5f5;
-            border-color: #0073aa;
-        }
-        .cubewp-business-hours-btn.active {
-            background: #0073aa;
-            color: #fff;
-            border-color: #0073aa;
-        }
-        
-        /* Sorting Dropdown Styles */
-        .cubewp-sorting-dropdown {
-            position: relative;
-            display: inline-block;
-        }
-        .cubewp-sorting-dropdown-menu {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            min-width: 200px;
-            background: #fff;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            list-style: none;
-            padding: 5px 0;
-            margin: 5px 0 0 0;
-            z-index: 1000;
-            display: none !important;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        .cubewp-sorting-dropdown-menu.open {
-            display: block !important;
-        }
-        .cubewp-sorting-dropdown-item {
-            padding: 10px 15px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .cubewp-sorting-dropdown-item:hover {
-            background: #f5f5f5;
-        }
-        .cubewp-sorting-dropdown-item.selected {
-            background: #e8f4f8;
-        }
-        .cubewp-rating-stars {
-            display: inline-flex;
-            gap: 2px;
-            align-items: center;
-        }
-        .cubewp-rating-star {
-            color: #ddd;
-            display: inline-flex;
-            align-items: center;
-        }
-        .cubewp-rating-star.filled {
-            color: #FFA500;
-        }
-        .cubewp-rating-star svg {
-            width: 16px;
-            height: 16px;
-        }
-        .cubewp-business-hours-btn .cubewp-button-content-wrapper {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        .cubewp-business-hours-btn.cubewp-icon-left .cubewp-button-content-wrapper {
-            flex-direction: row;
-        }
-        .cubewp-business-hours-btn.cubewp-icon-right .cubewp-button-content-wrapper {
-            flex-direction: row-reverse;
-        }
-        .cubewp-business-hours-btn .cubewp-button-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1;
-        }
-        .cubewp-business-hours-btn .cubewp-button-text {
-            display: inline-block;
-        }
-        ';
-        
-        return $css;
-    }
-
-    /**
-     * Get custom JavaScript for filter builder UI interactions
-     * The main AJAX functionality is in filter-builder.js module
-     */
-    private function get_filter_builder_js()
-    {
-        return '
-        (function($) {
-            // Use a flag to ensure handlers are only attached once
-            if (typeof window.cubewpFilterBuilderInitialized === "undefined") {
-                window.cubewpFilterBuilderInitialized = true;
-                
-                $(document).ready(function() {
-                    // Remove any existing handlers to prevent duplicates
-                    $(document).off("click.cubewpFilterBuilder", ".cubewp-filter-button.cubewp-filter-builder-btn");
-                    
-                    // Button toggle functionality - use namespaced event to prevent duplicates
-                    $(document).on("click.cubewpFilterBuilder", ".cubewp-filter-button.cubewp-filter-builder-btn", function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        var $button = $(this);
-                        var target = $button.data("target");
-                        var $target = $("#" + target);
-                        
-                        // Prevent multiple toggles if already animating
-                        if ($target.is(":animated")) {
-                            return false;
-                        }
-                        
-                        $target.slideToggle();
-                    });
- 
-
-                // Popup open functionality
-                $(document).on("click", ".cubewp-filter-popup-button", function() {
-                    var target = $(this).data("target");
-                    $("#" + target).addClass("active");
-                    $("#" + target + "-overlay").addClass("active");
-                    $("body").css("overflow", "hidden");
-                });
-
-                // Popup close functionality
-                $(document).on("click", ".cubewp-filter-popup-close", function() {
-                    var target = $(this).data("target");
-                    $("#" + target).removeClass("active");
-                    $("#" + target + "-overlay").removeClass("active");
-                    $("body").css("overflow", "");
-                });
-
-                // Close popup when clicking overlay
-                $(document).on("click", ".cubewp-filter-popup-overlay", function() {
-                    $(this).removeClass("active");
-                    $(".cubewp-filter-popup-content").removeClass("active");
-                    $("body").css("overflow", "");
-                });
-
-                // Apply filters in popup
-                $(document).on("click", ".cubewp-filter-popup-apply", function() {
-                    var popup = $(this).closest(".cubewp-filter-popup-content");
-                    var popupId = popup.attr("id");
-                    popup.removeClass("active");
-                    $("#" + popupId + "-overlay").removeClass("active");
-                    $("body").css("overflow", "");
-                    // Trigger filter builder data collection
-                    if (typeof cubewpCollectFilterBuilderData === "function") {
-                        cubewpCollectFilterBuilderData();
-                    }
-                    // Trigger AJAX if function exists
-                    if (typeof cwp_search_filters_ajax_content === "function") {
-                        cwp_search_filters_ajax_content();
-                    }
-                });
-
-                // Handle radio mode for taxonomy fields (convert checkbox to radio behavior)
-                $(document).on("change", ".cubewp-radio-mode input[type=\"checkbox\"][data-radio-mode=\"1\"]", function() {
-                    var $checkbox = $(this);
-                    var $container = $checkbox.closest(".cubewp-radio-mode");
-                    // Uncheck all other checkboxes in the same container
-                    $container.find("input[type=\"checkbox\"][data-radio-mode=\"1\"]").not($checkbox).prop("checked", false);
-                    // Update hidden field with single value
-                    var $hiddenField = $container.find("input[type=\"hidden\"]");
-                    if ($hiddenField.length > 0) {
-                        if ($checkbox.is(":checked")) {
-                            $hiddenField.val($checkbox.val());
-                        } else {
-                            $hiddenField.val("");
-                        }
-                        // Trigger data collection
-                        if (typeof cubewpCollectFilterBuilderData === "function") {
-                            cubewpCollectFilterBuilderData();
-                        }
-                        // Trigger AJAX
-                        if (typeof cwp_search_filters_ajax_content === "function") {
-                            cwp_search_filters_ajax_content();
-                        }
-                    }
-                });
-
-                // Handle business hours filter buttons
-                $(document).on("click", ".cubewp-business-hours-btn", function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    var $button = $(this);
-                    // Ensure we get the correct container for this specific widget instance
-                    var $container = $button.closest(".cubewp-business-hours-filter");
-                    
-                    // Double-check container exists
-                    if (!$container.length) {
-                        console.warn("CubeWP Business Hours: Container not found for button");
-                        return;
-                    }
-                    
-                    var filterType = $button.data("filter-type");
-                    var fieldName = $button.data("field-name");
-                    var $statusInput = $container.find(".cubewp-business-hours-status").first();
-                    
-                    // Ensure status input exists
-                    if (!$statusInput.length) {
-                        console.warn("CubeWP Business Hours: Status input not found");
-                        return;
-                    }
-                    
-                    // Get the actual field name from the status inputs data attribute (for form submission)
-                    var actualFieldName = $statusInput.data("field-name") || fieldName;
-                    var formFieldName = actualFieldName + "_status"; // Standard format for form submission
-                    
-                    var isCurrentlyActive = $button.hasClass("active");
-                    var currentStatus = $statusInput.val();
-                    
-                    // If button is already active or status matches this filter type, deselect it
-                    if (isCurrentlyActive || currentStatus === filterType) {
-                        // Uncheck: Remove status and active class
-                        $statusInput.val("");
-                        $button.removeClass("active");
-                        // Also remove active class from all other buttons in THIS container only
-                        $container.find(".cubewp-business-hours-btn").removeClass("active");
-                    } else {
-                        // Check: Set status and add active class
-                        // IMPORTANT: Clear values from all other widgets with the same field name
-                        // This ensures only the clicked widget sends its value
-                        $(".cubewp-business-hours-filter").each(function() {
-                            var $otherContainer = $(this);
-                            var $otherStatusInput = $otherContainer.find(".cubewp-business-hours-status").first();
-                            var otherFieldName = $otherStatusInput.data("field-name");
-                            
-                            // If its a different widget but same field name, clear its value
-                            if (otherFieldName === actualFieldName && $otherContainer[0] !== $container[0]) {
-                                $otherStatusInput.val("");
-                                $otherContainer.find(".cubewp-business-hours-btn").removeClass("active");
-                            }
-                        });
-                        
-                        // First remove active from all buttons in THIS container only
-                        $container.find(".cubewp-business-hours-btn").removeClass("active");
-                        // Then set the new status and activate this button
-                        $statusInput.val(filterType);
-                        $button.addClass("active");
-                    }
-                    
-                    // Explicitly remove the parameter from the form and any collected data
-                    // Use the standard field name format (field_name_status) for form operations
-                    if (formFieldName && !$statusInput.val()) {
-                        // Remove from any form that might contain it using the standard name format
-                        $(".cwp-search-filters").find("input[name=\"" + formFieldName + "\"]").remove();
-                        // Also remove from any dynamically added fields container
-                        $(".cubewp-filter-builder-fields-container").find("input[name=\"" + formFieldName + "\"]").remove();
-                    }
-                    
-                    // Trigger data collection first (this will handle removing empty parameters)
-                    if (typeof cubewpCollectFilterBuilderData === "function") {
-                        cubewpCollectFilterBuilderData();
-                    }
-                    
-                    // Small delay to ensure data collection completes before AJAX
-                    setTimeout(function() {
-                        // Double-check: Remove parameter if status is still empty
-                        if (!$statusInput.val() && formFieldName) {
-                            $(".cwp-search-filters").find("input[name=\"" + formFieldName + "\"]").remove();
-                            $(".cubewp-filter-builder-fields-container").find("input[name=\"" + formFieldName + "\"]").remove();
-                        }
-                        
-                        // Trigger AJAX after ensuring parameter is removed
-                        if (typeof cwp_search_filters_ajax_content === "function") {
-                            cwp_search_filters_ajax_content();
-                        }
-                    }, 50);
-                });
-                
-                // Restore button states on page load based on status input values
-                // Use a function to restore state for each widget instance
-                function restoreBusinessHoursState() {
-                    $(".cubewp-business-hours-filter").each(function() {
-                        var $container = $(this);
-                        var $statusInput = $container.find(".cubewp-business-hours-status").first();
-                        
-                        if (!$statusInput.length) {
-                            return; // Skip if no status input found
-                        }
-                        
-                        var currentStatus = $statusInput.val();
-                        
-                        // Remove active class from all buttons in THIS container first
-                        $container.find(".cubewp-business-hours-btn").removeClass("active");
-                        
-                        // If theres a status value, activate the corresponding button
-                        if (currentStatus && currentStatus !== "") {
-                            var $activeButton = $container.find(".cubewp-business-hours-btn[data-filter-type=\"" + currentStatus + "\"]");
-                            if ($activeButton.length) {
-                                $activeButton.addClass("active");
-                            }
-                        } else {
-                            // No status means no button should be active
-                            $statusInput.val("");
-                        }
-                    });
-                }
-                
-                // Restore on page load
-                restoreBusinessHoursState();
-                
-                // Also restore when widget is added/updated (for Elementor)
-                $(document).on("cubewp_filter_builder_widget_added", function() {
-                    setTimeout(restoreBusinessHoursState, 100);
-                });
-
-                // Custom Icon Rendering for Checkbox/Radio
-                function renderCustomIcons() {
-                    $(".cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled").each(function() {
-                        var $container = $(this);
-                        var checkboxIconData = $container.data("checkbox-icon");
-                        var radioIconData = $container.data("radio-icon");
-                        
-                        // Render checkbox custom icons
-                        if (checkboxIconData && typeof checkboxIconData === "object") {
-                            $container.find(".cwp-field-checkbox-container .cwp-field-checkbox input[type=\"checkbox\"]:checked + label").each(function() {
-                                var $label = $(this);
-                                
-                                // Remove existing ::after content by updating CSS
-                                // Note: Well use CSS to handle the icon display
-                            });
-                        }
-                        
-                        // Render radio custom icons
-                        if (radioIconData && typeof radioIconData === "object") {
-                            $container.find(".cwp-field-radio-container .cwp-field-radio input[type=\"radio\"]:checked + label").each(function() {
-                                var $label = $(this);
-                                
-                                // Remove existing ::after content by updating CSS
-                                // Note: Well use CSS to handle the icon display
-                            });
-                        }
-                    });
-                }
-                
-                // Render custom icons on page load
-                renderCustomIcons();
-                
-                // Re-render custom icons when checkboxes/radios change
-                $(document).on("change", ".cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled input[type=\"checkbox\"], .cubewp-filter-builder-container.cubewp-custom-checkbox-radio-enabled input[type=\"radio\"]", function() {
-                    setTimeout(renderCustomIcons, 50);
-                });
-
-                // Trigger event when widget is added
-                $(document).trigger("cubewp_filter_builder_widget_added");
-                }); // End of $(document).ready
-            } // End of if (typeof window.cubewpFilterBuilderInitialized === "undefined")
-        })(jQuery);
-        ';
     }
 
     /**
@@ -6400,82 +7663,77 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
     private function render_sorting($settings, $post_type)
     {
         $sorting_display_type = isset($settings['sorting_display_type']) ? $settings['sorting_display_type'] : 'buttons';
-        $sorting_field = isset($settings['sorting_field']) ? $settings['sorting_field'] : 'DESC';
-        $sorting_fields_dropdown = isset($settings['sorting_fields_dropdown']) ? $settings['sorting_fields_dropdown'] : ['DESC'];
-        $enable_best_match = isset($settings['enable_best_match']) ? $settings['enable_best_match'] : 'no';
+        $sorting_title_default = isset($settings['sorting_display_type_title_default']) ? $settings['sorting_display_type_title_default'] : ['Sorting'];
         $sorting_button_icon = isset($settings['sorting_button_icon']) ? $settings['sorting_button_icon'] : [];
         $sorting_dropdown_toggle_icon = isset($settings['sorting_dropdown_toggle_icon']) ? $settings['sorting_dropdown_toggle_icon'] : [];
         $sorting_button_text = isset($settings['sorting_button_text']) ? $settings['sorting_button_text'] : '';
-        $sorting_button_display_type = isset($settings['sorting_button_display_type']) ? $settings['sorting_button_display_type'] : 'text';
-        $rating_display_type = isset($settings['rating_display_type']) ? $settings['rating_display_type'] : 'text';
-        $rating_star_color = isset($settings['rating_star_color']) ? $settings['rating_star_color'] : '#FFA500';
+        $sorting_button_display_type = 'text';
 
-        // Get all available sorting options for labels
-        $reviews_active = defined('CUBEWP_REVIEWS') || class_exists('CubeWp_Reviews_Load');
-        $all_options = [
-            'DESC' => esc_html__('Newest', 'cubewp-framework'),
-            'ASC' => esc_html__('Oldest', 'cubewp-framework'),
-            'title' => esc_html__('Title', 'cubewp-framework'),
-            'rand' => esc_html__('Random', 'cubewp-framework'),
-            'relevance' => esc_html__('Relevance', 'cubewp-framework'),
-            'most_viewed' => esc_html__('Most Viewed', 'cubewp-framework'),
-        ];
 
-        if ($reviews_active) {
-            $all_options['high_rated'] = esc_html__('High Rated', 'cubewp-framework');
-            $all_options['most_reviewed'] = esc_html__('Most Reviewed', 'cubewp-framework');
-            $all_options['rating_1'] = esc_html__('1 Star', 'cubewp-framework');
-            $all_options['rating_2'] = esc_html__('2 Stars', 'cubewp-framework');
-            $all_options['rating_3'] = esc_html__('3 Stars', 'cubewp-framework');
-            $all_options['rating_4'] = esc_html__('4 Stars', 'cubewp-framework');
-            $all_options['rating_5'] = esc_html__('5 Stars', 'cubewp-framework');
-        }
 
-        // Get custom sorting fields
-        $cwp_search_filters = CWP()->get_form('search_filters');
-        if (!empty($cwp_search_filters) && is_array($cwp_search_filters)) {
-            foreach ($cwp_search_filters as $post_type_key => $filter_data) {
-                if (!empty($filter_data['fields']) && is_array($filter_data['fields'])) {
-                    foreach ($filter_data['fields'] as $field_name => $field_data) {
-                        if (isset($field_data['sorting']) && $field_data['sorting'] == 1) {
-                            $field_label = isset($field_data['label']) ? $field_data['label'] : $field_name;
-                            $all_options[$field_name . '-ASC'] = $field_label . ': ' . esc_html__('Low to High', 'cubewp-framework');
-                            $all_options[$field_name . '-DESC'] = $field_label . ': ' . esc_html__('High to Low', 'cubewp-framework');
-                        }
-                    }
-                }
+        $sorting_field = isset($settings['sorting_number_field_button_' . $post_type]) ? $settings['sorting_number_field_button_' . $post_type] : 'DESC';
+        $sorting_number_operation_button = isset($settings['sorting_number_operation_button_' . $post_type]) ? $settings['sorting_number_operation_button_' . $post_type] : '';
+        $sorting_number_value_button = isset($settings['sorting_number_value_button_' . $post_type]) ? $settings['sorting_number_value_button_' . $post_type] : '';
+        $sorting_number_value_between_button = isset($settings['sorting_number_value_between_button_' . $post_type]) ? $settings['sorting_number_value_between_button_' . $post_type] : '';
+
+        $sorting_number_field_button_filter_type = isset($settings['sorting_number_field_button_filter_type_' . $post_type]) ? $settings['sorting_number_field_button_filter_type_' . $post_type] : '';
+        $sorting_number_field_button_filter_type_value = isset($settings['sorting_number_field_button_filter_type_value_' . $post_type]) ? $settings['sorting_number_field_button_filter_type_value_' . $post_type] : '';
+        $sorting_number_fields_repeater = isset($settings['sorting_number_fields_repeater_' . $post_type]) ? $settings['sorting_number_fields_repeater_' . $post_type] : '';
+
+
+
+        if ($sorting_number_operation_button === 'BETWEEN' || $sorting_number_operation_button === 'NOT BETWEEN') {
+            $raw_value = trim($sorting_number_value_between_button);
+            if (strpos($raw_value, ',') === false) {
+                echo esc_html__('Please enter two values separated by a comma (e.g. 10,50).', 'cubewp-framework');
+                return;
             }
+            $sorting_number_value_dropdown = preg_replace('/\s*,\s*/', ',', $raw_value);
+        } else {
+            $sorting_number_value_dropdown = $sorting_number_value_button;
         }
 
-        $all_options['business_hours'] = esc_html__('Open Now (Business Hours)', 'cubewp-framework');
 
         // Get current orderby value from URL
         $current_orderby = isset($_GET['orderby']) && !empty($_GET['orderby']) ? sanitize_text_field(wp_unslash($_GET['orderby'])) : '';
 
         $widget_id = 'cubewp-sorting-' . $this->get_id();
 
-        // Add star color CSS if using stars
-        if (($sorting_display_type === 'dropdown' && $rating_display_type === 'stars') ||
-            ($sorting_display_type === 'buttons' && $sorting_button_display_type === 'stars')
-        ) {
-            echo '<style>
-                #' . esc_attr($widget_id) . ' .cubewp-rating-star.filled {
-                    color: ' . esc_attr($rating_star_color) . ';
-                }
-                #' . esc_attr($widget_id) . ' .cubewp-rating-star.filled svg {
-                    fill: ' . esc_attr($rating_star_color) . ';
-                }
-            </style>';
-        }
 
-        echo '<div class="cubewp-sorting-container" id="' . esc_attr($widget_id) . '" data-post-type="' . esc_attr($post_type) . '" data-rating-display-type="' . esc_attr($rating_display_type) . '" data-button-display-type="' . esc_attr($sorting_button_display_type) . '">';
+
+        echo '<div class="cubewp-sorting-container" id="' . esc_attr($widget_id) . '" data-post-type="' . esc_attr($post_type) . '" data-button-display-type="' . esc_attr($sorting_button_display_type) . '">';
 
         if ($sorting_display_type === 'buttons') {
             // Single field for buttons
-            $this->render_sorting_buttons_single($sorting_field, $sorting_button_text, $all_options, $current_orderby, $enable_best_match, $sorting_button_icon, $post_type, $sorting_button_display_type);
+            $render_sorting_buttons = array(
+                'sorting_field' => $sorting_field,
+                'sorting_button_text' => $sorting_button_text,
+                'sorting_button_icon' => $sorting_button_icon,
+                'post_type' => $post_type,
+                'display_type' => $sorting_button_display_type,
+                'sorting_number_field_button' => $sorting_field,
+                'sorting_number_operation_dropdown' => $sorting_number_operation_button,
+                'sorting_number_value_dropdown' => $sorting_number_value_dropdown,
+                'current_orderby' => $current_orderby,
+                'sorting_number_field_button_filter_type' => $sorting_number_field_button_filter_type,
+                'sorting_number_field_button_filter_type_value' => $sorting_number_field_button_filter_type_value,
+            );
+            $this->render_sorting_buttons_single($render_sorting_buttons);
         } else {
             // Multiple fields for dropdown
-            $this->render_sorting_dropdown_multiple($sorting_fields_dropdown, $all_options, $current_orderby, $enable_best_match, $rating_display_type, $post_type, $sorting_dropdown_toggle_icon);
+            $render_sorting_dropdown = array(
+                'sorting_fields' => $sorting_number_fields_repeater,
+                'all_options' => '',
+                'current_orderby' => $current_orderby,
+                'post_type' => $post_type,
+                'toggle_icon' => $sorting_dropdown_toggle_icon,
+                'sorting_display_type_custom' => 'dropdown',
+                'sorting_display_type_title_default' => $sorting_title_default,
+                'sorting_number_fields_dropdown' => $sorting_field,
+                'sorting_number_operation_dropdown' => '',
+                'sorting_number_value_dropdown' => $sorting_number_value_dropdown,
+            );
+            $this->render_sorting_dropdown_multiple($render_sorting_dropdown);
         }
 
         echo '</div>';
@@ -6484,61 +7742,59 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
     /**
      * Render sorting as single button
      */
-    private function render_sorting_buttons_single($sorting_field, $button_text, $all_options, $current_orderby, $enable_best_match, $button_icon, $post_type, $display_type = 'text')
+    private function render_sorting_buttons_single($render_sorting_buttons)
     {
+        $sorting_field = $render_sorting_buttons['sorting_field'];
+        $button_text = $render_sorting_buttons['sorting_button_text'];
+        $button_icon = $render_sorting_buttons['sorting_button_icon'];
+        $post_type = $render_sorting_buttons['post_type'];
+        $sorting_number_operation_dropdown = $render_sorting_buttons['sorting_number_operation_dropdown'];
+        $sorting_number_value_dropdown = $render_sorting_buttons['sorting_number_value_dropdown'];
+
+        $sorting_number_field_button_filter_type = $render_sorting_buttons['sorting_number_field_button_filter_type'];
+        $sorting_number_field_button_filter_type_value = $render_sorting_buttons['sorting_number_field_button_filter_type_value'];
         // Process field to get actual field name
+
+
+
         $actual_sorting_field = $this->process_sorting_field($sorting_field, $post_type);
 
-        // Check if this is a rating field
-        $is_rating = (strpos($sorting_field, 'rating_') === 0);
-
+        // Check if this is a rating field  
         // Get label - use custom button text if provided, otherwise use option label
         $field_label = !empty($button_text) ? $button_text : (isset($all_options[$sorting_field]) ? $all_options[$sorting_field] : $sorting_field);
 
         echo '<div class="cubewp-sorting-buttons">';
 
-        // Best Match button if enabled
-        if ($enable_best_match === 'yes') {
-            $best_match_active = ($current_orderby === 'best_match' || $current_orderby === 'relevance') ? 'active' : '';
-            echo '<button type="button" class="cubewp-sorting-btn cubewp-best-match-btn ' . esc_attr($best_match_active) . '" data-orderby="best_match">';
+
+        if ($sorting_field !== 'DESC' && $sorting_field !== 'ASC' && $sorting_field !== 'title' && $sorting_field !== 'rand' && $sorting_field !== 'relevance' && $sorting_field !== 'most_viewed') {
+            $dat_sorting = '';
+            if ($sorting_number_field_button_filter_type === 'sorting') {
+                $dat_sorting = $sorting_number_field_button_filter_type_value;
+            }
+
+            echo '<button type="button" class="cubewp-sorting-btn cubewp-sorting-btn-custom " data-sortings="' . esc_attr($dat_sorting) . '" data-orderby="' . esc_attr($sorting_field) . '"  data-operation="' . esc_attr($sorting_number_operation_dropdown) . '" data-value="' . esc_attr($sorting_number_value_dropdown) . '">';
             if (!empty($button_icon['value'])) {
                 echo '<span class="cubewp-sorting-btn-icon">';
                 \Elementor\Icons_Manager::render_icon($button_icon, ['aria-hidden' => 'true']);
                 echo '</span>';
             }
-            echo '<span class="cubewp-sorting-btn-text">' . esc_html__('Best Match', 'cubewp-framework') . '</span>';
+
+            echo '<span class="cubewp-sorting-btn-text">' . esc_html($field_label) . '</span>';
+
             echo '</button>';
-        }
+        } else {
 
-        // Single sorting button for selected field
-        $active = ($current_orderby === $actual_sorting_field || ($current_orderby === '' && $actual_sorting_field === 'DESC'));
-
-        $active_class = $active ? 'active' : '';
-        echo '<button type="button" class="cubewp-sorting-btn ' . esc_attr($active_class) . '" data-orderby="' . esc_attr($actual_sorting_field) . '" data-display-field="' . esc_attr($sorting_field) . '">';
-        if (!empty($button_icon['value'])) {
-            echo '<span class="cubewp-sorting-btn-icon">';
-            \Elementor\Icons_Manager::render_icon($button_icon, ['aria-hidden' => 'true']);
-            echo '</span>';
-        }
-
-        // Display as stars or text
-        if ($is_rating && $display_type === 'stars') {
-            $star_count = (int) str_replace('rating_', '', $sorting_field);
-            echo '<span class="cubewp-rating-stars">';
-            for ($i = 1; $i <= 5; $i++) {
-                $filled_class = ($i <= $star_count) ? 'filled' : '';
-                echo '<span class="cubewp-rating-star ' . esc_attr($filled_class) . '">';
-                echo '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">';
-                echo '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>';
-                echo '</svg>';
+            echo '<button type="button" class="cubewp-sorting-btn" data-orderby="' . esc_attr($actual_sorting_field) . '" data-display-field="' . esc_attr($sorting_field) . '">';
+            if (!empty($button_icon['value'])) {
+                echo '<span class="cubewp-sorting-btn-icon">';
+                \Elementor\Icons_Manager::render_icon($button_icon, ['aria-hidden' => 'true']);
                 echo '</span>';
             }
-            echo '</span>';
-        } else {
-            echo '<span class="cubewp-sorting-btn-text">' . esc_html($field_label) . '</span>';
-        }
-        echo '</button>';
 
+            echo '<span class="cubewp-sorting-btn-text">' . esc_html($field_label) . '</span>';
+
+            echo '</button>';
+        }
         echo '</div>';
     }
 
@@ -6568,34 +7824,21 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
     /**
      * Render sorting as dropdown with multiple options
      */
-    private function render_sorting_dropdown_multiple($sorting_fields, $all_options, $current_orderby, $enable_best_match, $rating_display_type, $post_type, $toggle_icon = [])
+    private function render_sorting_dropdown_multiple($render_sorting_dropdown)
     {
-        if (!is_array($sorting_fields) || empty($sorting_fields)) {
-            $sorting_fields = ['DESC'];
-        }
-
+        $sorting_fields = $render_sorting_dropdown['sorting_fields'];
+        $current_orderby = $render_sorting_dropdown['current_orderby'];
+        $toggle_icon = $render_sorting_dropdown['toggle_icon'];
+        $sorting_display_type_title_default = $render_sorting_dropdown['sorting_display_type_title_default'];
         $dropdown_id = 'cubewp-sorting-dropdown-' . $this->get_id();
 
-        // Get current label
-        $current_label = esc_html__('Sort By', 'cubewp-framework');
-        foreach ($sorting_fields as $field) {
-            $actual_field = $this->process_sorting_field($field, $post_type);
 
-            if ($current_orderby === $actual_field || $current_orderby === $field) {
-                if (isset($all_options[$field])) {
-                    $current_label = $all_options[$field];
-                    break;
-                }
-            }
-        }
 
-        if ($current_orderby === 'best_match' || $current_orderby === 'relevance') {
-            $current_label = esc_html__('Best Match', 'cubewp-framework');
-        }
+
 
         echo '<div class="cubewp-sorting-dropdown" id="' . esc_attr($dropdown_id) . '">';
-        echo '<button type="button" class="cubewp-sorting-dropdown-toggle">';
-        echo '<span class="cubewp-sorting-dropdown-text">' . esc_html($current_label) . '</span>';
+        echo '<button type="button" class="cubewp-sorting-dropdown-toggle" data-button-text="' . esc_attr($sorting_display_type_title_default ?? 'Sort By') . '">';
+        echo '<span class="cubewp-sorting-dropdown-text">' . esc_html($sorting_display_type_title_default ?? 'Sort By') . '</span>';
         if (!empty($toggle_icon['value'])) {
             echo '<span class="cubewp-sorting-dropdown-icon">';
             \Elementor\Icons_Manager::render_icon($toggle_icon, ['aria-hidden' => 'true']);
@@ -6603,53 +7846,52 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
         }
         echo '</button>';
 
-        echo '<ul class="cubewp-sorting-dropdown-menu">';
+        echo '<ul class="cubewp-sorting-dropdown-menu" style="display: block;">';
 
-        // Best Match option if enabled
-        if ($enable_best_match === 'yes') {
-            $best_match_selected = ($current_orderby === 'best_match' || $current_orderby === 'relevance') ? 'selected' : '';
-            echo '<li class="cubewp-sorting-dropdown-item cubewp-best-match-option ' . esc_attr($best_match_selected) . '" data-orderby="best_match">';
-            echo '<span class="cubewp-sorting-dropdown-item-text">' . esc_html__('Best Match', 'cubewp-framework') . '</span>';
-            echo '</li>';
-        }
 
         // Multiple options
+        // cwp_pre($sorting_fields);
         foreach ($sorting_fields as $field) {
-            if (!isset($all_options[$field])) {
-                continue;
-            }
+            $title = $field['title'];
+            $field_name = $field['field'] ?? '';
+            $operation = $field['operation'] ?? '';
+            $value = $field['value'] ?? '';
 
-            $actual_field = $this->process_sorting_field($field, $post_type);
+            $value_between = $field['value_between'] ?? '';
+            $filter_types = $field['filter_types'] ?? '';
 
-            $selected = ($current_orderby === $actual_field || $current_orderby === $field);
+            $filter_types_value = $field['filter_types_value'] ?? '';
 
-            $selected_class = $selected ? 'selected' : '';
-            $label = $all_options[$field];
 
-            // Check if this is a rating field and should display as stars
-            $is_rating = (strpos($field, 'rating_') === 0);
-
-            echo '<li class="cubewp-sorting-dropdown-item ' . esc_attr($selected_class) . '" data-orderby="' . esc_attr($actual_field) . '" data-display-field="' . esc_attr($field) . '">';
-
-            if ($is_rating && $rating_display_type === 'stars') {
-                // Display as stars
-                $star_count = (int) str_replace('rating_', '', $field);
-                echo '<span class="cubewp-rating-stars">';
-                for ($i = 1; $i <= 5; $i++) {
-                    $filled_class = ($i <= $star_count) ? 'filled' : '';
-                    echo '<span class="cubewp-rating-star ' . esc_attr($filled_class) . '">';
-                    echo '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">';
-                    echo '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>';
-                    echo '</svg>';
-                    echo '</span>';
+            $active_class = $current_orderby === $field_name ? 'selected' : '';
+            if ($operation === 'BETWEEN' || $operation === 'NOT BETWEEN') {
+                $raw_value = trim($value_between);
+                if (strpos($raw_value, ',') === false) {
+                    echo esc_html__('Please enter two values separated by a comma (e.g. 10,50).', 'cubewp-framework');
+                    continue;
                 }
-                echo '</span>';
+                $value_between = preg_replace('/\s*,\s*/', ', ', $raw_value);
             } else {
-                // Display as text
-                echo '<span class="cubewp-sorting-dropdown-item-text">' . esc_html($label) . '</span>';
+                $value_between = $value;
             }
 
-            echo '</li>';
+            // Check if this is a rating field and should display as stars 
+            if ($field_name !== 'DESC' && $field_name !== 'ASC' && $field_name !== 'title' && $field_name !== 'rand' && $field_name !== 'relevance' && $field_name !== 'most_viewed') {
+
+                $dat_sorting = '';
+                if ($filter_types === 'sorting') {
+                    $dat_sorting = $filter_types_value;
+                }
+
+
+                echo '<li class="cubewp-sorting-dropdown-item cubewp-sorting-btn-custom cubewp-sorting-btn ' . esc_attr($active_class) . '" data-sortings="' . esc_attr($dat_sorting) . '" data-orderby="' . esc_attr($field_name) . '" data-operation="' . esc_attr($operation) . '" data-value="' . esc_attr($value_between) . '">';
+                echo '<span class="cubewp-sorting-dropdown-item-text">' . esc_html($title) . '</span>';
+                echo '</li>';
+            } else {
+                echo '<li class="cubewp-sorting-dropdown-item cubewp-sorting-btn ' . esc_attr($active_class) . '" data-orderby="' . esc_attr($field_name) . '" data-display-field="' . esc_attr($field_name) . '">';
+                echo '<span class="cubewp-sorting-dropdown-item-text">' . esc_html($title) . '</span>';
+                echo '</li>';
+            }
         }
 
         echo '</ul>';

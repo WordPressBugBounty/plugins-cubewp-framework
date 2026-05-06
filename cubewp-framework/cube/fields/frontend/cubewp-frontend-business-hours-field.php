@@ -16,6 +16,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 class CubeWp_Frontend_Business_Hours_Field extends CubeWp_Frontend {
 
     private static $timings = [];
+    private static function cwp_format_business_display_time($time)
+    {
+        if (empty($time) || $time === '24-hours-open') {
+            return '';
+        }
+        $timestamp = strtotime($time);
+        if (!$timestamp) {
+            return '';
+        }
+        return date_i18n('h:i A', $timestamp);
+    }
 
     public function __construct( ) {
         add_filter('cubewp/frontend/business_hours/field', array($this, 'render_business_hours_frontend'), 10, 2);
@@ -55,7 +66,6 @@ class CubeWp_Frontend_Business_Hours_Field extends CubeWp_Frontend {
         $field_name = $args['name'];
         $field_id = $args['id'];
         $business_hours = $args['value'];
-        $time_format = get_option('time_format');
         $output .= '<div class="yb-business-hours-display">';
         if (is_array($business_hours) && !empty($business_hours)) {
             foreach ($business_hours as $day => $business_hour) {
@@ -84,12 +94,12 @@ class CubeWp_Frontend_Business_Hours_Field extends CubeWp_Frontend {
                                 'fullday' => '',
                                 'open_time' => $open_time[$i],
                                 'close_time' => $close_time[$i],
-                                'start_time' => date_i18n($time_format, strtotime($open_time[$i])),
-                                'end_time' => date_i18n($time_format, strtotime($close_time[$i])),
+                                'start_time' => self::cwp_format_business_display_time($open_time[$i]),
+                                'end_time' => self::cwp_format_business_display_time($close_time[$i]),
                                 'day' => $day,
                                 'fullhoursclass' => '',
                                 'field_name' => $field_name,
-                                'dash' => '~',
+                                'dash' => ' - ',
                                 'meta_open' => '[open][]',
                                 'meta_close' => '[close][]',
                             ];
@@ -102,6 +112,9 @@ class CubeWp_Frontend_Business_Hours_Field extends CubeWp_Frontend {
             }
         }
         $output .= '</div>';
+        $default_day = 'monday';
+        $default_open_time = '09:00';
+        $default_close_time = '17:00';
         $args['value'] = '';
         $output .= '<div class="yb-business-hours-fields">';
         $args['type'] = 'dropdown';
@@ -112,6 +125,7 @@ class CubeWp_Frontend_Business_Hours_Field extends CubeWp_Frontend {
         $args['placeholder'] = esc_html__('Select Day', 'cubewp-framework');
         $args['field_size'] = 'size-1-3';
         $args['class'] = 'business-days';
+        $args['value'] = $default_day;
         $output .= apply_filters("cubewp/frontend/dropdown/field", $output, $args);
         $args['name'] = $field_name . '_open_time';
         $args['id'] = $field_id . '_open_time';
@@ -121,6 +135,7 @@ class CubeWp_Frontend_Business_Hours_Field extends CubeWp_Frontend {
         $args['placeholder'] = esc_html__('Open Time', 'cubewp-framework');
         $args['field_size'] = 'size-1-3';
         $args['class'] = 'business-open-time';
+        $args['value'] = $default_open_time;
         $output .= apply_filters("cubewp/frontend/time_picker/field", $output, $args);
         $args['name'] = $field_name . '_close_time';
         $args['id'] = $field_id . '_close_time';
@@ -129,6 +144,7 @@ class CubeWp_Frontend_Business_Hours_Field extends CubeWp_Frontend {
         $args['placeholder'] = esc_html__('Close Time', 'cubewp-framework');
         $args['field_size'] = 'size-1-3';
         $args['class'] = 'business-close-time';
+        $args['value'] = $default_close_time;
         $output .= apply_filters("cubewp/frontend/time_picker/field", $output, $args);
         $output .= '<div class="yb_business_hour_fulldayopen">
                         <input type="checkbox" id="yb_fulldayopen" class="yb_fulldayopen">
@@ -148,13 +164,13 @@ class CubeWp_Frontend_Business_Hours_Field extends CubeWp_Frontend {
         $timings = self::$timings;
         $output = '<div class="business-hours ' . $timings['day'] . ' ' . $timings['day'] . '-' . $timings['field_name'] . ' ' . $timings['fullhoursclass'] . ' ">
                     <div class="day-hours">
-                    <span class="weekday">' . $timings['day'] . '</span>
+                    <span class="weekday">' . ucfirst($timings['day']) . '</span>
                     <span class="start-end fullday">' . $timings['fullday'] . '</span>
                     <span class="open">' . $timings['start_time'] . '</span>
                     <span class="dash">' . $timings['dash'] . '</span>
                     <span class="close">' . $timings['end_time'] . '</span>
                     <a class="remove-business-hours" href="#" data-field_name ="' . $timings['field_name'] . '" data-weekday ="' . $timings['day'] . '">
-                        <span class="dashicons dashicons-no"></span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5ZM11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H2.506a.58.58 0 0 0-.01 0H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1h-.995a.59.59 0 0 0-.01 0H11Zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5h9.916Zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47ZM8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5Z"></path></svg>
                     </a>';
                     
         $output .= '<input class="' . $timings['day'] . '-open" name="cwp_user_form[cwp_meta][' . $timings['field_name'] . '][' . $timings['day'] . ']' .$timings['meta_open'] . '" value="' . $timings['open_time'] . '" type="hidden">

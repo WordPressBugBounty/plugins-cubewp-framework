@@ -57,6 +57,20 @@ protected function register_controls()
                 ],
             ]
         );
+
+        // Toggle to enable/disable text limit.
+        $this->add_control(
+            'text_limit_enable',
+            [
+                'label' => esc_html__( 'Enable Text Limit', 'cubewp-framework' ),
+                'type' => \Elementor\Controls_Manager::SWITCHER,
+                'label_on' => esc_html__( 'Yes', 'cubewp-framework' ),
+                'label_off' => esc_html__( 'No', 'cubewp-framework' ),
+                'return_value' => 'yes',
+                'default' => 'no',
+            ]
+        );
+
         $this->add_control(
             'text_limit',
             [
@@ -67,17 +81,22 @@ protected function register_controls()
                 'max' => 100,
                 'step' => 1,
                 'description' => esc_html__('Set how many characters to show before truncating with ellipsis.', 'cubewp-framework'),
+                'condition' => [
+                    'text_limit_enable' => 'yes',
+                ],
             ]
         );
     }
 
+
     public function render()
     {
+        $post_id = get_the_ID(); 
+     
         if (cubewp_is_elementor_editing()) {
-            $title = get_the_title(cubewp_get_elementor_preview_post_id());
-        } else {
-            $title = get_the_title();
+            $post_id = cubewp_get_elementor_preview_post_id();
         }
+        $title = get_the_title($post_id);
         if (empty($title)) {
             return;
         }
@@ -85,8 +104,12 @@ protected function register_controls()
         $settings = $this->get_settings_for_display();
         $enable_limit = ! empty($settings['line_limit_enable']) && $settings['line_limit_enable'] === 'yes';
         $line_limit   = ! empty($settings['line_limit']) ? intval($settings['line_limit']) : 1;
-        $text_limit   = ! empty($settings['text_limit']) ? intval($settings['text_limit']) : 10;
-        $title = wp_trim_words($title, $text_limit, '...'); 
+        $enable_text_limit = ! empty( $settings['text_limit_enable'] ) && $settings['text_limit_enable'] === 'yes';
+        $text_limit        = ! empty( $settings['text_limit'] ) ? intval( $settings['text_limit'] ) : 10;
+        if ( $enable_text_limit ) {
+            // Note: wp_trim_words trims by words (not characters) but matches existing behavior here.
+            $title = wp_trim_words( $title, $text_limit, '...' );
+        }
         if ($enable_limit) { 
             echo '<span class="cubewp-post-title-tag cubewp-clamp-' . intval($line_limit) . '">' . esc_html($title) . '</span>';
         } else {

@@ -28,7 +28,7 @@ class CubeWp_Theme_Builder_Rules {
 	 * * @since   1.1.16
      */
 	private static function get_public_taxonomies() {
-		$core                  = get_taxonomies( [ '_builtin' => true, 'public' => true, 'hierarchical' => true ], 'objects', 'and' );
+		$core                  = get_taxonomies( [ '_builtin' => true, 'public' => true ], 'objects', 'and' );
 		$public                = get_taxonomies( [ '_builtin' => false, 'public' => true, 'hierarchical' => true ], 'objects', 'and' );
 		$taxonomies = array_merge($core,$public);
 		$taxonomies = array_map(function($taxonomy) {
@@ -137,6 +137,12 @@ class CubeWp_Theme_Builder_Rules {
         foreach (self::get_public_post_types() as $post_type) {
             $template_options .= '<option value="postcard_' . esc_attr($post_type['name']) . '">Post Card ' . esc_html($post_type['label']) . '</option>';
         }
+        /**
+         * Allow insertion of extra postcard options.
+         *
+         * @param string $template_options Current template options HTML (passed by reference).
+         */
+        do_action_ref_array('cubewp/theme_builder/postcard_options', array(&$template_options));
         $template_options .= '</optgroup>';
         return $template_options;
     }
@@ -239,6 +245,34 @@ class CubeWp_Theme_Builder_Rules {
         $template_options .= '</optgroup>';
         return $template_options;
     }
+
+    /**
+     * Method render_no_results_options
+     *
+     * @return string
+     * @since   1.1.30
+     */
+    public static function render_no_results_options() {
+        $template_options = '';
+        $template_options .= '<optgroup label="Global">';
+        $template_options .= '<option value="all">' . esc_html__('All (site-wide)', 'cubewp-framework') . '</option>';
+        $template_options .= '</optgroup>';
+
+        $template_options .= '<optgroup label="Post Types">';
+        foreach (self::get_public_post_types() as $post_type) {
+            // Prefix to avoid collisions with taxonomy slugs.
+            $template_options .= '<option value="pt_' . esc_attr($post_type['name']) . '">' . esc_html($post_type['label']) . '</option>';
+        }
+        $template_options .= '</optgroup>';
+
+        $template_options .= '<optgroup label="Taxonomies">';
+        foreach (self::get_public_taxonomies() as $taxonomy) {
+            // Prefix to avoid collisions with post type slugs.
+            $template_options .= '<option value="tax_' . esc_attr($taxonomy['name']) . '">' . esc_html($taxonomy['label']) . '</option>';
+        }
+        $template_options .= '</optgroup>';
+        return $template_options;
+    }
     
     /**
      * Method get_template_options
@@ -297,6 +331,10 @@ class CubeWp_Theme_Builder_Rules {
                 case 'shop':
                     $template_options .= '<option value="all">all</option>';
                     break;
+
+                case 'no-results':
+                        $template_options .= self::render_no_results_options();
+                        break;
 
                 default:
                     $template_options .= self::render_default_options();

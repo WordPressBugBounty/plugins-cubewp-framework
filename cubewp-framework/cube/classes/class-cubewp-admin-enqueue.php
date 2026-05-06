@@ -405,7 +405,7 @@ class CubeWp_Admin_Enqueue{
 			CWP()->is_admin_screen('cubewp_taxonomies') ||
 			CWP()->is_admin_screen('cubewp_settings') ||
 			$pagenow == 'user-new.php' || $pagenow == 'user-edit.php' || $pagenow == 'profile.php' ||
-			$pagenow == 'post.php' || $pagenow == 'post-new.php'
+			$pagenow == 'post.php' || $pagenow == 'post-new.php' || $pagenow == 'edit-tags.php' || $pagenow == 'term.php'
 		)
        {
 			wp_enqueue_media();
@@ -413,6 +413,8 @@ class CubeWp_Admin_Enqueue{
 			self::enqueue_style('cubewp-metaboxes');
 			self::enqueue_script('cubewp-metaboxes-validation');
 			self::enqueue_script('cubewp-metaboxes');
+			self::enqueue_style('select2');
+			self::enqueue_script('select2');
             
         }
 		if ( $pagenow == 'post.php' || $pagenow == 'post-new.php') {

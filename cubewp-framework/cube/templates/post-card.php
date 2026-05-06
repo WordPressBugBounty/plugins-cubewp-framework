@@ -47,7 +47,11 @@ ob_start();
                     $terms = get_the_terms($post_id, $taxonomy_slug);
                     if (!empty($terms)) {
                         foreach ($terms as $term) {
-                            $terms_ui .= sprintf('<li><a href="%1$s">%2$s</a></li>', esc_url(get_term_link($term->slug, $taxonomy_slug)), esc_html($term->name));
+                            $term_link = get_term_link($term);
+                            if (is_wp_error($term_link) || !is_string($term_link)) {
+                                continue;
+                            }
+                            $terms_ui .= sprintf('<li><a href="%1$s">%2$s</a></li>', esc_url($term_link), esc_html($term->name));
                             if ($counter > 4) {
                                 $terms_ui .= sprintf('<li><a href="%1$s">%2$s</a></li>', esc_url(get_permalink($post_id)), esc_html__("View All", "cubewp-framework"));
                                 break;

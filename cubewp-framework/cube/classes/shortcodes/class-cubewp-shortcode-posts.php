@@ -46,6 +46,7 @@ class CubeWp_Shortcode_Posts
 		}
 
 		$load_via_ajax = isset($parameters['load_via_ajax']) ? $parameters['load_via_ajax'] : 'yes';
+		$parameters['nonce'] = wp_create_nonce('cubewp_posts_output');
 		if ($load_via_ajax !== 'yes' || cubewp_is_elementor_editing()) {
 			return self::cubewp_posts_output($parameters);
 		}
@@ -80,9 +81,7 @@ class CubeWp_Shortcode_Posts
 		$unique_id = uniqid('cubewp_posts_');
 
 		// Container start
-		$params_with_nonce = $parameters;
-		$params_with_nonce['nonce'] = wp_create_nonce('cubewp_posts_output');
-		$output .= '<div id="' . esc_attr($unique_id) . '" class="cubewp-ajax-posts-container" data-parameters="' . htmlspecialchars(json_encode($params_with_nonce), ENT_QUOTES, 'UTF-8') . '">
+		$output .= '<div id="' . esc_attr($unique_id) . '" class="cubewp-ajax-posts-container" data-parameters="' . htmlspecialchars(json_encode($parameters), ENT_QUOTES, 'UTF-8') . '">
         <div class="cubewp-processing-posts-container" style="display: flex; flex-wrap: wrap; gap: 10px;">';
 
 		for ($i = 0; $i < $processing_grid_count; $i++) {
@@ -203,6 +202,38 @@ class CubeWp_Shortcode_Posts
 			'page_num'          => 1,
 			'meta_query'     => isset($parameters['meta_query']) ? $parameters['meta_query'] : array(), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 		);
+
+		$author_filter = isset($parameters['author_filter']) ? $parameters['author_filter'] : 'no';
+		if ($author_filter === 'yes') {
+			$author_filter_type = isset($parameters['author_filter_type']) ? $parameters['author_filter_type'] : 'current_user';
+			$resolved_author_id = 0;
+			if ($author_filter_type === 'current_user') {
+				$current_user = wp_get_current_user();
+				if ($current_user && $current_user->ID) {
+					$resolved_author_id = (int) $current_user->ID;
+				}
+			} elseif ($author_filter_type === 'custom') {
+				$custom_author_id = isset($parameters['custom_author_id']) ? intval($parameters['custom_author_id']) : 0;
+				if ($custom_author_id > 0) {
+					$resolved_author_id = (int) $custom_author_id;
+				}
+			} elseif ($author_filter_type === 'dynamic') {
+				$dynamic_author_id = cubewp_get_elementor_tag_user_id();
+				if ($dynamic_author_id > 0) {
+					$resolved_author_id = (int) $dynamic_author_id;
+				}
+			} 
+			if ($resolved_author_id > 0) {
+				$args['author'] = $resolved_author_id;
+			} else {
+				$args['post__in'] = array(0);
+			}
+		}
+
+		if (isset($parameters['cwp_reviews_filters_key']) && $parameters['cwp_reviews_filters_key'] !== '') {
+			$args['cwp_reviews_filters_value'] = $parameters['cwp_reviews_filters_value'];
+			$args['cwp_reviews_filters_key'] = $parameters['cwp_reviews_filters_key'];
+		}
 
 		if (isset($parameters['number_of_posts']) && $parameters['number_of_posts'] !== '' && intval($parameters['number_of_posts']) !== -1) {
 			$args['posts_per_page'] = intval($parameters['number_of_posts']);
@@ -353,6 +384,13 @@ class CubeWp_Shortcode_Posts
 			$container_open .= ' data-enable-progress-bar="' . esc_attr($enable_progress_bar) . '"';
 			$container_open .= ' data-enable-wrapper="' . esc_attr($enable_wrap_dots_arrows) . '"';
 		}
+		// For Reviews Filter
+		if (class_exists('CubeWp_Reviews_Load')) {
+			$container_open .= ' data-post-count=' . esc_attr($parameters['posts_per_page']) . ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			$container_open .= ' data-post-ajax=' . esc_attr($parameters['posts_per_page']) . ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			$container_open .= ' data-query-json=' . esc_attr(json_encode($parameters)) . ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped  
+		}
+
 		$container_open .= '>';
 		$container_close = '</div>';
 
@@ -366,8 +404,19 @@ class CubeWp_Shortcode_Posts
 					return $classes;
 				});
 			}
+			// Get title settings for inline styles
+			$enable_title = isset($settings['enable_title']) && $settings['enable_title'] === 'yes';
+			$posts_title = isset($settings['posts_title']) ? $settings['posts_title'] : '';
+
+			// Initialize title output (will be added only if posts exist and on first page)
+			$title_output = '';
+
+			// Add title only when there are posts and on first page (not on load more pages)
+			if ($enable_title == 'yes' && !empty($posts_title)) {
+				$title_output = '<h2 class="cubewp-posts-title">' . esc_html($posts_title) . '</h2>';
+			}
 			if ($loadbyclick) {
-				$post_markup = $container_open;
+				$post_markup = $title_output . $container_open;
 			} else {
 				$post_markup = '';
 			}
@@ -453,7 +502,25 @@ class CubeWp_Shortcode_Posts
 				remove_all_filters('post_class'); // or remove using the closure reference if needed
 			}
 		} else {
-			$post_markup = self::cwp_no_result_found();
+			// Check if hide_no_results is enabled
+            $hide_no_results = isset($parameters['hide_no_results']) && $parameters['hide_no_results'] === 'yes';
+            if ($hide_no_results) { 
+                $post_markup = '';
+            } else {
+                $no_result_post_type = isset($parameters['post_type'][0]) ? $parameters['post_type'][0] : '';
+                // Prefer prefixed location, then fallback to legacy (unprefixed).
+                $no_result_template_id = false;
+                if (!empty($no_result_post_type)) {
+                    $no_result_template_id = CubeWp_Theme_Builder::get_template_post_id_by_location('pt_' . $no_result_post_type, 'no-results');
+                    if (!$no_result_template_id) {
+                        $no_result_template_id = CubeWp_Theme_Builder::get_template_post_id_by_location($no_result_post_type, 'no-results');
+                    }
+                }
+                if (!$no_result_template_id) {
+                    $no_result_template_id = CubeWp_Theme_Builder::get_template_post_id_by_location('all', 'no-results');
+                }
+                $post_markup = self::cwp_no_result_found($no_result_template_id);
+            }
 		}
 		wp_reset_postdata();
 
@@ -473,10 +540,11 @@ class CubeWp_Shortcode_Posts
 			self::set_cache($cache_key, $cache_data, $cache_ttl_hours * HOUR_IN_SECONDS);
 		}
 
-
-
 		if (wp_doing_ajax() && !cubewp_is_elementor_editing()) {
-			wp_send_json_success(array('content' => $final_output, 'newAttributes' => $parameters, 'has_more_posts' => $has_more_posts));
+			$perpage = $parameters['posts_per_page'];
+			$page_nums = isset($args['page_num']) ? $args['page_num'] : 1;
+			$total_posts = intval($perpage) * intval($page_nums);
+			wp_send_json_success(array('content' => $final_output, 'newAttributes' => $parameters, 'has_more_posts' => $has_more_posts, 'total_posts' => $total_posts));
 		} else {
 			return $final_output;
 		}
@@ -526,9 +594,15 @@ class CubeWp_Shortcode_Posts
 		return $output;
 	}
 
-	private static function cwp_no_result_found()
+	private static function cwp_no_result_found($template_id)
 	{
-		return '<div class="cwp-empty-search"><img class="cwp-empty-search-img" src="' . esc_url(CWP_PLUGIN_URI . 'cube/assets/frontend/images/no-result.png') . '" alt=""><h2>' . esc_html__('No Results Found', 'cubewp-framework') . '</h2><p>' . esc_html__('There are no results matching your search.', 'cubewp-framework') . '</p></div>';
+		if (!empty($template_id)) {
+			if (did_action('elementor/loaded')) {
+				return '<div class="elementor-cwp-empty-search">' . \Elementor\Plugin::instance()->frontend->get_builder_content_for_display($template_id) . '</div>';
+			}
+		} else {
+			return '<div class="cwp-empty-search"><img class="cwp-empty-search-img" src="' . esc_url(CWP_PLUGIN_URI . 'cube/assets/frontend/images/no-result.png') . '" alt=""><h2>' . esc_html__('No Results Found', 'cubewp-framework') . '</h2><p>' . esc_html__('There are no results matching your search.', 'cubewp-framework') . '</p></div>';
+		}
 	}
 
 	public function cubewp_enqueue_slick_for_elementor()
@@ -923,6 +997,7 @@ class CubeWp_Shortcode_Posts
 	{
 		// Get the address field name from parameters (set by widget)
 		$nearby_address_field = isset($parameters['nearby_address_field']) ? $parameters['nearby_address_field'] : '';
+		$nearby_source_post_id = isset($parameters['nearby_source_post_id']) ? $parameters['nearby_source_post_id'] : '';
 
 		if (empty($nearby_address_field)) {
 			// If nearby posts is selected but no address field configured, return no results
@@ -938,11 +1013,10 @@ class CubeWp_Shortcode_Posts
 			$args['post__in'] = array(0);
 			return;
 		}
-
+ 
 		// Get lat/lng from parameters (set by widget as $args[$meta_key.'_lat'] and $args[$meta_key.'_lng'])
 		$lat = isset($parameters[$meta_key . '_lat']) ? floatval($parameters[$meta_key . '_lat']) : '';
-		$lng = isset($parameters[$meta_key . '_lng']) ? floatval($parameters[$meta_key . '_lng']) : '';
-
+		$lng = isset($parameters[$meta_key . '_lng']) ? floatval($parameters[$meta_key . '_lng']) : ''; 
 		// Get range from parameters, fallback to default radius
 		$range = isset($parameters[$meta_key . '_range']) ? floatval($parameters[$meta_key . '_range']) : '';
 		if (empty($range)) {
@@ -959,12 +1033,18 @@ class CubeWp_Shortcode_Posts
 		}
 
 		// Use CubeWP's proximity SQL function (same as q_type_google)
-		// Get nearby post IDs using proximity SQL
+		// Get nearby post IDs using proximity SQL   
 		$nearby_post_ids = cubewp_get_nearby_post_ids($meta_key . '_lat', $meta_key . '_lng', $lat, $lng, $radius_unit, $range, array());
-		
+
 		// Ensure it's an array
 		if (!is_array($nearby_post_ids)) {
 			$nearby_post_ids = array();
+		}
+
+		// Remove the source post ID if present
+		if (!empty($nearby_source_post_id) && in_array($nearby_source_post_id, $nearby_post_ids)) {
+			$nearby_post_ids = array_diff($nearby_post_ids, array($nearby_source_post_id));
+			$nearby_post_ids = array_values($nearby_post_ids); // Re-index
 		}
 
 		// Filter the main query by nearby post IDs
@@ -975,7 +1055,7 @@ class CubeWp_Shortcode_Posts
 			} else {
 				$args['post__in'] = $nearby_post_ids;
 			}
-			
+
 			// If no posts match after intersection, set to empty array to return no results
 			if (empty($args['post__in'])) {
 				$args['post__in'] = array(0); // Force no results

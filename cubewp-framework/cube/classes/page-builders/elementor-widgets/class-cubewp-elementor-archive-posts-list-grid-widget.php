@@ -9,16 +9,33 @@ use Elementor\Repeater;
 use Elementor\Widget_Base;
 use Elementor\Icons_Manager;
 
-class CubeWp_Elementor_Archive_Posts_List_Grid_Widget extends Widget_Base {
+class CubeWp_Elementor_Archive_Posts_List_Grid_Widget extends Widget_Base
+{
 
-    public function get_name() { return 'archive_posts_list_grid_widget'; }
-    public function get_title() { return __('Archive Posts List/Grid', 'cubewp-framework'); }
-    public function get_icon() { return 'eicon-view-list'; }
-    public function get_categories() { return ['cubewp']; }
-    public function get_script_depends() { return ['cubewp-view-toggle']; }
+    public function get_name()
+    {
+        return 'archive_posts_list_grid_widget';
+    }
+    public function get_title()
+    {
+        return __('Archive Posts List/Grid', 'cubewp-framework');
+    }
+    public function get_icon()
+    {
+        return 'eicon-view-list';
+    }
+    public function get_categories()
+    {
+        return ['cubewp'];
+    }
+    public function get_script_depends()
+    {
+        return ['cubewp-view-toggle'];
+    }
 
-    protected function register_controls() {
-        
+    protected function register_controls()
+    {
+
         /* =========================
          * CONTENT SECTION
          * ========================= */
@@ -70,13 +87,13 @@ class CubeWp_Elementor_Archive_Posts_List_Grid_Widget extends Widget_Base {
                 'type'    => Controls_Manager::SELECT,
                 'options' => [
                     'grid' => __('Grid View', 'cubewp-framework'),
-                    'list' => __('List View', 'cubewp-framework'), 
+                    'list' => __('List View', 'cubewp-framework'),
                 ],
                 'default' => 'grid',
             ]
         );
-       
-        
+
+
 
         $this->add_control(
             'view_buttons',
@@ -85,12 +102,12 @@ class CubeWp_Elementor_Archive_Posts_List_Grid_Widget extends Widget_Base {
                 'fields'      => $repeater->get_controls(),
                 'default'     => [
                     [
-                        'button_text' => __('Grid', 'cubewp-framework'), 
+                        'button_text' => __('Grid', 'cubewp-framework'),
                         'trigger_type' => 'grid',
                         'button_icon' => ['value' => 'fas fa-th-large', 'library' => 'fa-solid']
                     ],
                     [
-                        'button_text' => __('List', 'cubewp-framework'), 
+                        'button_text' => __('List', 'cubewp-framework'),
                         'trigger_type' => 'list',
                         'button_icon' => ['value' => 'fas fa-list', 'library' => 'fa-solid']
                     ],
@@ -98,6 +115,129 @@ class CubeWp_Elementor_Archive_Posts_List_Grid_Widget extends Widget_Base {
                 'title_field' => '{{{ button_text }}}',
             ]
         );
+
+        $this->end_controls_section();
+
+        /* =========================
+        * STYLE SECTION: Display & Layout
+        * ========================= */
+
+        $this->start_controls_section(
+            'section_display_style',
+            [
+                'label' => __( 'Display Style', 'cubewp-framework' ),
+                'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
+            ]
+        );
+
+        /* Display */
+        $this->add_responsive_control(
+            'view_switcher_display',
+            [
+                'label'   => __( 'Display', 'cubewp-framework' ),
+                'type'    => \Elementor\Controls_Manager::SELECT,
+                'default' => 'block',
+                'options' => [
+                    'block'        => __( 'Block', 'cubewp-framework' ),
+                    'inline-block' => __( 'Inline Block', 'cubewp-framework' ),
+                    'flex'         => __( 'Flex', 'cubewp-framework' ),
+                    'inline-flex'  => __( 'Inline Flex', 'cubewp-framework' ),
+                    'none'         => __( 'None', 'cubewp-framework' ),
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-view-switcher' => 'display: {{VALUE}};',
+                ],
+            ]
+        );
+                
+        /* Flex Direction */
+        $this->add_responsive_control(
+            'view_switcher_flex_direction',
+            [
+                'label'   => __( 'Flex Direction', 'cubewp-framework' ),
+                'type'    => \Elementor\Controls_Manager::SELECT,
+                'default' => 'row',
+                'options' => [
+                    'row'           => __( 'Row', 'cubewp-framework' ),
+                    'row-reverse'   => __( 'Row Reverse', 'cubewp-framework' ),
+                    'column'        => __( 'Column', 'cubewp-framework' ),
+                    'column-reverse'=> __( 'Column Reverse', 'cubewp-framework' ),
+                ],
+                'condition' => [
+                    'view_switcher_display' => [ 'flex', 'inline-flex' ],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-view-switcher' => 'flex-direction: {{VALUE}};',
+                ],
+            ]
+        );
+
+        /* Justify Content (Only for flex) */
+        $this->add_responsive_control(
+            'view_switcher_justify',
+            [
+                'label'   => __( 'Justify', 'cubewp-framework' ),
+                'type'    => \Elementor\Controls_Manager::SELECT,
+                'default' => 'flex-start',
+                'options' => [
+                    'flex-start'    => __( 'Start', 'cubewp-framework' ),
+                    'center'        => __( 'Center', 'cubewp-framework' ),
+                    'flex-end'      => __( 'End', 'cubewp-framework' ),
+                    'space-between' => __( 'Space Between', 'cubewp-framework' ),
+                    'space-around'  => __( 'Space Around', 'cubewp-framework' ),
+                    'space-evenly'  => __( 'Space Evenly', 'cubewp-framework' ),
+                ],
+                'condition' => [
+                    'view_switcher_display' => [ 'flex', 'inline-flex' ],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-view-switcher' => 'justify-content: {{VALUE}};',
+                ],
+            ]
+        );
+
+        /* Align Items (Vertical align for flex) */
+        $this->add_responsive_control(
+            'view_switcher_align_items',
+            [
+                'label'   => __( 'Align Items', 'cubewp-framework' ),
+                'type'    => \Elementor\Controls_Manager::SELECT,
+                'default' => 'center',
+                'options' => [
+                    'flex-start' => __( 'Top', 'cubewp-framework' ),
+                    'center'     => __( 'Center', 'cubewp-framework' ),
+                    'flex-end'   => __( 'Bottom', 'cubewp-framework' ),
+                    'stretch'   => __( 'Stretch', 'cubewp-framework' ),
+                ],
+                'condition' => [
+                    'view_switcher_display' => [ 'flex', 'inline-flex' ],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-view-switcher' => 'align-items: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'view_switcher_flex_wrap',
+            [
+                'label' => __( 'Flex Wrap', 'cubewp-framework' ),
+                'type' => \Elementor\Controls_Manager::SELECT,
+                'default' => 'nowrap',
+                'options' => [
+                    'nowrap'       => __( 'No Wrap', 'cubewp-framework' ),
+                    'wrap'         => __( 'Wrap', 'cubewp-framework' ),
+                    'wrap-reverse' => __( 'Wrap Reverse', 'cubewp-framework' ),
+                ],
+                'condition' => [
+                    'view_switcher_display' => [ 'flex', 'inline-flex' ],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-view-switcher' => 'flex-wrap: {{VALUE}};',
+                ],
+            ]
+        );
+
 
         $this->end_controls_section();
 
@@ -183,7 +323,12 @@ class CubeWp_Elementor_Archive_Posts_List_Grid_Widget extends Widget_Base {
                 'type'       => Controls_Manager::DIMENSIONS,
                 'size_units' => ['px', 'em'],
                 'default'    => [
-                    'top' => '10', 'right' => '20', 'bottom' => '10', 'left' => '20', 'unit' => 'px', 'isLinked' => false
+                    'top' => '10',
+                    'right' => '20',
+                    'bottom' => '10',
+                    'left' => '20',
+                    'unit' => 'px',
+                    'isLinked' => false
                 ],
                 'selectors'  => ['{{WRAPPER}} .cubewp-view-btn' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};'],
                 'separator'  => 'before',
@@ -265,7 +410,7 @@ class CubeWp_Elementor_Archive_Posts_List_Grid_Widget extends Widget_Base {
         $this->end_controls_tab();
         $this->end_controls_tabs();
 
-        
+
 
         $this->end_controls_section();
 
@@ -294,7 +439,10 @@ class CubeWp_Elementor_Archive_Posts_List_Grid_Widget extends Widget_Base {
                 'label' => __('Active Icon Color', 'cubewp-framework'),
                 'type'  => Controls_Manager::COLOR,
                 'default' => '#ffffff',
-                'selectors' => ['{{WRAPPER}} .cubewp-view-btn.active i,{{WRAPPER}} .cubewp-view-btn.active svg' => 'fill: {{VALUE}};stroke: {{VALUE}};color: {{VALUE}};'],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-view-btn.active i,{{WRAPPER}} .cubewp-view-btn.active svg' => 'fill: {{VALUE}};stroke: {{VALUE}};color: {{VALUE}};',
+                    '{{WRAPPER}} .cubewp-view-btn:hover i,{{WRAPPER}} .cubewp-view-btn:hover svg' => 'fill: {{VALUE}};stroke: {{VALUE}};color: {{VALUE}};'
+                ],
             ]
         );
 
@@ -324,23 +472,23 @@ class CubeWp_Elementor_Archive_Posts_List_Grid_Widget extends Widget_Base {
         $this->end_controls_section();
     }
 
-    protected function render() {
+    protected function render()
+    {
         $settings = $this->get_settings_for_display();
 
         if (empty($settings['view_buttons'])) {
             return;
         }
-        ?>
+?>
         <div class="cubewp-view-switcher" data-default="grid">
             <?php foreach ($settings['view_buttons'] as $index => $button) :
                 $active = ($index === 0) ? 'active' : '';
                 $icon_pos = !empty($button['icon_align']) ? 'icon-' . $button['icon_align'] : 'icon-left';
-                 ?>
+            ?>
                 <button
                     type="button"
                     class="cubewp-view-btn <?php echo esc_attr($active . ' ' . $icon_pos); ?>"
-                    data-view="<?php echo esc_attr($button['trigger_type']); ?>"
-                >
+                    data-view="<?php echo esc_attr($button['trigger_type']); ?>">
                     <?php if ($button['icon_align'] === 'left' && !empty($button['button_icon']['value'])) : ?>
                         <?php Icons_Manager::render_icon($button['button_icon'], ['aria-hidden' => 'true']); ?>
                     <?php endif; ?>
@@ -356,23 +504,30 @@ class CubeWp_Elementor_Archive_Posts_List_Grid_Widget extends Widget_Base {
             <?php endforeach; ?>
         </div>
         <style>
-            .cubewp-view-switcher { display: flex; flex-wrap: wrap; align-items: center; }
-            .cubewp-view-btn { 
-                display: inline-flex; 
-                align-items: center; 
-                justify-content: center; 
-                cursor: pointer; 
+            .cubewp-view-switcher {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+            }
+
+            .cubewp-view-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
                 transition: all 0.3s;
-                border-style: solid; 
+                border-style: solid;
                 line-height: 1;
                 outline: none;
             }
-            .cubewp-view-btn i, .cubewp-view-btn svg {
+
+            .cubewp-view-btn i,
+            .cubewp-view-btn svg {
                 line-height: 1;
                 width: auto;
                 height: auto;
             }
         </style>
-        <?php
+<?php
     }
 }

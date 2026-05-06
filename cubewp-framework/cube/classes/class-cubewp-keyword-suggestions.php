@@ -75,12 +75,12 @@ class CubeWp_Keyword_Suggestions {
 			true
 		);
 
-		wp_enqueue_style(
-			'cubewp-keyword-suggestions',
-			CWP_PLUGIN_URI . 'cube/assets/frontend/css/keyword-suggestions.css',
-			array(),
-			'1.0.0'
-		);
+		// wp_enqueue_style(
+		// 	'cubewp-keyword-suggestions',
+		// 	CWP_PLUGIN_URI . 'cube/assets/frontend/css/keyword-suggestions.css',
+		// 	array(),
+		// 	'1.0.0'
+		// );
 
 		// Get all post types with their taxonomy settings
 		$post_types_settings = array();
@@ -153,7 +153,7 @@ class CubeWp_Keyword_Suggestions {
 			return $output;
 		}
 
-		$data_attrs = 'data-enable-suggestions="1"';
+		$data_attrs = 'data-enable-suggestions="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"';
 		$output = str_replace( '<input', '<input ' . $data_attrs, $output );
 		$suggestions_html = '<div class="cubewp-keyword-suggestions-container" style="display: none;"></div>';
 		$output = str_replace( '</div>', $suggestions_html . '</div>', $output );
@@ -164,7 +164,19 @@ class CubeWp_Keyword_Suggestions {
 		return $output;
 	}
 
- 
+	/**
+	 * Whether term meta holds a safe data:image …;base64, URI for use in img src.
+	 * (WordPress esc_url() strips data: URLs, so we validate and use esc_attr() instead.)
+	 *
+	 * @param string $value Raw meta value.
+	 * @return bool
+	 */
+	private static function is_term_icon_data_uri_image( $value ) {
+		if ( ! is_string( $value ) || strlen( $value ) < 30 ) {
+			return false;
+		}
+		return (bool) preg_match( '#^data:image/(png|gif|jpe?g|webp|svg\+xml);base64,#i', $value );
+	}
 
 	/**
 	 * AJAX handler to get default keyword suggestions (when field is empty)
@@ -175,6 +187,8 @@ class CubeWp_Keyword_Suggestions {
 			wp_send_json_error( array( 'message' => __( 'Security check failed', 'cubewp-framework' ) ) );
 		}
 
+		global $cwpOptions;
+
 		$post_type = isset( $_POST['post_type'] ) ? sanitize_text_field( wp_unslash( $_POST['post_type'] ) ) : '';
 		$taxonomies = isset( $_POST['taxonomies'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['taxonomies'] ) ) : array();
 
@@ -184,56 +198,62 @@ class CubeWp_Keyword_Suggestions {
 
 		$suggestions = array();
 
-		// 1. Add posts first (ordered by date DESC, 10 max)
-		$latest_posts_args = array(
-			'post_type'      => $post_type,
-			'post_status'    => 'publish',
-			'posts_per_page' => 10,
-			'orderby'        => 'date',
-			'order'          => 'DESC',
-		);
-		$latest_posts_query = new WP_Query( $latest_posts_args );
-		if ( $latest_posts_query->have_posts() ) {
-			$post_type_obj = get_post_type_object( $post_type );
-			$post_type_label = $post_type_obj && isset( $post_type_obj->labels->singular_name ) ? $post_type_obj->labels->singular_name : ucfirst( $post_type );
+		$default_taxonomy_key = 'keywords_suggestions_default_taxonomy_' . $post_type;
+		$default_taxonomy     = isset( $cwpOptions[ $default_taxonomy_key ] ) ? sanitize_text_field( $cwpOptions[ $default_taxonomy_key ] ) : '';
 
-			foreach ( $latest_posts_query->posts as $post ) {
-				// Get featured image url (full or thumbnail, returns empty string if none)
-				$thumbnail = get_the_post_thumbnail_url( $post->ID, 'thumbnail' );
-				$suggestions[] = array(
-					'id'             => $post->ID,
-					'name'           => get_the_title( $post->ID ),
-					'slug'           => $post->post_name,
-					'taxonomy'       => '',
-					'taxonomy_label' => $post_type_label,
-					'type'           => 'post',
-					'url'            => get_permalink( $post->ID ),
-					'thumbnail'      => $thumbnail ? $thumbnail : '',
-				);
-			}
+		// Empty keyword behavior: use selected "Default Taxonomy" only (single taxonomy, 10 terms).
+		if ( ! empty( $default_taxonomy ) && taxonomy_exists( $default_taxonomy ) ) {
+			$taxonomies = array( $default_taxonomy );
+		} elseif ( ! empty( $taxonomies ) ) {
+			$taxonomies = array_values( array_filter( array_map( 'sanitize_text_field', (array) $taxonomies ) ) );
+		} else {
+			$taxonomies = array();
 		}
 
-		// 2. Add taxonomies suggestions in the same order as $taxonomies in request, up to overall 20 suggestions
 		foreach ( $taxonomies as $taxonomy ) {
 			if ( ! taxonomy_exists( $taxonomy ) ) {
 				continue;
 			}
 
-			// Get terms ordered by count (most used)
 			$terms = get_terms(
 				array(
 					'taxonomy'   => $taxonomy,
-					'hide_empty' => true,
+					'hide_empty' => false,
 					'orderby'    => 'count',
 					'order'      => 'DESC',
-					'number'     => 10, // 10 per taxonomy, still sliced below
+					'number'     => 10,
 				)
 			);
 
 			if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
-				$taxonomy_obj = get_taxonomy( $taxonomy );
+				$taxonomy_obj   = get_taxonomy( $taxonomy );
 				$taxonomy_label = $taxonomy_obj ? $taxonomy_obj->labels->singular_name : $taxonomy;
 				foreach ( $terms as $term ) {
+					$term_icon_key = 'keywords_suggestions_icon_' . $taxonomy;
+					if ( isset( $cwpOptions[ $term_icon_key ] ) ) {
+						$term_icon = get_term_meta( $term->term_id, $cwpOptions[ $term_icon_key ], true );
+					} else {
+						$term_icon = '';
+					}
+					$term_icon = $term_icon ? $term_icon : '';
+					// Font Awesome class, attachment ID, or data:image base64 URI.
+					if ( strpos( $term_icon, 'fa-' ) !== false ) {
+						$term_icon = '<i class="' . esc_attr( $term_icon ) . '"></i>';
+					} elseif ( is_numeric( $term_icon ) ) {
+						$attachment_url = wp_get_attachment_image_url( (int) $term_icon, 'thumbnail' );
+						$term_icon      = $attachment_url
+							? '<img src="' . esc_url( $attachment_url ) . '" alt="' . esc_attr( $term->name ) . '" />'
+							: '';
+					} elseif ( self::is_term_icon_data_uri_image( $term_icon ) ) {
+						$term_icon = '<img src="' . esc_attr( $term_icon ) . '" alt="' . esc_attr( $term->name ) . '" />';
+					} elseif ( is_string( $term_icon ) && strpos( $term_icon, 'http' ) === 0 ) {
+						$term_icon = '<img src="' . esc_attr( $term_icon ) . '" alt="' . esc_attr( $term->name ) . '" />';
+					} elseif ( empty( $term_icon ) ) {
+						$term_icon = '';
+					} else {
+						$term_icon = '';
+					}
+
 					$suggestions[] = array(
 						'id'             => $term->term_id,
 						'name'           => $term->name,
@@ -241,19 +261,19 @@ class CubeWp_Keyword_Suggestions {
 						'taxonomy'       => $taxonomy,
 						'taxonomy_label' => $taxonomy_label,
 						'type'           => 'term',
-						'thumbnail'      => '', // Taxonomy terms do not have thumbnail. Kept key for structure parity with posts.
+						'thumbnail'      => '',
+						'icon'           => $term_icon ? $term_icon : '',
 					);
-					if ( count( $suggestions ) >= 20 ) {
-						break 2;
-					}
 				}
+			}
+
+			// With default taxonomy selected we only use one taxonomy source.
+			if ( ! empty( $default_taxonomy ) ) {
+				break;
 			}
 		}
 
-		// Now slice to 20 items (already ordered: posts then taxonomies; capped early if >20)
-		$final_suggestions = array_slice( $suggestions, 0, 20 );
-
-		wp_send_json_success( array( 'suggestions' => $final_suggestions ) );
+		wp_send_json_success( array( 'suggestions' => $suggestions ) );
 	}
 
 	/**
@@ -293,19 +313,45 @@ class CubeWp_Keyword_Suggestions {
 					'number'     => 5, // Reduce to make room for posts
 				)
 			);
-
+			global $cwpOptions;
 			if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
-				$taxonomy_obj = get_taxonomy( $taxonomy );
+				$taxonomy_obj   = get_taxonomy( $taxonomy );
 				$taxonomy_label = $taxonomy_obj ? $taxonomy_obj->labels->singular_name : $taxonomy;
-
 				foreach ( $terms as $term ) {
+					$term_icon_key = 'keywords_suggestions_icon_' . $taxonomy;
+					if ( isset( $cwpOptions[ $term_icon_key ] ) ) {
+						$term_icon = get_term_meta( $term->term_id, $cwpOptions[ $term_icon_key ], true );
+					} else {
+						$term_icon = '';
+					}
+					$term_icon = $term_icon ? $term_icon : '';
+					// Font Awesome class, attachment ID, or data:image base64 URI.
+					if ( strpos( $term_icon, 'fa-' ) !== false ) {
+						$term_icon = '<i class="' . esc_attr( $term_icon ) . '"></i>';
+					} elseif ( is_numeric( $term_icon ) ) {
+						$attachment_url = wp_get_attachment_image_url( (int) $term_icon, 'thumbnail' );
+						$term_icon      = $attachment_url
+							? '<img src="' . esc_url( $attachment_url ) . '" alt="' . esc_attr( $term->name ) . '" />'
+							: '';
+					} elseif ( self::is_term_icon_data_uri_image( $term_icon ) ) {
+						$term_icon = '<img src="' . esc_attr( $term_icon ) . '" alt="' . esc_attr( $term->name ) . '" />';
+					} elseif ( is_string( $term_icon ) && strpos( $term_icon, 'http' ) === 0 ) {
+						$term_icon = '<img src="' . esc_attr( $term_icon ) . '" alt="' . esc_attr( $term->name ) . '" />';
+					} elseif ( empty( $term_icon ) ) {
+						$term_icon = '';
+					} else {
+						$term_icon = '';
+					}
+
 					$suggestions[] = array(
-						'id'       => $term->term_id,
-						'name'     => $term->name,
-						'slug'     => $term->slug,
-						'taxonomy' => $taxonomy,
+						'id'             => $term->term_id,
+						'name'           => $term->name,
+						'slug'           => $term->slug,
+						'taxonomy'       => $taxonomy,
 						'taxonomy_label' => $taxonomy_label,
-						'type'     => 'term',
+						'type'           => 'term',
+						'thumbnail'      => '',
+						'icon'           => $term_icon ? $term_icon : '',
 					);
 				}
 			}
@@ -343,7 +389,7 @@ class CubeWp_Keyword_Suggestions {
 			}
 		}
 
-		// Separate posts and terms, then combine with posts first
+		// Separate posts and terms, then combine with terms first
 		$posts = array();
 		$terms = array();
 
@@ -355,8 +401,8 @@ class CubeWp_Keyword_Suggestions {
 			}
 		}
 
-		// Combine with posts first, limited to 10 total suggestions
-		$combined_suggestions = array_merge( $posts, $terms );
+		// Combine with terms first, limited to 10 total suggestions
+		$combined_suggestions = array_merge( $terms, $posts );
 		$final_suggestions = array_slice( $combined_suggestions, 0, 10 );
 
 		wp_send_json_success( array( 'suggestions' => $final_suggestions ) );

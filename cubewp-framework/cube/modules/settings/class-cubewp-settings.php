@@ -47,12 +47,37 @@ class CubeWp_Settings {
 	}
 
 	public function cwp_settings() {
-		$settings      = require CWP_PLUGIN_PATH . 'cube/functions/settings/cubewp-default-options.php';
-		$this->options = apply_filters('cubewp/options/sections', $settings);
-		foreach ($this->options as $key => $data) {
-			$data['fields']      = apply_filters("cubewp/settings/section/{$key}", $data['fields']);
-			$this->options[$key] = $data;
+		$this->options = self::build_settings_options();
+ 
+	}
+
+	/**
+	 * Return prepared settings sections/options.
+	 *
+	 * @return array
+	 */
+	public function get_options() {
+		return is_array($this->options) ? $this->options : array();
+	}
+
+	/**
+	 * Build settings options with the same filters used by settings page.
+	 *
+	 * @return array
+	 */
+	public static function build_settings_options() {
+		$settings = require CWP_PLUGIN_PATH . 'cube/functions/settings/cubewp-default-options.php';
+		$options = apply_filters('cubewp/options/sections', $settings);
+		if (!is_array($options)) {
+			return array();
 		}
+		foreach ($options as $key => $data) {
+			if (isset($data['fields']) && is_array($data['fields'])) {
+				$data['fields'] = apply_filters("cubewp/settings/section/{$key}", $data['fields']);
+			}
+			$options[$key] = $data;
+		}
+		return $options;
 	}
 
 	public function settings_page() {

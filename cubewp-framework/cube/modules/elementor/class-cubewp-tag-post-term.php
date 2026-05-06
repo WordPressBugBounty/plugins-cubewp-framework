@@ -91,8 +91,8 @@ class CubeWp_Tag_Post_Term extends Data_Tag
 	{
 		$this->add_control('post_taxonomy', [
 			'type'    => Controls_Manager::SELECT,
-			'label'   => esc_html__('Select Term Field', 'cubewp-framework'),
-			'options' => self::get_post_type_tax()
+			'label'   => esc_html__('Select Taxonomy', 'cubewp-framework'),
+			'options' => self::cwp_get_taxonomies_label()
 		]);
 		$this->add_control('post_term_field', [
 			'type'      => Controls_Manager::SELECT,
@@ -158,5 +158,21 @@ class CubeWp_Tag_Post_Term extends Data_Tag
 		} else {
 			return get_the_ID();
 		}
+	}
+	public function cwp_get_taxonomies_label()
+	{
+		$args       = array(
+			'public'   => true,
+		);
+		$taxonomies = get_taxonomies($args);
+		$taxonomy_labels = array();
+		if (!empty($taxonomies) && is_array($taxonomies))
+			foreach ($taxonomies as $slug => $taxonomy) {
+				if (taxonomy_exists($taxonomy)) {
+					$label = get_taxonomy($taxonomy)->labels->name;
+					$taxonomy_labels[$slug] = $label;
+				}
+			}
+		return $taxonomy_labels;
 	}
 }

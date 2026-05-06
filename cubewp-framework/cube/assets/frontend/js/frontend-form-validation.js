@@ -34,6 +34,13 @@ function cubewp_frontend_form_validation(from) {
             _thisObj.find('.required:checked').each(function () {
                 val = 1;
             });
+        } else if (type === 'gallery') {
+            var galleryCount = _thisObj.find('.cwp-gallery-field-preview.cloned input[type="hidden"]').length;
+            if (galleryCount > 0) {
+                val = 1;
+            } else {
+                val = _thisObj.find('.required:not([disabled])').val();
+            }
         } else if (type === 'file' || type === 'image') {
             if (_thisObj.find(".cwp-file-field-preview input").length > 0) {
                 val = _thisObj.find(".cwp-file-field-preview input").val();

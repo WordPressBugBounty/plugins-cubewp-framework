@@ -388,8 +388,9 @@ a {
 }
 
 .cwp-welcome-page-section .cwp-title-menu li {
-    margin-bottom:0px
+    margin-bottom: 0px
 }
+
 .cwp-update-plugin-btn a span {
     margin-right: 5px;
     color: #171130;
@@ -492,7 +493,7 @@ a {
     background: #1486B8 0% 0% no-repeat padding-box;
     border-radius: 4px;
     opacity: 1;
-	top: 0px;
+    top: 0px;
     transition: 0.2s ease-in-out;
 }
 
@@ -572,8 +573,9 @@ a {
     margin: 0 20px 0 0 !important;
 }
 
-.cwp-post-type-wrape tbody tr td, .table-view-list tr td {
-	vertical-align: middle;
+.cwp-post-type-wrape tbody tr td,
+.table-view-list tr td {
+    vertical-align: middle;
 }
 
 .cwp-post-type-wrape table {
@@ -850,15 +852,13 @@ span.dashicons.dashicons-trash:hover {
 #toplevel_page_cube_wp_dashboard li:has(a[href^="admin.php?page=user-custom-fields"]),
 #toplevel_page_cube_wp_dashboard li:has(a[href^="admin.php?page=settings-custom-fields"]),
 #toplevel_page_cube_wp_dashboard li a[href^="admin.php?page=cubewp-pricing"],
-#toplevel_page_cube_wp_dashboard li a[href^="admin.php?page=cubewp-export"]
-{
+#toplevel_page_cube_wp_dashboard li a[href^="admin.php?page=cubewp-export"] {
     display: none;
 }
 
 #toplevel_page_cube_wp_dashboard li:has(a[href^="admin.php?page=taxonomy-custom-fields"]).current,
 #toplevel_page_cube_wp_dashboard li:has(a[href^="admin.php?page=user-custom-fields"]).current,
-#toplevel_page_cube_wp_dashboard li:has(a[href^="admin.php?page=settings-custom-fields"]).current
-{
+#toplevel_page_cube_wp_dashboard li:has(a[href^="admin.php?page=settings-custom-fields"]).current {
     display: block;
 }
 
@@ -866,19 +866,25 @@ span.dashicons.dashicons-trash:hover {
     font-size: 18px;
     color: #FFB300;
 }
+
 #toplevel_page_cube_wp_dashboard li a[href^="https://cubewp.com/pricing/"],
 #toplevel_page_cube_wp_dashboard li a[href^="https://cubewp.com/pricing/"]:hover,
-#toplevel_page_cube_wp_dashboard li a[href^="https://cubewp.com/pricing/"]:focus  {
+#toplevel_page_cube_wp_dashboard li a[href^="https://cubewp.com/pricing/"]:focus {
     color: #FFB300;
     font-weight: bold;
 }
 
 #toplevel_page_cube_wp_dashboard li .new-feature-tag {
-    background-image: url('../images/new-tag-submenu.svg'); /* Navigate one directory up and then into the 'images' folder */
-    background-position: right center; /* Position the image on the right side, vertically centered */
-    background-repeat: no-repeat; /* Ensure the image doesn't repeat */
-    padding-right: 42px; /* Adjust padding so text doesn't overlap with the image */
+    background-image: url('../images/new-tag-submenu.svg');
+    /* Navigate one directory up and then into the 'images' folder */
+    background-position: right center;
+    /* Position the image on the right side, vertically centered */
+    background-repeat: no-repeat;
+    /* Ensure the image doesn't repeat */
+    padding-right: 42px;
+    /* Adjust padding so text doesn't overlap with the image */
 }
+
 label .cwp-required {
     color: #ff0000;
 }
@@ -1386,13 +1392,14 @@ cwp-unlock-feature a {
     display: flex;
 
 }
+
 .imp-exp .cubewp-page-header h2 {
     font-size: 20px;
     line-height: 24px;
     font-family: Helvetica, sans-serif;
     color: #32373C;
     font-weight: bold;
-    margin:0px;
+    margin: 0px;
     line-height: 47px;
 }
 
@@ -1404,16 +1411,19 @@ cwp-unlock-feature a {
     align-items: center;
     padding: 0 10px;
 }
+
 .cubewp-import-box-container .cubewp-import-box {
     max-width: 600px;
     margin: 0 10px;
 }
+
 .cubewp-import-box-container .cubewp-import-card {
     background-color: #FFFFFF;
     box-shadow: 0 3px 6px #00000029;
     border-radius: 10px;
     overflow: hidden;
 }
+
 .cubewp-import-box-container .cubewp-import-card .cubewp-import-header {
     background-color: #FBFAFF;
     padding: 20px;
@@ -1421,6 +1431,7 @@ cwp-unlock-feature a {
     justify-content: flex-start;
     align-items: center;
 }
+
 .cubewp-import-box-container .cubewp-import-card .cubewp-import-header span {
     color: #0073AF;
     width: 18px;
@@ -1428,6 +1439,7 @@ cwp-unlock-feature a {
     font-size: 18px;
     margin: 0 5px 0 0;
 }
+
 .cubewp-import-box-container .cubewp-import-card .cubewp-import-header h4 {
     color: #0073AF;
     font-size: 15px;
@@ -1505,12 +1517,14 @@ cwp-unlock-feature a {
     max-width: 600px;
     text-align: right;
 }
+
 /* header button  */
 
 .flot-left.cwp-library {
     margin-left: 35px;
     margin-top: 15px;
 }
+
 .flot-left.cwp-library {
     margin-left: 35px;
     margin-top: 15px;
@@ -1520,6 +1534,7 @@ cwp-unlock-feature a {
     margin-left: 15px;
     margin-top: 15px;
 }
+
 .form-templates a {
     border-radius: 5px;
     border: 1px solid #fff;
@@ -1540,10 +1555,12 @@ cwp-unlock-feature a {
     margin-right: 13px;
     font-weight: bold;
 }
+
 .form-templates a:hover {
     background: linear-gradient(90deg, #d5e5ff, #f6d3ff, #fff7d3);
     color: black;
 }
+
 .flot-left.cwp-library a {
     background: linear-gradient(90deg, #d5e5ff, #f6d3ff, #fff7d3);
     border-radius: 5px;
@@ -1641,9 +1658,11 @@ cwp-unlock-feature a {
     0% {
         background-position: 0% 50%;
     }
+
     50% {
         background-position: 100% 50%;
     }
+
     100% {
         background-position: 0% 50%;
     }
@@ -1773,145 +1792,742 @@ cwp-unlock-feature a {
     }
 }
 
-@media (min-width: 1150px) and  (max-width: 1500px) {
-	.cwp-welcome-page-section .cwp-title-menu li:nth-child(2), .cwp-welcome-page-section .cwp-title-menu li:nth-child(3) {
-		display: none;
-	}
-	.cwp-title-menu ul li a {
-		padding-left: 8px;
-	}
+@media (min-width: 1150px) and (max-width: 1500px) {
+
+    .cwp-welcome-page-section .cwp-title-menu li:nth-child(2),
+    .cwp-welcome-page-section .cwp-title-menu li:nth-child(3) {
+        display: none;
+    }
+
+    .cwp-title-menu ul li a {
+        padding-left: 8px;
+    }
 }
 
-.column-name .post-state{
-  font-size: 12px;
-  font-weight: bold;
-  background: green;
-  color: white;
-  padding: 2px 5px !important;
-  border-radius: 5px !important;
+.column-name .post-state {
+    font-size: 12px;
+    font-weight: bold;
+    background: green;
+    color: white;
+    padding: 2px 5px !important;
+    border-radius: 5px !important;
 }
-.column-name .post-state.inactive{
+
+.column-name .post-state.inactive {
     background: #ddd;
     color: #000;
 }
 
 
 /* theme Builder Pop Up Css Start */
-.cubewp-theme-builder-popup {
-    padding: 20px !important;
+[aria-describedby="ctb-add-template-dialog"] {
+    border: none !important;
+    border-radius: 12px !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+    overflow: hidden;
+    background: #ffffff !important;
+}
+
+/* Header Refinement */
+[aria-describedby="ctb-add-template-dialog"] .ui-dialog-titlebar {
+    background: #f8fafc !important;
+    border: none !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 1.25rem 1.5rem !important;
+}
+
+.ui-dialog-title {
+    font-weight: 700 !important;
+    color: #1e293b;
+    font-size: 1.1rem !important;
+}
+
+/* Layout Split */
+#ctb-add-template-dialog .cubewp-theme-builder-popup {
+    display: flex;
+    min-height: 500px;
+}
+
+/* Left Sidebar (Onboarding) */
+#ctb-add-template-dialog .cubewp-elements-builder .page-content {
+    flex: 0 0 35%;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: #ffffff;
+    padding: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-radius: 18px;
+}
+
+#ctb-add-template-dialog .cubewp-elements-builder .page-content .heading {
+    color: #fff !important;
+    font-size: 2rem !important;
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+}
+
+#ctb-add-template-dialog .cubewp-elements-builder .page-content .paragraph {
+    opacity: 0.9;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+/* Right Form Side */
+#ctb-add-template-dialog .cubewp-main-form {
+    flex: 1;
+    padding: 2.5rem;
+    background: #fff;
+}
+
+#ctb-add-template-dialog .cubewp-main-form .heading {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: #1e293b;
+}
+
+/* Fields Styling */
+#ctb-add-template-dialog .cubewp-form-fileds {
+    margin-bottom: 1.25rem;
+}
+
+#ctb-add-template-dialog .cubewp-form-fileds label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: #475569;
+    font-size: 0.9rem;
+}
+
+#ctb-add-template-dialog .cubewp-form-fileds select,
+#ctb-add-template-dialog .cubewp-form-fileds input[type="text"] {
+    width: 100% !important;
+    padding: 0.75rem !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    background-color: #f1f5f9 !important;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+    max-width: 100%;
+}
+
+#ctb-add-template-dialog .cubewp-form-fileds select:focus,
+#ctb-add-template-dialog .cubewp-form-fileds input:focus {
+    outline: none !important;
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+    background-color: #fff !important;
+}
+
+/* Checkbox Section */
+#ctb-add-template-dialog #cwp_tb_mobile_view_wrap {
+    background: #f8fafc;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px dashed #cbd5e1;
+}
+
+#ctb-add-template-dialog #cwp_tb_mobile_view_wrap label {
     display: flex;
     align-items: center;
-    overflow: hidden;
-    gap: 20px;
+    gap: 10px;
+    cursor: pointer;
 }
-.cubewp-theme-builder-popup .page-content {
-    width: 50%;
+
+#ctb-add-template-dialog .description {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-top: 0.5rem;
+}
+
+/* Buttons */
+#ctb-add-template-dialog .form-fileds-buttons {
+    margin-top: 2rem;
     display: flex;
-    flex-direction: column;
-    gap:15px;
+    gap: 12px;
+    justify-content: space-between;
 }
-.cubewp-theme-builder-popup .page-content .heading {
-    line-height: 50px;
-    font-weight: 500;
-    font-size: 25px;
-    color: #644FE4;
-    margin: 0px;
+
+#ctb-add-template-dialog .button.cwp-save-template {
+    padding: 0.75rem 1.5rem !important;
+    height: auto !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    transition: transform 0.1s ease;
 }
-.cubewp-theme-builder-popup .page-content .heading span {
-    font-weight: 700;
-    font-size: 50px;
-    color:#1D1D1D;
+
+#ctb-add-template-dialog .button.cwp-save-template[value="save"] {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    border: 1px solid #e2e8f0 !important;
+    padding: 13px 42px !important;
+    width: calc(100% / 2 - 10px);
 }
-.cubewp-theme-builder-popup .page-content .paragraph {
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 26px;
-    margin: 0px;
-    scrollbar-width: none;
-    overflow: auto;
-    scrollbar-width: none;
-    margin-bottom: 20px;
-}
-.cubewp-theme-builder-popup .cubewp-main-form{
-    width: 50%;
-    border: 1px solid #D9D9D9;
-    padding: 40px;
-    border-radius: 6px;
-    background: #f6f6f6;
-}
-.cubewp-theme-builder-popup .cubewp-main-form .heading {
-    font-size: 33px;
-    font-weight: 400;
-    line-height: 40px;
-    margin-bottom: 30px;
-}
-.cubewp-main-form .cubewp-form-fileds {
-    margin-bottom: 15px;
-    width: 100%;
-}
-.cubewp-main-form .cubewp-form-fileds label{
-    display: block;
-    font-weight: 400;
-    font-size: 15px;
-    line-height: 20px;
-    padding-bottom: 5px;
-}
-.cubewp-main-form .cubewp-form-fileds select {
-    width: 100%;
-    border: 1px solid #ddd;
-    padding: 15px 12px;
-    border-radius: 4px;
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 20px;
-}
-.cubewp-main-form .cubewp-form-fileds select:hover {
-    color: #505052;
-}
-.cubewp-main-form .cubewp-form-fileds select:focus {
-    border-color: #644FE4;
-    box-shadow:none;
-}
-.cubewp-main-form .cubewp-form-fileds input {
-    padding: 15px 12px;
-    width: 100%;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 20px;
-}
-.cubewp-main-form .cubewp-form-fileds input:focus {
-    border-color: #644FE4;
-    box-shadow:none;
-}
-.cubewp-main-form .form-fileds-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-.cubewp-main-form .form-fileds-buttons button {
-    border-radius: 4px;
-    padding: 15px;
-    background-color: #644FE4;
-    border: none;
-    width: 100%;
-    font-size: 18px;
-    font-weight: 400;
-    line-height: 20px;
+
+#ctb-add-template-dialog .button.cwp-save-template[value="save-edit"] {
+    background: #6366f1 !important;
+    border-color: #4f46e5 !important;
     color: white !important;
-    cursor: pointer !important;
-    transition: 0.3s ease-in-out;
+    padding: 13px 42px !important;
+    width: calc(100% / 2 - 10px);
 }
-.cubewp-main-form .form-fileds-buttons button:hover {
-    background: #1254CD;
-    border-color: #1254CD;
-    color: #fff;
+
+#ctb-add-template-dialog .button.cwp-save-template:hover {
+    transform: translateY(-1px);
 }
-@media (max-width: 1620px) {
-    .cubewp_page_cubewp-theme-builder .cwp-post-type-title .cwp-post-type-title-nav .nav-tab-wrapper{
-        margin:20px 0;
-        width:100%;
+
+@media screen and (max-width: 1024px) {
+    [aria-describedby="ctb-add-template-dialog"] {
+        width: 90% !important;
+        /* Force the dialog to fit the screen */
+        left: 5% !important;
     }
 }
-/* theme Builder Pop Up Css End */
+
+/* Mobile & Small Tablets */
+@media screen and (max-width: 782px) {
+    #ctb-add-template-dialog .cubewp-theme-builder-popup {
+        flex-direction: column;
+        /* Stack the Info panel and Form vertically */
+        height: auto;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    #ctb-add-template-dialog .cubewp-elements-builder .page-content {
+        flex: 0 0 auto;
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .cubewp-elements-builder .page-content .heading {
+        font-size: 1.5rem !important;
+        margin-bottom: 0.5rem;
+    }
+
+    #ctb-add-template-dialog .cubewp-elements-builder .page-content .paragraph {
+        font-size: 0.85rem;
+    }
+
+    #ctb-add-template-dialog .cubewp-main-form {
+        padding: 1.5rem;
+    }
+
+    #ctb-add-template-dialog .form-fileds-buttons {
+        flex-direction: column;
+        /* Stack buttons on mobile for easier tapping */
+    }
+
+    #ctb-add-template-dialog .button.cwp-save-template {
+        width: 100%;
+        text-align: center;
+        margin-bottom: 8px !important;
+    }
+}
+
+/* Fix for WordPress Admin Menu Overlay */
+@media screen and (max-width: 600px) {
+    .ui-dialog.ui-widget-content {
+        top: 20px !important;
+        width: 96% !important;
+        left: 2% !important;
+    }
+
+    .ui-dialog-titlebar {
+        padding: 0.75rem 1rem !important;
+    }
+
+    #ctb-add-template-dialog .button.cwp-save-template[value="save"] {
+        padding: 6px 42px !important;
+        width: 100%;
+    }
+
+    #ctb-add-template-dialog .button.cwp-save-template[value="save-edit"] {
+        padding: 6px 42px !important;
+        width: 100%;
+    }
+
+}
+
+/* CubeWP Hub Connect CSS Start */
+/* CubeWP Addons page (admin) */
+/* :root {
+    --cwp-primary: #6752eb;
+    --cwp-primary-hover: #5441d1;
+    --cwp-success: #10b981;
+    --cwp-error: #ef4444;
+    --cwp-warning: #f59e0b;
+    --cwp-card-bg: #ffffff;
+    --cwp-text: #1e293b;
+    --cwp-text-muted: #64748b;
+    --cwp-border: #e2e8f0;
+    --cwp-radius: 12px;
+    --cwp-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+    --cwp-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+}
+
+.cubewp-addons-wrap {
+    margin: 20px 20px 0 0;
+}
+
+.cubewp-header {
+    margin-bottom: 24px;
+}
+
+.cubewp-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--cwp-text);
+    margin: 0 0 5px;
+}
+
+.cubewp-header p {
+    color: var(--cwp-text-muted);
+    font-size: 14px;
+    margin: 0;
+}
+
+.cubewp-dashboard-layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 24px;
+    align-items: start;
+}
+
+.cubewp-addons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.cubewp-card {
+    background: var(--cwp-card-bg);
+    border: 1px solid var(--cwp-border);
+    border-radius: var(--cwp-radius);
+    padding: 24px;
+    box-shadow: var(--cwp-shadow);
+    transition: all .2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.cubewp-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.08);
+}
+
+.cubewp-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    gap: 10px;
+}
+
+.cubewp-card-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--cwp-text);
+    margin: 0 0 4px;
+}
+
+.cubewp-card-slug {
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--cwp-text-muted);
+    background: #f0f0f1;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.cwp-badge {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: .5px;
+    white-space: nowrap;
+}
+
+.status-active {
+    background: #e7f6ed;
+    color: #007017;
+    border: 1px solid #b3e3c6;
+}
+
+.status-installed {
+    background: #f0f6fb;
+    color: #0b4aa2;
+    border: 1px solid #c3d9ef;
+}
+
+.status-missing {
+    background: #fcf0f1;
+    color: #d63638;
+    border: 1px solid #f8d7da;
+}
+
+.cubewp-card-footer {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #f0f0f1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.cwp-card-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.cwp-card-manage {
+    margin-left: auto;
+}
+
+.cwp-inline-spinner {
+    float: none;
+    margin: 0 0 0 8px;
+    vertical-align: middle;
+}
+
+.cwp-btn-loading {
+    opacity: .85;
+    pointer-events: none;
+} */
+
+/* .button.cwp-btn-primary {
+    background: var(--cwp-primary) !important;
+    border: none !important;
+    color: #fff !important;
+    padding: 0 20px !important;
+    height: 38px !important;
+    line-height: 36px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    transition: all 0.2s !important;
+    box-shadow: 0 2px 4px rgba(103, 82, 235, 0.2);
+} */
+
+/* .button.cwp-btn-primary:hover {
+    background: var(--cwp-primary-hover) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(103, 82, 235, 0.3);
+}
+
+.button.cwp-btn-manage {
+    background: #fff !important;
+    border: 1px solid var(--cwp-border) !important;
+    color: var(--cwp-text) !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+}
+
+.button.cwp-btn-manage:hover {
+    border-color: var(--cwp-primary) !important;
+    color: var(--cwp-primary) !important;
+}
+
+.cubewp-account-panel {
+    background: #fff;
+    border: 1px solid var(--cwp-border);
+    border-radius: var(--cwp-radius);
+    padding: 20px;
+    box-shadow: var(--cwp-shadow);
+}
+
+.cubewp-account-panel h2 {
+    font-size: 16px;
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.account-details {
+    background: #f6f7f7;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-size: 13px;
+}
+
+.cubewp-filter-bar {
+    background: #fff;
+    padding: 12px 20px;
+    border-radius: var(--cwp-radius);
+    border: 1px solid var(--cwp-border);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.cubewp-search-input {
+    width: 300px;
+    border-radius: 6px;
+    border: 1px solid #8c8f94;
+    padding: 5px 12px;
+}
+
+@media (max-width:1100px) {
+    .cubewp-dashboard-layout {
+        grid-template-columns: 1fr;
+    }
+}
+ */
+/* --- Modernized Modal Styling --- */
+.cubewp-account-panel {
+    padding: 20px;
+    background: #FFFFFF 0% 0% no-repeat padding-box;
+    box-shadow: 0px 3px 6px #00000029;
+    opacity: 1;
+    border-radius: 12px;
+    margin-bottom: 25px;
+}
+
+.cubewp-account-panel h2 {
+    font-size: 16px;
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cubewp-hub-account-status {
+    font-weight: 600;
+    color: #10b981;
+    margin-bottom: 5px;
+}
+
+.cubewp-hub-account-email {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cubewp-hub-account-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.cwp-leads-template-addons-cotent .cwp-lead-content-imges.two.cubewp-card {
+    max-width: calc(100% / 2 - 5px);
+}
+
+.cwp-leads-template-addons-cotent .cubewp-card a {
+    color: #32373C;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.cwp-leads-template-addons-cotent .cubewp-card .cwp-lead-actions.cwp-card-actions {
+    gap: 10px;
+}
+
+.cwp-leads-template-addons-cotent .cubewp-card .cwp-lead-actions.cwp-card-actions button[data-cwp-manage],
+.cwp-leads-template-addons-cotent .cubewp-card .cwp-lead-actions.cwp-card-actions form[data-op=plugin_activate] {
+    width: calc(100% / 2 - 5px);
+}
+
+.cwp-leads-template-addons-cotent .cubewp-card .cwp-lead-actions.cwp-card-actions form[data-op=plugin_activate] button {
+    width: 100%;
+}
+
+.cwp-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100001; /* Ensure it stays above WordPress menus */
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.cwp-modal[aria-hidden="false"] {
+    display: flex; /* Centered layout */
+}
+
+.cwp-modal__backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(30, 35, 40, 0.7);
+    backdrop-filter: blur(2px);
+}
+
+.cwp-modal__dialog {
+    position: relative;
+    width: 90%;
+    max-width: 600px; /* Slimmer, more professional width */
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    animation: cwpModalFadeIn 0.3s ease-out;
+}
+
+@keyframes cwpModalFadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.cwp-modal__header {
+    background: #f8f9fa;
+    padding: 18px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.cwp-modal__header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.cwp-modal__close {
+    border: none;
+    background: #edf2f7;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    cursor: pointer;
+    color: #64748b;
+    transition: all 0.2s;
+}
+
+.cwp-modal__close:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.cwp-modal__body {
+    padding: 24px;
+}
+
+/* License Detail Box */
+.edd-sl-manage-license-details {
+    background: #f1f5f9;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.edd-sl-manage-license-key, 
+.edd-sl-manage-license-product {
+    display: block;
+    font-size: 13px;
+    color: #475569;
+}
+
+.edd-sl-manage-license-key code {
+    background: #fff;
+    padding: 4px 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: #0f172a;
+    margin-left: 5px;
+}
+
+.edd-sl-manage-license-product span {
+    font-weight: 700;
+    color: #1e293b;
+    margin-left: 5px;
+}
+
+/* Action Buttons */
+.cwp-modal__actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 20px;
+}
+
+.cwp-modal__actions .button {
+    flex: 1;
+    justify-content: center;
+    height: 36px !important;
+    border-radius: 6px !important;
+    font-weight: 500 !important;
+}
+
+/* Styled Table */
+#cwp_license_sites {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+    border-collapse: separate;
+    margin-top: 10px;
+}
+
+#cwp_license_sites thead th {
+    background: #f8f9fa;
+    padding: 12px 15px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+}
+
+#cwp_license_sites tbody td {
+    padding: 12px 15px;
+    vertical-align: middle;
+    font-size: 13px;
+    color: #334155;
+    border-top: 1px solid #f1f5f9;
+}
+
+.button-link-delete {
+    color: #d63638 !important;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 13px;
+    padding: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.button-link-delete:hover {
+    color: #b32d2e !important;
+    text-decoration: underline;
+}
+
+/* Loading State */
+.cwp-modal__loading {
+    padding: 40px 0;
+    flex-direction: column;
+}
+
+.cwp-modal__loading-text {
+    font-weight: 500;
+    color: #64748b;
+    margin-top: 10px;
+}
+/* CubeWP Hub Connect CSS End */
+
+/* Welcome tiles: actions under name (not connected) */
+.cwp-lead-tile a{display:flex;flex-direction:column;align-items:center;gap:7px;width:100%;}
+.cwp-lead-actions{width:100%;display:flex;justify-content:center;margin-top:2px;}
+.cwp-lead-actions form{margin:0;}
+.cwp-lead-actions .button{min-height:28px;line-height:26px;padding:0 10px;border-radius:6px;}

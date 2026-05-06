@@ -391,6 +391,45 @@ class CubeWp_Form_Builder {
             'value'       => $field['name'],
             'extra_attrs' => 'data-name="name"',
         );
+        if($field['form_type'] == 'search_filters' || $field['form_type'] == 'search_fields' && $field['type'] == 'number'){
+            $field_args['range_slider_ui'] = array(
+                'class'       => 'group-field field-range_number',
+                'label'       => esc_html__( "Range Slider UI", "cubewp-framework" ),
+                'name'       => 'range_slider_ui',
+                'type'       => 'dropdown',
+                'options'     => array( '0' => __( "No", "cubewp-framework" ), '1' => __( "Yes", "cubewp-framework" ) ),
+                'value'       => isset($field['range_slider_ui']) && !empty($field['range_slider_ui']) ? $field['range_slider_ui'] : '0',
+                'extra_attrs' => 'data-name="range_slider_ui"',
+            );
+
+            if ( isset( $field['type'] ) && $field['type'] === 'number' ) {
+                $field_args['min'] = array(
+                    'class'       => 'group-field field-range_number_min',
+                    'label'       => esc_html__( "Range Min", "cubewp-framework" ),
+                    'name'        => 'min',
+                    'type'        => 'number',
+                    'value'       => isset( $field['min'] ) && $field['min'] !== '' ? $field['min'] : 0,
+                    'extra_attrs' => 'data-name="min"',
+                );
+                $field_args['max'] = array(
+                    'class'       => 'group-field field-range_number_max',
+                    'label'       => esc_html__( "Range Max", "cubewp-framework" ),
+                    'name'        => 'max',
+                    'type'        => 'number',
+                    'value'       => isset( $field['max'] ) && $field['max'] !== '' ? $field['max'] : 100,
+                    'extra_attrs' => 'data-name="max"',
+                );
+                $field_args['step'] = array(
+                    'class'       => 'group-field field-range_number_step',
+                    'label'       => esc_html__( "Range Step", "cubewp-framework" ),
+                    'name'        => 'step',
+                    'type'        => 'number',
+                    'value'       => isset( $field['step'] ) && $field['step'] !== '' ? $field['step'] : 1,
+                    'extra_attrs' => 'data-name="step"',
+                );
+            }
+            
+        }
         $input_attrs = apply_filters( 'cubewp/builder/cubes/fields', $field_args, $field );
         $output = '';
         foreach($input_attrs as $input_attr){

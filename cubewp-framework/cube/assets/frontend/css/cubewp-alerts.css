@@ -16,7 +16,7 @@
     max-width: 100vw;
     box-shadow: 10px 10px 20px -15px #000;
     display: none;
-    z-index: 99999;
+    z-index: 999999999999999999;
 }
 .cwp-alert.cwp-js-alert:not(.shown) {
     display: none;
@@ -212,3 +212,6 @@ button.cube-post-edit-btn svg {
     z-index: 99999;
 }
 /*Modal*/
+.vp-cubewp-map-address-item {
+    display: flex;
+}

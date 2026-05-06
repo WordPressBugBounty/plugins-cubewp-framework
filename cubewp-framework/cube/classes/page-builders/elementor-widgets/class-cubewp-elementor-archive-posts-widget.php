@@ -42,7 +42,6 @@ class CubeWp_Elementor_Archive_Posts_Widget extends Widget_Base
     {
         self::get_post_types();
 
-
         $this->start_controls_section(
             'section_map',
             [
@@ -51,6 +50,23 @@ class CubeWp_Elementor_Archive_Posts_Widget extends Widget_Base
         );
         $this->add_post_type_controls();
 
+        //Processing grids per row
+        $this->add_responsive_control('processing_grids_per_row', array(
+            'type'        => Controls_Manager::SELECT,
+            'label'       => esc_html__('Processing Grids Per Row', 'cubewp-framework'),
+            'default'     => '33.33',
+            'options'     => [
+                '100' => esc_html__("1", "cubewp-framework"),
+                '50' => esc_html__("2", "cubewp-framework"),
+                '33.33' => esc_html__("3", "cubewp-framework"),
+                '25' => esc_html__("4", "cubewp-framework"),
+                '20' => esc_html__("5", "cubewp-framework"),
+                '16.66' => esc_html__("6", "cubewp-framework"),
+            ],
+            'selectors'   => [
+                '{{WRAPPER}} .cwp-processing-grids .cwp-grids-container.cwp-row>.cwp-col-md-4' => 'width: {{VALUE}}%;',
+            ],
+        ));
 
         $this->end_controls_section();
 
@@ -183,12 +199,411 @@ class CubeWp_Elementor_Archive_Posts_Widget extends Widget_Base
         ));
 
         $this->end_controls_section();
-    }
+        $this->add_pagination_style_controls(); 
 
+    }
+    private function add_pagination_style_controls()
+    {
+        //Adding Spacing controls
+        $this->start_controls_section(
+            'section_spacing',
+            [
+                'label' => __('Post Spacing', 'cubewp-framework'),
+                'tab'   => Controls_Manager::TAB_STYLE,
+            ]
+        );
+        //container gap (row + column)
+        $this->add_responsive_control(
+            'container_gap',
+            [
+                'label' => __('Container Gap (Grid View)', 'cubewp-framework'),
+                'type' => Controls_Manager::GAPS,
+                'size_units' => ['px', '%', 'em', 'rem', 'custom'],
+                'default' => [
+                    'row' => 0,
+                    'column' => 0,
+                    'unit' => 'px',
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-archive-container .cwp-search-result-output .cwp-row.grid-view' => 'gap: {{ROW}}{{UNIT}} {{COLUMN}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        //container gap (row + column)
+        $this->add_responsive_control(
+            'container_list_gap',
+            [
+                'label' => __('Container Gap (List View)', 'cubewp-framework'),
+                'type' => Controls_Manager::GAPS,
+                'size_units' => ['px', '%', 'em', 'rem', 'custom'],
+                'default' => [
+                    'row' => 0,
+                    'column' => 0,
+                    'unit' => 'px',
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-archive-container .cwp-search-result-output .cwp-row.list-view' => 'gap: {{ROW}}{{UNIT}} {{COLUMN}}{{UNIT}};',
+                ],
+            ]
+        );
+        //
+
+        $this->add_responsive_control(
+            'post_padding',
+            [
+                'label' => __('Padding(Grid View)', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em', 'rem','custom'],
+                'range' => [
+                    'px' => ['min' => 0, 'max' => 100],
+                    '%' => ['min' => 0, 'max' => 100],
+                    'em' => ['min' => 0, 'max' => 10],
+                    'rem' => ['min' => 0, 'max' => 10],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-archive-container .cwp-search-result-output .cwp-row.grid-view>div' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'post_margin',
+            [
+                'label' => __('Margin(Grid View)', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em', 'rem','custom'],
+                'range' => [
+                    'px' => ['min' => 0, 'max' => 100],
+                    '%' => ['min' => 0, 'max' => 100],
+                    'em' => ['min' => 0, 'max' => 10],
+                    'rem' => ['min' => 0, 'max' => 10],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-archive-container .cwp-search-result-output .cwp-row.grid-view>div' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'post_width',
+            [
+                'label' => __('Width (Grid View)', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', '%', 'em', 'rem','custom'],
+                'range' => [
+                    'px' => ['min' => 0, 'max' => 1200],
+                    '%' => ['min' => 1, 'max' => 100],
+                    'em' => ['min' => 0, 'max' => 80],
+                    'rem' => ['min' => 0, 'max' => 80],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-archive-container .cwp-search-result-output .cwp-row.grid-view>div' => 'width: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'post_list_padding',
+            [
+                'label' => __('Padding(List View)', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em', 'rem','custom'],
+                'range' => [
+                    'px' => ['min' => 0, 'max' => 100],
+                    '%' => ['min' => 0, 'max' => 100],
+                    'em' => ['min' => 0, 'max' => 10],
+                    'rem' => ['min' => 0, 'max' => 10],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-archive-container .cwp-search-result-output .cwp-row.list-view>div' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'post_list_margin',
+            [
+                'label' => __('Margin(List View)', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em', 'rem','custom'],
+                'range' => [
+                    'px' => ['min' => 0, 'max' => 100],
+                    '%' => ['min' => 0, 'max' => 100],
+                    'em' => ['min' => 0, 'max' => 10],
+                    'rem' => ['min' => 0, 'max' => 10],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-archive-container .cwp-search-result-output .cwp-row.list-view>div' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'post_list_width',
+            [
+                'label' => __('Width (List View)', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', '%', 'em', 'rem','custom'],
+                'range' => [
+                    'px' => ['min' => 0, 'max' => 1200],
+                    '%' => ['min' => 1, 'max' => 100],
+                    'em' => ['min' => 0, 'max' => 80],
+                    'rem' => ['min' => 0, 'max' => 80],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-archive-container .cwp-search-result-output .cwp-row.list-view>div' => 'width: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+        $this->end_controls_section();
+
+        $this->start_controls_section(
+            'section_pagination_style',
+            [
+                'label' => __('Pagination Style', 'cubewp-framework'),
+                'tab'   => Controls_Manager::TAB_STYLE,
+            ]
+        );
+    
+        $this->add_responsive_control(
+            'pagination_alignment',
+            [
+                'label' => __('Alignment', 'cubewp-framework'),
+                'type' => Controls_Manager::CHOOSE,
+                'options' => [
+                    'left' => [
+                        'title' => __('Left', 'cubewp-framework'),
+                        'icon' => 'eicon-text-align-left',
+                    ],
+                    'center' => [
+                        'title' => __('Center', 'cubewp-framework'),
+                        'icon' => 'eicon-text-align-center',
+                    ],
+                    'right' => [
+                        'title' => __('Right', 'cubewp-framework'),
+                        'icon' => 'eicon-text-align-right',
+                    ],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-pagination' => 'width:100%; text-align: {{VALUE}};',
+                    '{{WRAPPER}} .cwp-pagination ul' => 'display: inline-flex; justify-content: {{VALUE}}; width: 100%; list-style: none; padding: 0;',
+                ],
+            ]
+        );
+    
+        $this->add_group_control(
+            \Elementor\Group_Control_Typography::get_type(),
+            [
+                'name' => 'pagination_typography',
+                'selector' => '{{WRAPPER}} .cwp-pagination ul li a, {{WRAPPER}} .cwp-pagination ul li span a',
+            ]
+        );
+    
+        $this->start_controls_tabs('pagination_tabs');
+    
+        // --- Normal State ---
+        $this->start_controls_tab(
+            'pagination_normal',
+            ['label' => __('Normal', 'cubewp-framework')]
+        );
+    
+        $this->add_control(
+            'pagination_color',
+            [
+                'label' => __('Text Color', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-pagination ul li a' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .cwp-pagination ul li a svg' => 'fill: {{VALUE}};',
+                ],
+            ]
+        );
+    
+        $this->add_control(
+            'pagination_bg_color',
+            [
+                'label' => __('Background Color', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-pagination ul li a' => 'background-color: {{VALUE}};',
+                ],
+            ]
+        );
+    
+        $this->add_control(
+            'pagination_border_color_normal',
+            [
+                'label' => esc_html__('Border Color', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-pagination ul li a' => 'border-color: {{VALUE}};',
+                ],
+            ]
+        );
+    
+        $this->end_controls_tab();
+    
+        // --- Active & Hover State ---
+        $this->start_controls_tab(
+            'pagination_active',
+            ['label' => __('Active / Hover', 'cubewp-framework')]
+        );
+    
+        $this->add_control(
+            'pagination_active_color',
+            [
+                'label' => __('Color', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-pagination ul li.active a, {{WRAPPER}} .cwp-pagination ul li.active span a, {{WRAPPER}} .cwp-pagination ul li a:hover' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .cwp-pagination ul li.active a svg, {{WRAPPER}} .cwp-pagination ul li a:hover svg' => 'fill: {{VALUE}};',
+                ],
+            ]
+        );
+    
+        $this->add_control(
+            'pagination_active_bg_color',
+            [
+                'label' => __('Background', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-pagination ul li.active a, {{WRAPPER}} .cwp-pagination ul li.active span a, {{WRAPPER}} .cwp-pagination ul li a:hover' => 'background-color: {{VALUE}} !important;',
+                ],
+            ]
+        );
+    
+        $this->add_control(
+            'pagination_border_colors',
+            [
+                'label' => __('Border Color', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-pagination ul li.active a, {{WRAPPER}} .cwp-pagination ul li.active span a, {{WRAPPER}} .cwp-pagination ul li a:hover' => 'border-color: {{VALUE}};',
+                ],
+            ]
+        );
+    
+        $this->end_controls_tab();
+    
+        $this->end_controls_tabs();
+    
+        // --- Border, Radius & Shadow ---
+        $this->add_group_control(
+            \Elementor\Group_Control_Border::get_type(),
+            [
+                'name' => 'pagination_border',
+                'selector' => '{{WRAPPER}} .cwp-pagination ul li a',
+                'separator' => 'before',
+            ]
+        );
+
+        $this->add_responsive_control(
+            'pagination_width',
+            [
+                'label' => __('Width', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::SLIDER,
+                'size_units' => ['px', '%', 'em', 'rem'],
+                'range' => [
+                    'px' => ['min' => 10, 'max' => 200],
+                    '%' => ['min' => 1, 'max' => 100],
+                    'em' => ['min' => 1, 'max' => 10],
+                    'rem' => ['min' => 1, 'max' => 10],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-pagination ul li a' => 'width: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'pagination_height',
+            [
+                'label' => __('Height', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::SLIDER,
+                'size_units' => ['px', '%', 'em', 'rem'],
+                'range' => [
+                    'px' => ['min' => 10, 'max' => 200],
+                    '%' => ['min' => 1, 'max' => 100],
+                    'em' => ['min' => 1, 'max' => 10],
+                    'rem' => ['min' => 1, 'max' => 10],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-pagination ul li a' => 'height: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+        $this->add_responsive_control(
+            'pagination_margin',
+            [
+                'label' => __('Margin', 'cubewp-framework'),
+                'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em', 'rem'],
+                'range' => [
+                    'px' => ['min' => 0, 'max' => 200],
+                    '%' => ['min' => 0, 'max' => 100],
+                    'em' => ['min' => 0, 'max' => 10],
+                    'rem' => ['min' => 0, 'max' => 10],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-pagination ul li a' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+        $this->add_responsive_control(
+            'pagination_border_radius',
+            [
+                'label' => __('Border Radius', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%'],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-pagination ul li a' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+    
+        $this->add_group_control(
+            \Elementor\Group_Control_Box_Shadow::get_type(),
+            [
+                'name' => 'pagination_box_shadow',
+                'selector' => '{{WRAPPER}} .cwp-pagination ul li a',
+            ]
+        );
+    
+        $this->add_responsive_control(
+            'pagination_padding',
+            [
+                'label' => __('Padding', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', 'em', '%'],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-pagination ul li a' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}; display: flex; align-items: center; justify-content: center; min-width: 30px; min-height: 30px; text-decoration: none;',
+                ],
+                'separator' => 'before',
+            ]
+        );
+    
+        $this->add_responsive_control(
+            'pagination_spacing',
+            [
+                'label' => __('Spacing Between Buttons', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'range' => [
+                    'px' => ['min' => 0, 'max' => 50],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-pagination ul li:not(:last-child)' => 'margin-right: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+    
+        $this->end_controls_section();
+    }
     protected function render()
     {
         $settings   = $this->get_settings_for_display();
         $type = isset($settings['posttype']) ? $settings['posttype'] : '';
+       
         $card_style = isset($settings[$type . '_card_style']) ? $settings[$type . '_card_style'] : '';
         $page_num = '1';
 
@@ -197,10 +612,10 @@ class CubeWp_Elementor_Archive_Posts_Widget extends Widget_Base
 
         CubeWp_Enqueue::enqueue_script('cwp-search-filters');
 
-        echo CubeWp_Frontend_Search_Filter::cwp_filter_results();
+        echo CubeWp_Frontend_Search_Filter::cwp_filter_results() ;
         echo '<form name="cwp-search-filters" class="cwp-search-filters" method="post">';
         echo CubeWp_Frontend_Search_Filter::filter_hidden_fields( $type, $page_num, $card_style );
-        echo CubeWp_Frontend_Search_Filter::get_hidden_field_if_tax();
+        echo   CubeWp_Frontend_Search_Filter::get_hidden_field_if_tax() ;
         $count = 1;
         if ($promotional_card && !empty($promotional_card_list) && is_array($promotional_card_list)) {
             foreach ($promotional_card_list as $_promotional_card) {

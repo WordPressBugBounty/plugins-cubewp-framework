@@ -130,7 +130,7 @@ class CubeWp_Pagination{
         
         if ( $this->page_num > 1 ) {
             if($this->archive_page == 'false'){
-                $output = '<li><a href="?page_num=' . ($this->page_num - 1) .'">';
+                $output = '<li><a href="?page_num=' . ($this->page_num - 1) . $this->extra_query . '">';
             }
             else{
                 $output = '<li><a href="javascript:void(0);" onclick="cubewp_posts_pagination_ajax(\'' . ($this->page_num - 1) . '\');">';
@@ -151,7 +151,7 @@ class CubeWp_Pagination{
         
         if( $this->page_num > 3 && $this->total_page > 5 ){
             if($this->archive_page == 'false'){
-                $output = '<li><a href="?page_num=1">';
+                $output = '<li><a href="?page_num=1' . $this->extra_query . '">';
             }
             else{
                 $output = '<li><a href="javascript:void(0);" onclick="cubewp_posts_pagination_ajax(\'' . (1) . '\');">';
@@ -227,7 +227,7 @@ class CubeWp_Pagination{
         
         if( $this->loop_end != $this->total_page ) {
             if($this->archive_page == 'false'){
-                $output = '<li><a href="?page_num=' . $this->total_page .'">';
+                $output = '<li><a href="?page_num=' . $this->total_page . $this->extra_query . '">';
             }
             else{
                 $output = '<li><a href="javascript:void(0);" onclick="cubewp_posts_pagination_ajax(\'' . ($this->total_page) . '\');">';
@@ -248,7 +248,7 @@ class CubeWp_Pagination{
         
         if( $this->total_posts > 0 && $this->page_num < ($this->total_posts / $this->posts_per_page) ){
             if($this->archive_page == 'false'){
-                $output = '<li><a href="?page_num=' . ($this->page_num + 1) .'">';
+                $output = '<li><a href="?page_num=' . ($this->page_num + 1) . $this->extra_query . '">';
             }
             else{
                 $output = '<li><a href="javascript:void(0);" onclick="cubewp_posts_pagination_ajax(\'' . ($this->page_num + 1) . '\');">';

@@ -595,7 +595,7 @@ class CubeWp_Custom_Fields_Markup
             'type_input' => 'checkbox',
             'class' => 'field-conditional cwp-switch-check',
             'tr_class' => 'conditional-field',
-            'tr_extra_attr' => 'data-not_equal="repeating_field"',
+            'tr_extra_attr' => '',
             'extra_label' => esc_html__('Conditional', 'cubewp-framework'),
         );
         $conditional_rule_hide_row = 'cwp-hide-row';

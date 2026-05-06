@@ -36,12 +36,19 @@ class CubeWp_Tag_Featured_Image extends \Elementor\Core\DynamicTags\Data_Tag {
         }else {
             $imageID = get_post_thumbnail_id();
         }
-        if(!empty($imageID)){
-            $returnArr = [
-                'id' =>$imageID,
-                'url' => wp_get_attachment_image_src($imageID, 'full')[0],
-            ]; 
+        if ( empty( $imageID ) ) {
+            $cwp_options = get_option( 'cwpOptions', array() );
+            $imageID = isset( $cwp_options['default_featured_image'] ) ? absint( $cwp_options['default_featured_image'] ) : 0;
         }
-		return $returnArr;
-	}
+        if ( ! empty( $imageID ) ) {
+            $image_src = wp_get_attachment_image_src( $imageID, 'full' );
+            if ( $image_src && isset( $image_src[0] ) ) {
+                $returnArr = array(
+                    'id'  => $imageID,
+                    'url' => $image_src[0],
+                );
+            }
+        }
+        return $returnArr;
+    }
 }

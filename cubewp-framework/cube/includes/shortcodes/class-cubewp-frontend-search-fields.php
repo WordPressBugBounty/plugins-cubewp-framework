@@ -111,14 +111,21 @@ class CubeWp_Frontend_Search_Fields {
                     $fieldOptions['custom_name_lng'] =   $fieldOptions['name'].'_lng';
                     $fieldOptions['custom_name_range'] =   $fieldOptions['name'].'_range';
                 }
+                $fieldname = $fieldOptions['name'];
                 if($fieldOptions['type'] == 'taxonomy'){
                     $fieldOptions['appearance'] = $fieldOptions['display_ui'];
+                    $fieldname = CubeWp_Frontend_Search_Filter::taxonomy_prefix($fieldname);
                 }
                 $fieldOptions['form_type'] = 'search';
 
                 if( isset($this->custom_fields[$name['name']]) && !empty($this->custom_fields[$name['name']]) ){
                     $fieldOptions = wp_parse_args($fieldOptions, $this->custom_fields[$name['name']]);
                 }
+
+                if(isset($_GET[$fieldname]) && !empty($_GET[$fieldname])){// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+                    $fieldOptions['value'] = sanitize_text_field(wp_unslash($_GET[$fieldname]));// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+                }
+
                 $only_fields[]= $fieldOptions;
                 $output .=  apply_filters("cubewp/frontend/search/{$fieldOptions['type']}/field", '', $fieldOptions);
             }

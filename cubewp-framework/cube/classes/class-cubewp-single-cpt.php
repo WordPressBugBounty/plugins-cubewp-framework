@@ -290,8 +290,7 @@ class CubeWp_Single_Cpt
         }
         return $output;
     }
-
-    /**
+ /**
      * Method get_single_meta_value
      *
      * @param string $meta_key
@@ -300,9 +299,10 @@ class CubeWp_Single_Cpt
      * @return array
      * @since  1.0.0
      */
-    public static function get_single_meta_value($meta_key = '', $field_type = '')
+    public static function get_single_meta_value($meta_key = '', $field_type = '', $postID = '')
     {
-
+        self::$post_id = isset($postID) && !empty($postID) ? $postID : get_the_ID() ;
+       
         if ($meta_key == 'the_title' || $meta_key == 'the_content' || $meta_key == 'the_excerpt' || $meta_key == 'featured_image') {
             return '';
         } elseif ($field_type == 'taxonomy') {

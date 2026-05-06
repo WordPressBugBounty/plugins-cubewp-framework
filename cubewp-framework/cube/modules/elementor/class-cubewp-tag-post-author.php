@@ -34,13 +34,43 @@ class CubeWp_Tag_Post_Author extends Data_Tag {
 
 	public function get_value( $options = array() ) {
 		$field = $this->get_settings( 'post_author_field' );
+	
 		if ( cubewp_is_elementor_editing() ) {
 			$post_id = cubewp_get_elementor_preview_post_id();
 		} else {
 			$post_id = get_the_ID();
 		}
-		$post_author_id   = get_post_field( 'post_author', $post_id );
+		$post_id = absint( $post_id );
+		if ( ! $post_id ) {
+			return ( $field === 'post_count' ) ? 0 : '';
+		}
+
+		$post_author_id = absint( get_post_field( 'post_author', $post_id ) );
+
+		if ( $field == 'post_count' ) {
+			if ( ! $post_author_id ) {
+				return 0;
+			}
+
+			$post_type = get_post_type( $post_id );
+			if ( empty( $post_type ) ) {
+				return 0;
+			}
+			$args = [
+				'author'         => $post_author_id,
+				'posts_per_page' => -1,
+				'post_type'      => $post_type,
+				'post_status'    => 'publish',
+			]; 
+			$query = new \WP_Query( $args );
+			return $query->post_count ? $query->post_count : 0;
+		}
+
 		$post_author_data = get_userdata( $post_author_id );
+		if ( ! $post_author_id || ! $post_author_data ) {
+			return '';
+		}
+
 		if ( $field == 'display_name' ) {
 			return $post_author_data->display_name;
 		} else if ( $field == 'profile_url' ) {
@@ -70,6 +100,7 @@ class CubeWp_Tag_Post_Author extends Data_Tag {
 					"display_name" => esc_html__( "Display Name", "cubewp-framework" ),
 					"avatar"       => esc_html__( "Avatar", "cubewp-framework" ),
 					"profile_url"  => esc_html__( "Profile URL", "cubewp-framework" ),
+					"post_count"  => esc_html__( "Post Count", "cubewp-framework" ),
 					"custom_meta"  => esc_html__( "Custom Meta", "cubewp-framework" )
 				),
 				'default' => 'display_name'

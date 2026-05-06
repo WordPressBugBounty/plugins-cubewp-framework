@@ -83,6 +83,10 @@ class CubeWp_Taxonomy_Custom_Fields {
             'placeholder'    => '',
             'default_value'  => '',
             'taxonomies'     => '',
+            'filter_taxonomy' => '',
+            'appearance' => '',
+            'select2_ui' => 0,
+            'auto_complete' => 0,
         );
         $FieldData       = wp_parse_args( $FieldData, $defaults );
 
@@ -148,6 +152,70 @@ class CubeWp_Taxonomy_Custom_Fields {
                 'class' => 'field-placeholder',
                 'id' => '',
                 'tr_extra_attr' => 'data-equal="text,textarea"',
+        );
+        $field_settings['field_filter_taxonomy'] = array(
+            'label' => esc_html__('Filter by Taxonomy', 'cubewp-framework'),
+            'name' => 'cwp_tax_fields[filter_taxonomy]',
+            'type' => 'dropdown',
+            'id' => '',
+            'options' => cwp_taxonomies(),
+            'value' => $FieldData['filter_taxonomy'],
+            'placeholder' => esc_html__('Select Taxonomy', 'cubewp-framework'),
+            'option-class' => 'form-option option',
+            'class' => 'field-filter-taxonomy',
+            'tr_class' => 'conditional-field',
+            'tr_extra_attr' => 'data-equal="taxonomy"',
+            'required' => true,
+            'validation_msg' => esc_html__('Please select taxonomy', 'cubewp-framework'),
+        );
+        $field_settings['field_appearance'] = array(
+            'label' => esc_html__('Field Appearance', 'cubewp-framework'),
+            'name' => 'cwp_tax_fields[appearance]',
+            'type' => 'dropdown',
+            'id' => '',
+            'options' => array(
+                'select' => __('Dropdown', 'cubewp-framework'),
+                'multi_select' => __('Multi Dropdown', 'cubewp-framework'),
+                'checkbox' => __('Checkbox', 'cubewp-framework'),
+            ),
+            'value' => $FieldData['appearance'],
+            'placeholder' => '',
+            'option-class' => 'form-option option',
+            'class' => 'field-appearance',
+            'tr_class' => 'conditional-field hide-field-on-selection',
+            'tr_extra_attr' => 'data-equal="taxonomy" data-hide-option="checkbox"',
+            'required' => true,
+            'validation_msg' => esc_html__('Please select appearance', 'cubewp-framework'),
+        );
+        $field_settings['field_select2_ui'] = array(
+            'label' => esc_html__('Select2 UI', 'cubewp-framework'),
+            'name' => 'cwp_tax_fields[select2_ui]',
+            'value' => '1',
+            'placeholder' => '',
+            'type' => 'text',
+            'checked' => $FieldData['select2_ui'],
+            'type_input' => 'checkbox',
+            'class' => 'field-multiple-checkbox checkbox cwp-switch-check',
+            'id' => 'field-select-ui-' . str_replace('cwp_field_', '', $FieldData['name']),
+            'tr_class' => 'conditional-field',
+            'tr_extra_attr' => 'data-equal="dropdown,post,user,taxonomy"',
+            'extra_label' => esc_html__('Select2 UI', 'cubewp-framework'),
+            'tooltip' => "This option will add select2 UI js on your dropdown field only",
+        );
+        $field_settings['field_autocomplete_ui'] = array(
+            'label' => esc_html__('Autocomplete (Ajax)', 'cubewp-framework'),
+            'name' => 'cwp_tax_fields[auto_complete]',
+            'value' => '1',
+            'placeholder' => '',
+            'type' => 'text',
+            'checked' => $FieldData['auto_complete'],
+            'type_input' => 'checkbox',
+            'class' => 'field-multiple-checkbox checkbox cwp-switch-check',
+            'id' => 'field-auto_complete-' . str_replace('cwp_field_', '', $FieldData['name']),
+            'tr_class' => 'conditional-field',
+            'tr_extra_attr' => 'data-equal="taxonomy"',
+            'extra_label' => esc_html__('Autocomplete', 'cubewp-framework'),
+            'tooltip' => "If you enable this option, Then field will appear as text and it will fetch result on user input.",
         );
         $field_settings = apply_filters( 'cwp_taxonomy_custom_field_settings', $field_settings, $FieldData);
         
@@ -289,6 +357,7 @@ class CubeWp_Taxonomy_Custom_Fields {
         $field_types['gallery']    = esc_html__('Gallery', 'cubewp-framework');
         $field_types['oembed']    = esc_html__('oEmbed', 'cubewp-framework');
         $field_types['google_address']    = esc_html__('Google Address', 'cubewp-framework');
+        $field_types['taxonomy']    = esc_html__('Taxonomy', 'cubewp-framework');
         
         return apply_filters('cwp_taxonomy_custom_field_types', $field_types);
     }

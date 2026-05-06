@@ -40,7 +40,7 @@ class CubeWp_Frontend_Alerts{
         }
     }
 
-    public function cubewp_post_confirmation( $post_id = 0 ){
+      public function cubewp_post_confirmation( $post_id = 0 ){
         global $cwpOptions;
 
         self::cubewp_post_views($post_id);
@@ -53,13 +53,14 @@ class CubeWp_Frontend_Alerts{
 	        $post_admin_approved  =  isset($cwpOptions['post_admin_approved'][ $post_type ]) ? $cwpOptions['post_admin_approved'][ $post_type ] : 'pending';
 	        $paid_submission      =  isset($cwpOptions['paid_submission']) ? $cwpOptions['paid_submission'] : '';
 	        $postStatus           =  get_post_status($post_id);
+	        $is_published         =  ($postStatus === 'publish');
 	        $plan_id              =  get_post_meta($post_id, 'plan_id', true);
 	        $plan_price           =  get_post_meta($plan_id, 'plan_price', true);
 	        $payment_status       =  get_post_meta($post_id, 'payment_status', true);
-	        if( $payment_status == 'pending' && $paid_submission == 'yes' && $plan_price > 0 ){
+	        if( $payment_status == 'pending' && ! $is_published && $paid_submission == 'yes' && $plan_price > 0 ){
 		        $payment_status = apply_filters('cubewp_check_post_payment_status', '', $plan_id, $post_id);
 	        }
-            if(!empty($submit_edit_page) || $payment_status == 'pending' || ($post_admin_approved != 'pending' && $postStatus == 'pending')){
+            if(!empty($submit_edit_page) || ($payment_status == 'pending' && ! $is_published) || ($post_admin_approved != 'pending' && $postStatus == 'pending')){
                 ?>
                 <div class="cubewp-post-author-actions">
                 <?php if (!empty($submit_edit_page)) { ?>
@@ -75,7 +76,7 @@ class CubeWp_Frontend_Alerts{
                         </button>
                     </a>
                 <?php } ?>
-                    <?php if($payment_status == 'pending') { ?>
+                    <?php if($payment_status == 'pending' && ! $is_published) { ?>
                         <button class="cwp-pay-publish-btn" data-pid="<?php echo absint($post_id); ?>">
                             <?php esc_html_e("Pay & Publish", "cubewp-framework"); ?>
                         </button>
@@ -89,7 +90,7 @@ class CubeWp_Frontend_Alerts{
             }
         }
     }
-
+    
     public function cubewp_single_page_notification( $post_id = 0 ){
         $postStatus = get_post_status($post_id);
         $authorID   = get_post_field( 'post_author', $post_id );

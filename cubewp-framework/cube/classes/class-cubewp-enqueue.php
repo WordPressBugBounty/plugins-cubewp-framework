@@ -163,7 +163,7 @@ class CubeWp_Enqueue extends CubeWp_Admin_Enqueue {
 			),
 			'cwp-frontend-fields'      => array(
 				'src'     => CWP_PLUGIN_URI . 'cube/assets/frontend/js/frontend-fields.js',
-				'deps'    => array( 'jquery' ),
+				'deps'    => array( 'jquery', 'jquery-ui-slider' ),
 				'version' => CUBEWP_VERSION,
 			),
 			'cwp-repeating-fields'     => array(
@@ -355,6 +355,20 @@ class CubeWp_Enqueue extends CubeWp_Admin_Enqueue {
 			case 'cubewp-map':
 				$params = _get_map_settings();
 				break;
+			case 'cwp-filter-builder':
+				$params = array(
+					'ajax_url'  => admin_url( 'admin-ajax.php' ),
+					'admin_url' => admin_url(),
+					'nonce' 	=> wp_create_nonce("cubewp_filters_conditional_nonce"),
+				);
+				break;
+			case 'cwp-google-address-field':
+				$cwp_options  = ! empty( $cwpOptions ) && is_array( $cwpOptions ) ? $cwpOptions : get_option( 'cwpOptions', array() );
+				$params = array(
+					'google_address_city_location' => isset( $cwp_options['google_address_city_location'] ) && $cwp_options['google_address_city_location'] == '1',
+					'google_address_country_code'  => isset( $cwp_options['google_address_country_code'] ) ? sanitize_text_field( $cwp_options['google_address_country_code'] ) : '',
+				);
+				break;
 			default:
 				$params = false;
 		}
@@ -375,16 +389,18 @@ class CubeWp_Enqueue extends CubeWp_Admin_Enqueue {
 			  }
 		   } );
 	
-		   add_action( 'wp_footer', function(){
+		   // Enqueue custom JS early enough so inline script is printed.
+		   add_action( 'wp_enqueue_scripts', function(){
 			  global $cwpOptions;
 			  $cwpOptions = ! empty( $cwpOptions ) && is_array( $cwpOptions ) ? $cwpOptions : get_option( 'cwpOptions' );
 			  $cubewp_js = isset( $cwpOptions['cubewp-js'] ) && ! empty( $cwpOptions['cubewp-js'] ) ? $cwpOptions['cubewp-js'] : '';
-			  wp_enqueue_script( 'jquery' );
 			  if ( ! empty( $cubewp_js ) ) {
-				  // Attach custom JS inline to jQuery handle to avoid raw echo.
-				  wp_add_inline_script( 'jquery', $cubewp_js );
+				  // Print this inline in the footer and after jQuery.
+				  wp_register_script( 'cwp-scripts', '', array( 'jquery' ), CUBEWP_VERSION, true );
+				  wp_enqueue_script( 'cwp-scripts' );
+				  wp_add_inline_script( 'cwp-scripts', $cubewp_js );
 			  }
-		   } );
+		   }, 20 );
 		}
 	}
 

@@ -52,12 +52,17 @@ function cwp_notification_ui(notification_type, notification_content) {
     var $cwp_alert = jQuery(".cwp-alert.cwp-js-alert"),
         $alert_class = '',
         $cwp_alert_content = $cwp_alert.find('.cwp-alert-content');
-
     if ($cwp_alert.is(":visible") && $cwp_alert_content.html() === notification_content) {
         return false;
     }
-    if ($cwp_alert.is(":visible")) {
-        $cwp_alert.find('.cwp-alert-close').trigger("click");
+    if ($cwp_alert.is(":visible")) { 
+        $cwp_alert.slideUp(200, function () {
+            if ($cwp_alert.hasClass("cwp-js-alert")) {
+                $cwp_alert.hide();
+            } else {
+                $cwp_alert.remove();
+            }
+        });
     }
     if (notification_type === 'success') {
         $alert_class = 'cwp-alert-success';
@@ -71,9 +76,15 @@ function cwp_notification_ui(notification_type, notification_content) {
     $cwp_alert.removeClass("cwp-alert-danger cwp-alert-success cwp-alert-warning cwp-alert-info").addClass($alert_class);
     $cwp_alert.find('.cwp-alert-heading').text(notification_type + "!");
     $cwp_alert_content.html(notification_content);
-    $cwp_alert.slideDown();
+     $cwp_alert.slideDown();
     setTimeout(function () {
-        $cwp_alert.find('.cwp-alert-close').trigger("click");
+        $cwp_alert.slideUp(200, function () {
+            if ($cwp_alert.hasClass("cwp-js-alert")) {
+                $cwp_alert.hide();
+            } else {
+                $cwp_alert.remove();
+            }
+        });
     }, 3000);
 }
 
@@ -341,6 +352,11 @@ function initPostSlider($scope, clicked) {
         var CustomArrows = sliderElement.data('custom-arrows') === true || sliderElement.data('custom-arrows') === 'true';
         var CustomDots = sliderElement.data('custom-dots') === true || sliderElement.data('custom-dots') === 'true';
         var enableProgressBar = sliderElement.data('enable-progress-bar') === true || sliderElement.data('enable-progress-bar') === 'true';
+        if(jQuery('body').hasClass('rtl')){
+            var rtl = true;
+        } else {
+            var rtl = false;
+        }
         sliderElement.slick({
             slidesToShow: slidesToShow,
             slidesToScroll: slidesToScroll,
@@ -352,6 +368,7 @@ function initPostSlider($scope, clicked) {
             variableWidth: variableWidth,
             prevArrow: prevArrowButton,
             nextArrow: nextArrowButton,
+            rtl: rtl,
             arrows: CustomArrows,
             dots: CustomDots,
             responsive: [{
@@ -473,6 +490,8 @@ function initTermSlider($scope, clicked) {
 
         }
 
+        var sliderDeviceOption = sliderElement.data('slider-device-option');
+
         var isPrevSvg = sliderElement.data('is-prev-svg');
         var isNextSvg = sliderElement.data('is-next-svg');
 
@@ -495,6 +514,7 @@ function initTermSlider($scope, clicked) {
         var infinite = sliderElement.data('infinite') === true || sliderElement.data('infinite') === 'true';
         var fade_effect = sliderElement.data('fade') === true || sliderElement.data('fade') === 'true';
         var variableWidth = sliderElement.data('variable-width') === true || sliderElement.data('variable-width') === 'true';
+        var draggable = sliderElement.data('draggable') === true || sliderElement.data('draggable') === 'true';
         var prevArrowButton, nextArrowButton;
 
         if (isPrevSvg) {
@@ -511,42 +531,72 @@ function initTermSlider($scope, clicked) {
         var CustomArrows = sliderElement.data('custom-arrows') === true || sliderElement.data('custom-arrows') === 'true';
         var CustomDots = sliderElement.data('custom-dots') === true || sliderElement.data('custom-dots') === 'true';
         var enableProgressBar = sliderElement.data('enable-progress-bar') === true || sliderElement.data('enable-progress-bar') === 'true';
-        sliderElement.slick({
-            slidesToShow: slidesToShow,
-            slidesToScroll: slidesToScroll,
-            autoplay: autoplay,
-            autoplaySpeed: autoplaySpeed,
-            speed: Speed,
-            infinite: infinite,
-            fade: fade_effect,
-            variableWidth: variableWidth,
-            prevArrow: prevArrowButton,
-            nextArrow: nextArrowButton,
-            arrows: CustomArrows,
-            dots: CustomDots,
-            responsive: [{
-                    breakpoint: 1025,
-                    settings: {
-                        slidesToShow: slidesToShowTablet,
-                        slidesToScroll: slidesToScrollTablet
+
+        // Use real viewport width (jQuery width can be misleading on some mobiles)
+        var viewportWidth = (typeof window !== 'undefined' && window.innerWidth) ? window.innerWidth : $(window).width();
+        var isMobileViewport = (typeof window !== 'undefined' && window.matchMedia) ? window.matchMedia('(max-width: 767px)').matches : (viewportWidth <= 767);
+
+        // If slider is configured as mobile-only, do not initialize it on larger viewports
+        if (sliderDeviceOption === "mobile_only" && !isMobileViewport) {
+            return;
+        }
+
+        if (sliderDeviceOption === "mobile_only" && isMobileViewport) {
+            sliderElement.slick({
+                slidesToShow: slidesToShowMobile,
+                slidesToScroll: slidesToScrollMobile,
+                autoplay: autoplay,
+                autoplaySpeed: autoplaySpeed,
+                speed: Speed,
+                infinite: infinite,
+                fade: fade_effect,
+                variableWidth: variableWidth,
+                prevArrow: prevArrowButton,
+                nextArrow: nextArrowButton,
+                arrows: CustomArrows,
+                dots: CustomDots,
+                draggable: draggable,
+            });
+          }else{
+            sliderElement.slick({
+                slidesToShow: slidesToShow,
+                slidesToScroll: slidesToScroll,
+                autoplay: autoplay,
+                autoplaySpeed: autoplaySpeed,
+                speed: Speed,
+                infinite: infinite,
+                fade: fade_effect,
+                variableWidth: variableWidth,
+                prevArrow: prevArrowButton,
+                nextArrow: nextArrowButton,
+                arrows: CustomArrows,
+                dots: CustomDots,
+                draggable: draggable,
+                responsive: [{
+                        breakpoint: 1025,
+                        settings: {
+                            slidesToShow: slidesToShowTablet,
+                            slidesToScroll: slidesToScrollTablet
+                        }
+                    },
+                    {
+                        breakpoint: 768,
+                        settings: {
+                            slidesToShow: slidesToShowTabletPortrait,
+                            slidesToScroll: slidesToScrollTabletPortrait
+                        }
+                    },
+                    {
+                        breakpoint: 481,
+                        settings: {
+                            slidesToShow: slidesToShowMobile,
+                            slidesToScroll: slidesToScrollMobile
+                        }
                     }
-                },
-                {
-                    breakpoint: 768,
-                    settings: {
-                        slidesToShow: slidesToShowTabletPortrait,
-                        slidesToScroll: slidesToScrollTabletPortrait
-                    }
-                },
-                {
-                    breakpoint: 481,
-                    settings: {
-                        slidesToShow: slidesToShowMobile,
-                        slidesToScroll: slidesToScrollMobile
-                    }
-                }
-            ]
-        });
+                ]
+            });
+          }
+        
 
         if (enableProgressBar == true) {
             if (!sliderElement.next('.slick-progress').length) {
@@ -743,27 +793,20 @@ function initTermSlider($scope, clicked) {
                     onInit() {
                         super.onInit();
                         const settings = this.getElementSettings();
-                        const cwp_click_target_remove_css_controls = settings.cwp_click_target_remove_css_controls;
-                        const cwp_click_target_remove_css_transform = settings.cwp_click_target_remove_css_transform;
-                        const cwp_click_target_remove_css_transform_x = settings.cwp_click_target_remove_css_transform_x;
-                        const cwp_click_target_remove_css_transition = settings.cwp_click_target_remove_css_transition;
-                        if (cwp_click_target_remove_css_controls === 'hide') {
-                            $scope.css('display', 'none');
-                        } else if (cwp_click_target_remove_css_controls === 'show') {
-                            $scope.css('display', 'block');
-                        } else if (cwp_click_target_remove_css_controls === 'transform') {
-                            $scope.css('transform', 'translateX(' + cwp_click_target_remove_css_transform + 'px)');
-                            $scope.css('transform-x', 'translateY(' + cwp_click_target_remove_css_transform_x + 'px)');
-                            $scope.css('transition', 'transform ' + cwp_click_target_remove_css_transition + 'ms');
+                        const cwp_click_enable = settings.cwp_click_enable; 
+                        const cwp_click_apply = settings.cwp_click_apply; 
+                        if (cwp_click_enable == 'yes' && cwp_click_apply == 'custom') { 
+                                $scope.css('display', 'none');
+                            }else{ 
+                                $scope.css('display', '');
+                            }
                         }
-
-                    }
+                    
                     onElementChange(settingName) {
-                        super.onElementChange ?.apply(this, arguments);
+                        super.onElementChange?.apply(this, arguments);
                         const sliderSettings = [
-                            'cwp_click_target_remove_css_controls',
-                            'cwp_click_target_remove_css_transform', 'cwp_click_target_remove_css_transform_x', 'cwp_click_target_remove_css_transform_x'
-                        ];
+                            'cwp_click_enable' , 'cwp_click_apply'
+                          ];
 
                         if (sliderSettings.includes(settingName)) {
                             this.onInit();
@@ -778,8 +821,20 @@ function initTermSlider($scope, clicked) {
     });
 
     jQuery(document).ready(function ($) {
+        function cwpRefreshMapsInCard($card) {
+            if (typeof VP_Refresh_Or_Init_Single_Map !== 'function') {
+                return;
+            }
+            setTimeout(function () {
+                $card.find('.vp-cubewp-map-container').each(function () {
+                    VP_Refresh_Or_Init_Single_Map($(this));
+                });
+            }, 100);
+        }
+
         jQuery(document).on('click', '.cwp-elementor-post-card, .cwp-elementor-term-card', function (event) {
-            $(this).find('.cwp-click-element[data-cwp-click-enabled="true"]').each(function () {
+            var $card = $(this);
+            $card.find('.cwp-click-element[data-cwp-click-enabled="true"]').each(function () {
                 const clickable = $(this);
                 const targetMode = clickable.data('cwp-target-mode');
                 const applyCss = clickable.data('cwp-apply-css');
@@ -789,6 +844,7 @@ function initTermSlider($scope, clicked) {
                     });
                 }
             });
+            cwpRefreshMapsInCard($card);
         });
 
         jQuery(document).on('click', '.cwp-click-element[data-cwp-click-enabled="true"]', function (event) {
@@ -800,6 +856,7 @@ function initTermSlider($scope, clicked) {
                     return (oldStyle ? oldStyle + '; ' : '') + applyCss;
                 });
             }
+            cwpRefreshMapsInCard(clickable.closest('.cwp-elementor-post-card, .cwp-elementor-term-card'));
         });
 
         jQuery(document).on('click', '.cwp-click-element[data-cwp-click-enabled="true"]', function (event) {
@@ -819,7 +876,13 @@ function initTermSlider($scope, clicked) {
                     const element = card.find('.cwp-click-element[data-id="' + dataID + '"]');
                     element.removeAttr('style');
                     element.attr('style', applyCss);
-
+                    element.find('.vp-cubewp-map-container').addBack('.vp-cubewp-map-container').each(function () {
+                        if (typeof VP_Refresh_Or_Init_Single_Map === 'function') {
+                            VP_Refresh_Or_Init_Single_Map($(this));
+                        } else if (typeof VP_Init_Single_Map === 'function') {
+                            VP_Init_Single_Map($(this));
+                        }
+                    });
                 }
             }
             if ($this_data_remove.length > 0) {
@@ -827,12 +890,18 @@ function initTermSlider($scope, clicked) {
                 const dataID = $this_data_remove.data('id');
                 const removeClass = $this_data_remove.data('cwp-remove-class');
                 const removeCss = $this_data_remove.data('cwp-remove-css');
-                console.log('.cwp-click-element[data-id="' + dataID + '"]');
                 if (targetModes === 'custom' && removeClass && $this_data_remove.length > 0) {
                     const card = $(this).closest('.cwp-elementor-post-card, .cwp-elementor-term-card');
                     const element = card.find('.cwp-click-element[data-id="' + dataID + '"]');
                     element.removeAttr('style');
                     element.attr('style', removeCss);
+                    element.find('.vp-cubewp-map-container').addBack('.vp-cubewp-map-container').each(function () {
+                        if (typeof VP_Refresh_Or_Init_Single_Map === 'function') {
+                            VP_Refresh_Or_Init_Single_Map($(this));
+                        } else if (typeof VP_Init_Single_Map === 'function') {
+                            VP_Init_Single_Map($(this));
+                        }
+                    });
                 }
             }
         })
@@ -852,8 +921,38 @@ function initTermSlider($scope, clicked) {
 
         // Apply view class to archive container
         var $archive = jQuery('.cwp-search-result-output .cwp-grids-container');
-        $archive.removeClass('grid-view list-view')
-            .addClass(view + '-view ');
+        $archive.removeClass('grid-view list-view').addClass(view + '-view ');
+        if (view === 'list') {
+            cwp_setCookie("cwp_archive_switcher", 'list-view', 30);
+        } else if (view === 'grid') {
+            cwp_setCookie("cwp_archive_switcher", 'grid-view', 30);
+        }
     });
-
+    if (jQuery('.cubewp-view-btn.active').length > 0) {
+        if (typeof cwp_search_filters_ajax_content === 'function') {
+            var $btn = jQuery('.cubewp-view-btn.active');
+            var view = $btn.data('view');
+            // Apply view class to archive container
+            var $archive = jQuery('.cwp-search-result-output .cwp-grids-container');
+            $archive.removeClass('grid-view list-view').addClass(view + '-view ');
+            if (view === 'list') {
+                cwp_setCookie("cwp_archive_switcher", 'list-view', 30);
+            } else if (view === 'grid') {
+                cwp_setCookie("cwp_archive_switcher", 'grid-view', 30);
+            }
+        }
+    }
+    if (jQuery('.cwp-search-result-output .cwp-grids-container').length > 0) {
+        if (typeof cwp_search_filters_ajax_content === 'function') {
+            var $btn = jQuery('.cubewp-view-switcher');
+            if(!$btn.length > 0){
+                jQuery('.cwp-search-result-output .cwp-grids-container').removeClass('grid-view list-view').addClass('grid-view');
+            } 
+        }else{
+            var $btn = jQuery('.cubewp-view-switcher');
+            if(!$btn.length > 0){
+                jQuery('.cwp-search-result-output .cwp-grids-container').removeClass('grid-view list-view').addClass('grid-view');
+            }   
+        }
+    }
 })(jQuery);
