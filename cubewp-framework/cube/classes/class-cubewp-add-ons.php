@@ -35,7 +35,6 @@ class CubeWp_Add_Ons
 		//license system
 		add_action('admin_init', array($this, 'check_license'));
 		add_action('admin_init', array($this, 'updates_enable_for_free_addon'));
-		add_action('admin_init', array($this, 'check_for_plugin_update'), 0);
 		add_action(self::CUBEWP . '/' . self::ADDON . '/' . self::ACTI . self::VATION, array($this, '_plugins'), 9, 1);
 	}
 
@@ -159,59 +158,6 @@ class CubeWp_Add_Ons
 			} else {
 				//Plugin not good
 				wp_die( esc_html( $not_our_plugin ) );
-			}
-		}
-	}
-
-	/**
-	 * Plugin Update Check
-	 * @since 1.0
-	 * @version 1.1
-	 */
-	public function check_for_plugin_update()
-	{
-		$add_ons = CWP()->cubewp_get_modules();
-		foreach ($add_ons as $key => $add_on) {
-			$item_name = $add_on['item_name'];
-			$author = $add_on['author'];
-			$slug = $add_on['slug'];
-			$base = $add_on['base'];
-			$Lkey = CWP()->cubewp_options($slug . '_key');
-			$Lstatus = CWP()->cubewp_options($slug . '-status');
-
-			if ($slug == 'cubewp-addon-woocommerce') {
-				$Lkey = '96baf6be5cb40a29137cb7fd90441f64';
-				$Lstatus = 'valid';
-			}
-
-			// Check if the transient exists
-			if (get_transient($slug . '_update_check')) {
-				continue; // Skip if transient exists
-			}
-			if ($Lkey && is_plugin_active($base)) {
-				$plugin = get_plugin_data(plugin_dir_path(dirname(dirname(__DIR__))) . $base, false, false);
-				// Set up the updater
-				new CubeWp_Plugin_Updater(
-					$this->route,
-					$base,
-					array(
-						'version'    => $plugin['Version'],
-						'license'    => $Lkey,
-						'item_name'  => $item_name,
-						'author'     => $author,
-					),
-					array(
-						'license_status' => $Lstatus,
-						'admin_page_url' => admin_url('admin.php?page=cube_wp_dashboard'),
-						'purchase_url'   => $this->purchase_url,
-						'plugin_title'   => 'Dashboard',
-					)
-				);
-				set_transient(
-					$slug . '_update_check',
-					true,
-					24 * HOUR_IN_SECONDS
-				);
 			}
 		}
 	}

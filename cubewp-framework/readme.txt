@@ -2,10 +2,10 @@
 Contributors: cubewp1211, teamcubewp
 Donate link: https://cubewp.com/
 Tags: custom fields, custom post types, custom taxonomies, acf, metabox
-Requires at least: 5.0
+Requires at least: 6.5
 Requires PHP: 7.4
-Tested up to: 6.9
-Stable tag: 1.1.30
+Tested up to: 7.0
+Stable tag: 1.1.31
 License: GPLv2 or later
 
 CubeWP is an end-to-end dynamic content framework for WordPress to help you shrink time and cut cost of development up to 90%.
@@ -375,6 +375,36 @@ To getting started with the plugin, please go to [Documentation](https://support
 
 
 == Changelog ==
+
+= 1.1.31 2026-07-30
+
+- SECURITY: Fixed a SQL injection vulnerability in the cubewp_remove_relation AJAX action by casting request IDs to integers, using prepared statements, and adding a capability check on the object the relation belongs to. Reported by Muni Nitish Kumar Yaddala.
+- SECURITY: Fixed an arbitrary post and user meta disclosure (IDOR) in the cubewp-custom-fields/v1/render REST route by adding per-object read authorization and restricting requests to registered CubeWP custom fields. Reported by Muni Nitish Kumar Yaddala.
+- SECURITY: Fixed a path traversal issue (CVE-2026-13339) that allowed arbitrary local files to be read through slider arrow icon parameters. Icon files are now restricted to .svg files inside the uploads or plugin directory, with the resolved path canonicalised and containment verified before reading. Reported by Nhien Pham (nhienit) of GalaxyOne.
+- SECURITY: Fixed a cross-site scripting issue where search filter hidden field values were output without escaping.
+- ADDED: New CubeWP Users Widget for Elementor and cubewp_shortcode_users shortcode to display users with filtering by roles, specific IDs, current user, or post author, including slider, grid, and boxed view layouts.
+- ADDED: CubeWP typography settings are now available inside the Elementor typography control, allowing site-wide font variables to be selected on any Elementor widget.
+- ADDED: Responsive font size options (Desktop, Tablet, and Mobile) for typography settings in CubeWP Settings.
+- ADDED: Typography color selection support in the CubeWP Settings dynamic tag.
+- ADDED: Support for assigning multiple display locations to a single template in CubeWP Theme Builder, with automatic deactivation of conflicting templates.
+- ADDED: Hierarchical child term support in the CubeWP Search Filter Builder taxonomy checkbox filter, with child terms accordion, hide child terms by default, View More toggle, and full styling controls for child term labels, indent, spacing, and typography.
+- ADDED: Parent term options in CubeWP Taxonomy Widget, allowing terms to be limited by parent term ID or slug, or by using the current archive term as the parent.
+- ADDED: Vertical slider direction with responsive control and arrow rotation options in CubeWP Taxonomy Widget.
+- ADDED: Term IDs, term slugs, and parent term source options in the CubeWP Taxonomy shortcode, with output ordered by the selection order.
+- ADDED: Mobile and tablet off-canvas menu toggle with button styling options in CubeWP Nav Menu Widget.
+- ADDED: Container, focus, spacing, width, and button icon styling options in CubeWP Search Widget.
+- ADDED: Image position and icon styling options in CubeWP Archive Map Widget.
+- ADDED: Registered date display options for the CubeWP Post Author dynamic tag, including date format, custom format, and human readable "time ago" output.
+- ADDED: Line limit and maximum lines options for the CubeWP Term Name dynamic tag.
+- ADDED: Custom reading time text option in the CubeWP Post Info dynamic tag.
+- ADDED: Allowed file types (MIME) option for file and image fields in CubeWP Taxonomy Custom Fields.
+- ADDED: Separate desktop, tablet, and mobile width options for promotional cards in CubeWP Archive Posts.
+- ADDED: New cubewpLoadMoreSuccess JavaScript event so developers can hook into load more completion.
+- IMPROVED: reCAPTCHA is now loaded only on forms where it is enabled, reducing unnecessary script loading on other pages.
+- IMPROVED: Post slider now supports vertical mode per device and respects RTL layouts.
+- IMPROVED: Enhanced CubeWP admin interface styling and dashboard experience.
+- FIXED: Address and taxonomy custom field values are now escaped correctly when rendered through Elementor dynamic tags.
+- IMPROVED: General code hardening across the plugin, including prepared database statements, direct file access protection, safer redirects, and improved input sanitization and output escaping.
 
 = 1.1.30 2026-05-06
 
@@ -868,3 +898,8 @@ Note: It is necessory to update if you want to update Frontend PRO or CubeWP For
 = 1.0.0 - 2022-09-30 
 
 Plug released.
+
+== Upgrade Notice ==
+
+= 1.1.31 =
+Security release. Fixes a SQL injection, an arbitrary post and user meta disclosure, a path traversal (CVE-2026-13339), and a cross-site scripting issue. Updating is strongly recommended.

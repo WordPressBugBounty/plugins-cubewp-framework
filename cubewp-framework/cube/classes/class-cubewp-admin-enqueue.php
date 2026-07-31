@@ -440,6 +440,13 @@ class CubeWp_Admin_Enqueue{
             self::enqueue_script('cubewp-term-meta');
             wp_enqueue_media();
         }
+
+		if ( CWP()->is_admin_screen( 'cubewp_theme_builder' ) ) {
+            self::enqueue_style( 'select2' );
+            self::enqueue_script( 'select2' );
+            self::enqueue_style( 'cubewp-metaboxes' );
+        }
+
         
         if(CWP()->is_admin_screen('cubewp_settings'))
         {

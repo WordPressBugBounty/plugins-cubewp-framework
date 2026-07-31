@@ -142,7 +142,7 @@ class CubeWp_Query
         $sortings = isset($args['sortings']) ? $args['sortings'] : '';
 
         if ($sortings && $sortings !== '') {
-            $query['meta_key'] = $field_type_key;
+            $query['meta_key'] = $field_type_key; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Custom-field sorting/filtering is the core purpose of this framework.
             $query['order'] = $sortings;
             $query['orderby'] = 'meta_value_num';
         } else {
@@ -174,14 +174,14 @@ class CubeWp_Query
                 }
                 // build query
                 if (in_array($operation, ['EXISTS', 'NOT EXISTS'], true)) {
-                    $query['meta_query'] = [
+                    $query['meta_query'] = [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Custom-field filtering is the core purpose of this framework.
                         [
                             'key'     => $field_type_key,
                             'compare' => $operation,
                         ],
                     ];
                 } else {
-                    $query['meta_query'] = [
+                    $query['meta_query'] = [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Custom-field filtering is the core purpose of this framework.
                         [
                             'key'     => $field_type_key,
                             'value'   => $value_key,

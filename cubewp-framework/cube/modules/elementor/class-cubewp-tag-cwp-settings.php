@@ -47,6 +47,7 @@ class CubeWp_Tag_Cwp_Settings extends \Elementor\Core\DynamicTags\Data_Tag
 				'options' => [
 					'text' => esc_html__('Text', 'cubewp-framework'),
 					'color' => esc_html__('Color', 'cubewp-framework'),
+					'typography_color' => esc_html__('Typography Color', 'cubewp-framework'),
 					'select' => esc_html__('Select', 'cubewp-framework'),
 					'image' => esc_html__('Image', 'cubewp-framework'),
 					'number' => esc_html__('Number', 'cubewp-framework'),
@@ -77,6 +78,18 @@ class CubeWp_Tag_Cwp_Settings extends \Elementor\Core\DynamicTags\Data_Tag
 				'options' => $this->get_settings_fields_by_type('color'),
 				'condition' => [
 					'setting_field_type' => 'color',
+				],
+			]
+		);
+
+		$this->add_control(
+			'setting_typography_color_field',
+			[
+				'type' => \Elementor\Controls_Manager::SELECT,
+				'label' => esc_html__('Select typography color', 'cubewp-framework'),
+				'options' => $this->get_typography_color_options(),
+				'condition' => [
+					'setting_field_type' => 'typography_color',
 				],
 			]
 		);
@@ -152,6 +165,9 @@ class CubeWp_Tag_Cwp_Settings extends \Elementor\Core\DynamicTags\Data_Tag
 		$cwp_options = get_option('cwpOptions', array());
 		$value = isset($cwp_options[$field_key]) ? $cwp_options[$field_key] : '';
 
+		if ('color' === $field_type) {
+			return $this->normalize_color_variable_value($field_key, $value);
+		}
 		if ('image' === $field_type) {
 			return $this->normalize_image_value($value);
 		}
@@ -161,6 +177,9 @@ class CubeWp_Tag_Cwp_Settings extends \Elementor\Core\DynamicTags\Data_Tag
 		if ('submit_edit_page' === $field_type) { 
 			$value = isset($cwp_options['submit_edit_page'][$field_key]) ? $cwp_options['submit_edit_page'][$field_key] : '';
 			return $this->normalize_post_type_page_value($value);
+		}
+		if ('typography_color' === $field_type) {
+			return $this->normalize_typography_color_value($field_key, $value);
 		}
 		if (is_array($value)) {
 			return implode(', ', array_map('strval', $value));
@@ -174,6 +193,8 @@ class CubeWp_Tag_Cwp_Settings extends \Elementor\Core\DynamicTags\Data_Tag
 		switch ($field_type) {
 			case 'color':
 				return $this->get_settings('setting_color_field');
+			case 'typography_color':
+				return $this->get_settings('setting_typography_color_field');
 			case 'select':
 				return $this->get_settings('setting_select_field');
 			case 'image':
@@ -203,7 +224,9 @@ class CubeWp_Tag_Cwp_Settings extends \Elementor\Core\DynamicTags\Data_Tag
 
 		if ($type === 'submit_edit_page') {
 			$cwp_options = get_option('cwpOptions', array());
-			$value = isset($cwp_options['submit_edit_page']) ? $cwp_options['submit_edit_page'] : ''; 
+			$value = isset($cwp_options['submit_edit_page']) && is_array($cwp_options['submit_edit_page'])
+				? $cwp_options['submit_edit_page']
+				: array();
 			foreach($value as $post_type => $page_id) {
 				if(empty($page_id)) {
 					continue;
@@ -234,6 +257,36 @@ class CubeWp_Tag_Cwp_Settings extends \Elementor\Core\DynamicTags\Data_Tag
 		}
 
 		return $field_map;
+	}
+
+	private function get_typography_color_options()
+	{
+		$options = array();
+
+		$field_type_map = $this->get_default_settings_field_type_map();
+		$typography_fields = isset($field_type_map['typography']) && is_array($field_type_map['typography'])
+			? $field_type_map['typography']
+			: array();
+
+		$cwp_options = get_option('cwpOptions', array());
+		$cwp_options = is_array($cwp_options) ? $cwp_options : array();
+
+		foreach ($typography_fields as $field) {
+			$field_id = isset($field['id']) ? (string) $field['id'] : '';
+			if ($field_id === '') {
+				continue;
+			}
+
+			$value = isset($cwp_options[$field_id]) ? $cwp_options[$field_id] : array();
+			if (!is_array($value) || empty($value['color'])) {
+				continue;
+			}
+
+			$title = isset($field['title']) && $field['title'] !== '' ? (string) $field['title'] : $field_id;
+			$options[$field_id] = $title;
+		}
+
+		return $options;
 	}
 
 	private function normalize_image_value($value)
@@ -294,5 +347,43 @@ class CubeWp_Tag_Cwp_Settings extends \Elementor\Core\DynamicTags\Data_Tag
 			return $url;
 		}
 		return $post_type_page_url;
+	}
+
+	private function normalize_typography_color_value($field_key, $value)
+	{
+		if (is_array($value) && isset($value['color']) && $value['color'] !== '') {
+			return $this->build_color_variable((string) $field_key, (string) $value['color']);
+		}
+
+		return '';
+	}
+
+	private function normalize_color_variable_value($field_key, $value)
+	{
+		$fallback = '';
+
+		if (is_string($value)) {
+			$fallback = $value;
+		} elseif (is_array($value) && isset($value['color']) && is_string($value['color'])) {
+			$fallback = $value['color'];
+		}
+
+		return $this->build_color_variable((string) $field_key, $fallback);
+	}
+
+	private function build_color_variable($field_key, $fallback = '')
+	{
+		$safe_key = sanitize_key($field_key);
+		if ($safe_key === '') {
+			return '';
+		}
+
+		$var_name = '--cwp-color-' . $safe_key;
+		$fallback = trim((string) $fallback);
+		if ($fallback !== '') {
+			return 'var(' . $var_name . ', ' . $fallback . ')';
+		}
+
+		return 'var(' . $var_name . ')';
 	}
 }

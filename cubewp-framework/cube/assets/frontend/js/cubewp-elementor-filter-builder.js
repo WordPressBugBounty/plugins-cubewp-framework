@@ -109,8 +109,8 @@
     });
 
 
-     // Handle range slider changes
-     $(document).on('change', '.cubewp-filter-builder-field-wrapper .cwp-address-range input[type="range"]', function () {
+    // Handle range slider changes
+    $(document).on('change', '.cubewp-filter-builder-field-wrapper .cwp-address-range input[type="range"]', function () {
         const $input = $(this);
         const $container = $input.closest('.cubewp-filter-builder-field-container');
         const $googleAddressInput = $container.find('input[type="google_address"]');
@@ -319,6 +319,34 @@
         updateURLParam('sortings', '');
     }
 
+    /**
+     * Update sorting dropdown toggle label from selected item or default button text.
+     *
+     * @param {jQuery} $dropdown Optional single dropdown wrapper.
+     */
+    function updateSortingDropdownText($dropdown) {
+        var $targets = ($dropdown && $dropdown.length) ? $dropdown : $('.cubewp-sorting-dropdown');
+
+        $targets.each(function () {
+            var $dd = $(this);
+            var $toggle = $dd.find('.cubewp-sorting-dropdown-toggle').first();
+            var $textEl = $toggle.find('.cubewp-sorting-dropdown-text').first();
+            var defaultText = $toggle.attr('data-button-text') || 'Sort By';
+            var $selected = $dd.find('.cubewp-sorting-dropdown-item.active.selected').first();
+
+            if (!$selected.length) {
+                $selected = $dd.find('.cubewp-sorting-dropdown-item.selected, .cubewp-sorting-dropdown-item.active').first();
+            }
+
+            if ($selected.length) {
+                var label = $.trim($selected.find('.cubewp-sorting-dropdown-item-text').first().text());
+                $textEl.text(label || defaultText);
+            } else {
+                $textEl.text(defaultText);
+            }
+        });
+    }
+
     $(document).on('click', '.cubewp-sorting-btn', function () {
         var $btn = $(this);
         var orderby = $btn.data('orderby');
@@ -364,6 +392,7 @@
                 }
             }
         }
+        updateSortingDropdownText($btn.closest('.cubewp-sorting-dropdown'));
         triggerFilterAjax();
         return;
     });
@@ -416,6 +445,7 @@
         resetConditionalTaxonomyFields();
         jQuery('.cubewp-sorting-dropdown-item ').removeClass('selected active');
         jQuery('.cubewp-sorting-btn').removeClass('active selected');
+        updateSortingDropdownText();
         jQuery('.cubewp-business-hours-btn').removeClass('active selected');
         $containers.filter('.cwp-select2').each(function () {
             var $select = $(this).find('select');
@@ -733,11 +763,15 @@
             }
             if ($custom.length) {
                 $custom.first().addClass('active selected');
+                updateSortingDropdownText();
                 return;
             }
         }
 
-        if (!orderby) return;
+        if (!orderby) {
+            updateSortingDropdownText();
+            return;
+        }
 
         $('.cubewp-sorting-btn').each(function () {
             const $btn = $(this);
@@ -748,6 +782,8 @@
                 }
             }
         });
+
+        updateSortingDropdownText();
     }
 
     $(document).ready(function () {
@@ -756,6 +792,7 @@
         restoreRadiosFromURL();
         restoreGoogleAddressFromURL();
         restoreSortingFromURL();
+        updateSortingDropdownText();
     });
 
 
@@ -1205,5 +1242,85 @@
             }, 100);
         }
     }
+
+
+    jQuery(document).ready(function ($) {
+
+
+        $('.cwp-taxonomy-checkbox-tree').each(function () { 
+            var $tree = $(this);
+            var $button = $tree.find('.cwp-taxonomy-terms-show-more');
+
+            if (!$button.length) {
+                return;
+            }
+
+            var visibleCount = parseInt($button.data('visible-count')) || 10;
+
+            // Only top-level categories
+            var $items = $tree.children('.cwp-taxonomy-field.cwp-taxonomy-depth-0');
+
+            function hideExtraItems() {
+
+
+                if ($items.length > visibleCount) {
+
+                    $items.slice(visibleCount).slideUp();
+
+                    $button
+                        .attr('data-expanded', '0')
+                        .attr('aria-expanded', 'false');
+
+                    $button.find('.cwp-taxonomy-terms-show-more-text')
+                        .text($button.data('more-text'));
+
+                    $button.closest('.cwp-taxonomy-show-more-item').slideDown();
+
+                } else {
+
+                    $button.closest('.cwp-taxonomy-show-more-item').slideUp();
+                }
+            }
+
+            function showAllItems() {
+
+                $items.slideDown();
+
+                $button
+                    .attr('data-expanded', '1')
+                    .attr('aria-expanded', 'true');
+
+                $button.find('.cwp-taxonomy-terms-show-more-text')
+                    .text($button.data('less-text'));
+            }
+
+            // Page load
+            hideExtraItems();
+
+            // Click event
+            $button.on('click', function () {
+
+                if ($(this).attr('data-expanded') === '1') {
+                    hideExtraItems();
+                } else {
+                    showAllItems();
+                }
+
+            });
+
+        });
+
+
+        $(document).on('click', '.cwp-taxonomy-accordion-toggle', function (e) {
+            e.preventDefault();
+            const $btn = $(this);
+            const $children = $btn.closest('li').children('.cwp-taxonomy-children-list');
+            $children.stop(true, true).slideToggle(250);
+            const expanded = $btn.attr('aria-expanded') === 'true';
+            $btn.attr('aria-expanded', !expanded);
+            $children.toggleClass('is-collapsed');
+
+        });
+    });
 
 })(jQuery);

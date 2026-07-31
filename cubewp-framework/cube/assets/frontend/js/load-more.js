@@ -32,6 +32,8 @@ jQuery(document).ready(function ($) {
                     button.hide();
                     widget.find('.cubewp-load-more-conatiner').append('<div class="no-more-posts">No more posts</div>');
                 }
+                // Trigger a custom event after successful load more ajax
+                $(document).trigger('cubewpLoadMoreSuccess', [response, button, widget]);
             },
             error: function (xhr, status, error) {}
         });

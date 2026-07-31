@@ -1,5 +1,8 @@
 <?php
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 wp_enqueue_style('cubewp-template-library');
 $current_user = wp_get_current_user();
 if ($current_user->user_firstname) {

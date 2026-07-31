@@ -304,7 +304,7 @@ class CubeWp_Admin {
      * @return void
      * @since  1.0.0
      */
-    public static function register_elementor_tags($module) {
+public static function register_elementor_tags($module) {
         $tags = CubeWp_Custom_Fields_Markup::cwp_form_field_types( 'elementor_dynamic_tags' );
         $module->register_group( 'cubewp-fields', [
         'title' => esc_html__( 'CubeWP Custom Fields', 'cubewp-framework' ),
@@ -342,7 +342,6 @@ class CubeWp_Admin {
                 $module->register( new $tag() );
             }
         }
-
         $module->register_group( 'cubewp-taxonomy-fields', [
             'title' => esc_html__( 'CubeWP Taxonomy Custom Fields', 'cubewp-framework' ),
         ] );
@@ -366,7 +365,6 @@ class CubeWp_Admin {
                 $module->register( new $tag() );
             }
         }
-
         $module->register_group( 'cubewp-user-data', [
             'title' => esc_html__( 'CubeWP User Data', 'cubewp-framework' ),
         ] );
@@ -387,13 +385,18 @@ class CubeWp_Admin {
                 $module->register( new $tag() );
             }
         }
-
         $module->register_group( 'cubewp-settings-fields', [
             'title' => esc_html__( 'CubeWP Settings', 'cubewp-framework' ),
         ] );
         if (class_exists('CubeWp_Tag_Cwp_Settings')) {
             $module->register( new CubeWp_Tag_Cwp_Settings() );
         }
+        $module->register_group( 'cubewp-form-fields', array(
+            'title' => esc_html__( 'CubeWP Form Fields', 'cubewp-framework' ),
+        ) );
+        
+        // Register extra Elementor dynamic tags (e.g. CubeWP Frontend Pro field name tag).
+        do_action( 'cubewp/elementor/register_dynamic_tags', $module );
     }
 
     public function cubewp_updated_post_type_messages( $messages ) {

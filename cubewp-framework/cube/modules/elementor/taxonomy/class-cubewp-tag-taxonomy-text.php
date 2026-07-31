@@ -159,11 +159,11 @@ class CubeWp_Tag_Taxonomy_text extends Tag
 
 		if ($use_for_icon == 'yes') {
 			if (preg_match('/^data:image\/[a-zA-Z]+;base64,/', $value) || preg_match('/^https?:\/\/.+\.(jpg|jpeg|png|gif|svg|webp)$/i', $value)) {
-				$width_attr = $icon_width_style ? ' width: ' . esc_attr($icon_width_style) . ';' : '';
-				echo '<img src="' . esc_url($value) . '" alt="icon" style="max-width:100%; max-height:100%;' . $width_attr . '" />';
+				$width_attr = $icon_width_style ? ' width: ' . $icon_width_style . ';' : '';
+				echo '<img src="' . esc_url($value) . '" alt="icon" style="' . esc_attr('max-width:100%; max-height:100%;' . $width_attr) . '" />';
 			} else {
-				$font_size = $icon_width_style ? 'font-size: ' . esc_attr($icon_width_style) . ';' : '';
-				echo '<i class="' . esc_attr($value) . '"' . ($font_size ? ' style="' . $font_size . '"' : '') . '></i>';
+				$font_size = $icon_width_style ? 'font-size: ' . $icon_width_style . ';' : '';
+				echo '<i class="' . esc_attr($value) . '"' . ($font_size ? ' style="' . esc_attr($font_size) . '"' : '') . '></i>';
 			}
 		} else {
 			echo esc_html(cubewp_core_data($value));

@@ -1,5 +1,8 @@
 <?php
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 /**
  * The template for displaying all cubewp post type's single posts
  *

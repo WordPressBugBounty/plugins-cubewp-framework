@@ -81,6 +81,30 @@ class CubeWp_Tag_Number extends \Elementor\Core\DynamicTags\Tag
 				],
 			]
 		);
+
+		$currency_description = class_exists('WooCommerce')
+			? esc_html__(
+				'Uses the currency symbol and position from WooCommerce → Settings → General.',
+				'cubewp-framework'
+			)
+			: esc_html__(
+				'Uses "$" on the left when WooCommerce is not active.',
+				'cubewp-framework'
+			);
+
+		$this->add_control(
+			'enable_currency_symbol',
+			[
+				'type'         => \Elementor\Controls_Manager::SWITCHER,
+				'label'        => esc_html__('Enable Currency Symbol', 'cubewp-framework'),
+				'label_on'     => esc_html__('Yes', 'cubewp-framework'),
+				'label_off'    => esc_html__('No', 'cubewp-framework'),
+				'return_value' => 'yes',
+				'default'      => '',
+				'separator'    => 'before',
+				'description'  => $currency_description,
+			]
+		);
 	}
 
 	public function render()
@@ -118,7 +142,11 @@ class CubeWp_Tag_Number extends \Elementor\Core\DynamicTags\Tag
 		 * Number-only dynamic tag filter
 		 */
 		if (is_numeric($value)) {
-			$value = apply_filters('cubewp/elementor/number/dynamic_tag/value',$value,$this->get_settings(),);
+			$value = apply_filters('cubewp/elementor/number/dynamic_tag/value', $value, $this->get_settings());
+
+			if ('yes' === $this->get_settings('enable_currency_symbol')) {
+				$value = cubewp_format_number_with_currency($value, true);
+			}
 		}
 
 		if ('' === $value || null === $value) {

@@ -190,7 +190,7 @@ class CubeWp_Tag_Business_hours extends \Elementor\Core\DynamicTags\Tag
         $this->add_responsive_control(
             'icon_gap',
             [
-                'label' => __('Gap', 'plugin-name'),
+                'label' => __('Gap', 'cubewp-framework'),
                 'type' => \Elementor\Controls_Manager::SLIDER,
                 'size_units' => ['px', '%', 'em', 'rem'],
                 'range' => [

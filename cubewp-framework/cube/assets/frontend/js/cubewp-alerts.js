@@ -295,6 +295,10 @@ jQuery(document).ready(function ($) {
     }, 200);
 });
 
+function cubewpSlickIsRTL() {
+    return typeof jQuery !== 'undefined' && jQuery('body').hasClass('rtl');
+}
+
 /*------- CubeWP Post Slider ---------*/
 function initPostSlider($scope, clicked) {
     var sliders = $scope.find('.cubewp-post-slider');
@@ -352,48 +356,69 @@ function initPostSlider($scope, clicked) {
         var CustomArrows = sliderElement.data('custom-arrows') === true || sliderElement.data('custom-arrows') === 'true';
         var CustomDots = sliderElement.data('custom-dots') === true || sliderElement.data('custom-dots') === 'true';
         var enableProgressBar = sliderElement.data('enable-progress-bar') === true || sliderElement.data('enable-progress-bar') === 'true';
-        if(jQuery('body').hasClass('rtl')){
-            var rtl = true;
-        } else {
-            var rtl = false;
+
+        function postSliderIsVertical(value) {
+            return value === true || value === 'true';
         }
-        sliderElement.slick({
+
+        var vertical = postSliderIsVertical(sliderElement.data('vertical'));
+        var verticalTabletRaw = sliderElement.data('vertical-tablet');
+        var verticalTablet = (verticalTabletRaw === undefined || verticalTabletRaw === '') ? vertical : postSliderIsVertical(verticalTabletRaw);
+        var verticalMobileRaw = sliderElement.data('vertical-mobile');
+        var verticalMobile = (verticalMobileRaw === undefined || verticalMobileRaw === '') ? verticalTablet : postSliderIsVertical(verticalMobileRaw);
+
+        function postSliderApplyVertical(settings, isVertical) {
+            if (!settings) {
+                return settings;
+            }
+            settings.vertical = isVertical;
+            settings.verticalSwiping = isVertical;
+            settings.fade = isVertical ? false : fade_effect;
+            return settings;
+        }
+
+        var postSlickOptions = {
             slidesToShow: slidesToShow,
             slidesToScroll: slidesToScroll,
             autoplay: autoplay,
             autoplaySpeed: autoplaySpeed,
             speed: Speed,
             infinite: infinite,
-            fade: fade_effect,
+            fade: vertical ? false : fade_effect,
             variableWidth: variableWidth,
             prevArrow: prevArrowButton,
             nextArrow: nextArrowButton,
-            rtl: rtl,
+            rtl: cubewpSlickIsRTL(),
             arrows: CustomArrows,
             dots: CustomDots,
+            vertical: vertical,
+            verticalSwiping: vertical,
             responsive: [{
                     breakpoint: 1025,
-                    settings: {
+                    settings: postSliderApplyVertical({
                         slidesToShow: slidesToShowTablet,
                         slidesToScroll: slidesToScrollTablet
-                    }
+                    }, verticalTablet)
                 },
                 {
                     breakpoint: 768,
-                    settings: {
+                    settings: postSliderApplyVertical({
                         slidesToShow: slidesToShowTabletPortrait,
                         slidesToScroll: slidesToScrollTabletPortrait
-                    }
+                    }, verticalTablet)
                 },
                 {
                     breakpoint: 481,
-                    settings: {
+                    settings: postSliderApplyVertical({
                         slidesToShow: slidesToShowMobile,
                         slidesToScroll: slidesToScrollMobile
-                    }
+                    }, verticalMobile)
                 }
             ]
-        });
+        };
+
+        postSliderApplyVertical(postSlickOptions, vertical);
+        sliderElement.slick(postSlickOptions);
 
         if (enableProgressBar == true) {
             if (!sliderElement.next('.slick-progress').length) {
@@ -471,9 +496,9 @@ jQuery(document).on("click", ".vpack-nested-tabs  .e-n-tab-title", function () {
     jQuery(this).addClass('init-clicked');
 });
 
-/* CubeWP Term Slider */
+/* CubeWP Term / User Slider */
 function initTermSlider($scope, clicked) {
-    var sliders = $scope.find('.cubewp-term-slider');
+    var sliders = $scope.find('.cubewp-term-slider, .cubewp-user-slider');
     if (!sliders.length) return;
     sliders.each(function () {
         var sliderElement = jQuery(this);
@@ -532,6 +557,26 @@ function initTermSlider($scope, clicked) {
         var CustomDots = sliderElement.data('custom-dots') === true || sliderElement.data('custom-dots') === 'true';
         var enableProgressBar = sliderElement.data('enable-progress-bar') === true || sliderElement.data('enable-progress-bar') === 'true';
 
+        function termSliderIsVertical(value) {
+            return value === true || value === 'true';
+        }
+
+        var vertical = termSliderIsVertical(sliderElement.data('vertical'));
+        var verticalTabletRaw = sliderElement.data('vertical-tablet');
+        var verticalTablet = (verticalTabletRaw === undefined || verticalTabletRaw === '') ? vertical : termSliderIsVertical(verticalTabletRaw);
+        var verticalMobileRaw = sliderElement.data('vertical-mobile');
+        var verticalMobile = (verticalMobileRaw === undefined || verticalMobileRaw === '') ? verticalTablet : termSliderIsVertical(verticalMobileRaw);
+
+        function termSliderApplyVertical(settings, isVertical) {
+            if (!settings) {
+                return settings;
+            }
+            settings.vertical = isVertical;
+            settings.verticalSwiping = isVertical;
+            settings.fade = isVertical ? false : fade_effect;
+            return settings;
+        }
+
         // Use real viewport width (jQuery width can be misleading on some mobiles)
         var viewportWidth = (typeof window !== 'undefined' && window.innerWidth) ? window.innerWidth : $(window).width();
         var isMobileViewport = (typeof window !== 'undefined' && window.matchMedia) ? window.matchMedia('(max-width: 767px)').matches : (viewportWidth <= 767);
@@ -541,60 +586,55 @@ function initTermSlider($scope, clicked) {
             return;
         }
 
+        var termSlickOptions = {
+            rtl: cubewpSlickIsRTL(),
+            autoplay: autoplay,
+            autoplaySpeed: autoplaySpeed,
+            speed: Speed,
+            infinite: infinite,
+            fade: vertical ? false : fade_effect,
+            variableWidth: variableWidth,
+            prevArrow: prevArrowButton,
+            nextArrow: nextArrowButton,
+            arrows: CustomArrows,
+            dots: CustomDots,
+            draggable: draggable,
+            vertical: vertical,
+            verticalSwiping: vertical,
+        };
+
         if (sliderDeviceOption === "mobile_only" && isMobileViewport) {
-            sliderElement.slick({
-                slidesToShow: slidesToShowMobile,
-                slidesToScroll: slidesToScrollMobile,
-                autoplay: autoplay,
-                autoplaySpeed: autoplaySpeed,
-                speed: Speed,
-                infinite: infinite,
-                fade: fade_effect,
-                variableWidth: variableWidth,
-                prevArrow: prevArrowButton,
-                nextArrow: nextArrowButton,
-                arrows: CustomArrows,
-                dots: CustomDots,
-                draggable: draggable,
-            });
+            termSlickOptions.slidesToShow = slidesToShowMobile;
+            termSlickOptions.slidesToScroll = slidesToScrollMobile;
+            termSliderApplyVertical(termSlickOptions, verticalMobile);
+            sliderElement.slick(termSlickOptions);
           }else{
-            sliderElement.slick({
-                slidesToShow: slidesToShow,
-                slidesToScroll: slidesToScroll,
-                autoplay: autoplay,
-                autoplaySpeed: autoplaySpeed,
-                speed: Speed,
-                infinite: infinite,
-                fade: fade_effect,
-                variableWidth: variableWidth,
-                prevArrow: prevArrowButton,
-                nextArrow: nextArrowButton,
-                arrows: CustomArrows,
-                dots: CustomDots,
-                draggable: draggable,
-                responsive: [{
+            termSlickOptions.slidesToShow = slidesToShow;
+            termSlickOptions.slidesToScroll = slidesToScroll;
+            termSliderApplyVertical(termSlickOptions, vertical);
+            termSlickOptions.responsive = [{
                         breakpoint: 1025,
-                        settings: {
+                        settings: termSliderApplyVertical({
                             slidesToShow: slidesToShowTablet,
-                            slidesToScroll: slidesToScrollTablet
-                        }
+                            slidesToScroll: slidesToScrollTablet,
+                        }, verticalTablet)
                     },
                     {
                         breakpoint: 768,
-                        settings: {
+                        settings: termSliderApplyVertical({
                             slidesToShow: slidesToShowTabletPortrait,
-                            slidesToScroll: slidesToScrollTabletPortrait
-                        }
+                            slidesToScroll: slidesToScrollTabletPortrait,
+                        }, verticalTablet)
                     },
                     {
                         breakpoint: 481,
-                        settings: {
+                        settings: termSliderApplyVertical({
                             slidesToShow: slidesToShowMobile,
-                            slidesToScroll: slidesToScrollMobile
-                        }
+                            slidesToScroll: slidesToScrollMobile,
+                        }, verticalMobile)
                     }
-                ]
-            });
+                ];
+            sliderElement.slick(termSlickOptions);
           }
         
 
@@ -631,6 +671,7 @@ function initTermSlider($scope, clicked) {
     // Hook for Elementor frontend and editor
     jQuery(window).on('elementor/frontend/init', function () {
         elementorFrontend.hooks.addAction('frontend/element_ready/cubewp_taxonomy.default', initTermSlider);
+        elementorFrontend.hooks.addAction('frontend/element_ready/cubewp_users.default', initTermSlider);
     });
 
     // Initialize on document ready for frontend (non-Elementor contexts)
@@ -706,8 +747,8 @@ function initTermSlider($scope, clicked) {
                     return;
                 }
 
-                const distance = settings.cwp_hover_translate_distance ?.size || 30;
-                const duration = settings.cwp_hover_transition_duration ?.size || 0.3;
+                const distance = settings.cwp_hover_translate_distance?.size || 30;
+                const duration = settings.cwp_hover_transition_duration?.size || 0.3;
 
                 let transform = '';
                 let opacity = '1';
@@ -928,20 +969,27 @@ function initTermSlider($scope, clicked) {
             cwp_setCookie("cwp_archive_switcher", 'grid-view', 30);
         }
     });
-    if (jQuery('.cubewp-view-btn.active').length > 0) {
-        if (typeof cwp_search_filters_ajax_content === 'function') {
-            var $btn = jQuery('.cubewp-view-btn.active');
-            var view = $btn.data('view');
-            // Apply view class to archive container
-            var $archive = jQuery('.cwp-search-result-output .cwp-grids-container');
-            $archive.removeClass('grid-view list-view').addClass(view + '-view ');
-            if (view === 'list') {
-                cwp_setCookie("cwp_archive_switcher", 'list-view', 30);
-            } else if (view === 'grid') {
-                cwp_setCookie("cwp_archive_switcher", 'grid-view', 30);
-            }
-        }
+    
+    function getCookie(name) {
+        var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        return match ? decodeURIComponent(match[2]) : null;
     }
+
+    jQuery(document).ready(function () {
+        if (typeof cwp_search_filters_ajax_content === 'function') {
+            var $archive = jQuery('.cwp-search-result-output .cwp-grids-container');
+            var savedView = getCookie('cwp_archive_switcher'); // list-view / grid-view
+            if (!savedView) {
+                savedView = 'grid-view';
+            }
+            var view = (savedView === 'list-view') ? 'list' : 'grid';
+            $archive.removeClass('grid-view list-view').addClass(view + '-view');
+    
+            jQuery('.cubewp-view-btn').removeClass('active');
+            jQuery('.cubewp-view-btn[data-view="' + view + '"]').addClass('active');
+        }
+    });
+
     if (jQuery('.cwp-search-result-output .cwp-grids-container').length > 0) {
         if (typeof cwp_search_filters_ajax_content === 'function') {
             var $btn = jQuery('.cubewp-view-switcher');

@@ -68,6 +68,102 @@ class CubeWp_Elementor_Search_Widget extends Widget_Base
             ]
         );
 
+        $this->add_control(
+            'tabber_buttons_bg',
+            [
+                'label'     => esc_html__( 'Container Background Color', 'cubewp-framework' ),
+                'type'      => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-tabber-buttons' => 'background-color: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'tabber_buttons_width',
+            [
+                'label'      => esc_html__( 'Width', 'cubewp-framework' ),
+                'type'       => Controls_Manager::SLIDER,
+                'size_units' => [ 'px', '%', 'vw', 'custom' ],
+                'range'      => [
+                    'px' => [
+                        'min' => 0,
+                        'max' => 2000,
+                    ],
+                    '%' => [
+                        'min' => 0,
+                        'max' => 100,
+                    ],
+                ],
+                'selectors'  => [
+                    '{{WRAPPER}} .cubewp-tabber-buttons' => 'width: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'tabber_buttons_gap',
+            [
+                'label'      => esc_html__( 'Gap', 'cubewp-framework' ),
+                'type'       => Controls_Manager::SLIDER,
+                'size_units' => [ 'px', 'em', 'rem' ],
+                'range'      => [
+                    'px' => [
+                        'min' => 0,
+                        'max' => 200,
+                    ],
+                ],
+                'selectors'  => [
+                    '{{WRAPPER}} .cubewp-tabber-buttons' => 'gap: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_group_control(
+            \Elementor\Group_Control_Border::get_type(),
+            [
+                'name'     => 'tabber_buttons_border',
+                'selector' => '{{WRAPPER}} .cubewp-tabber-buttons',
+            ]
+        );
+
+        $this->add_responsive_control(
+            'tabber_buttons_border_radius',
+            [
+                'label'      => esc_html__( 'Container Border Radius', 'cubewp-framework' ),
+                'type'       => Controls_Manager::DIMENSIONS,
+                'size_units' => [ 'px', '%' ],
+                'selectors'  => [
+                    '{{WRAPPER}} .cubewp-tabber-buttons' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+
+        $this->add_responsive_control(
+            'tabber_buttons_padding',
+            [
+                'label'      => esc_html__( 'Container Padding', 'cubewp-framework' ),
+                'type'       => Controls_Manager::DIMENSIONS,
+                'size_units' => [ 'px', '%', 'em', 'rem' ],
+                'selectors'  => [
+                    '{{WRAPPER}} .cubewp-tabber-buttons' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'tabber_buttons_margin',
+            [
+                'label'      => esc_html__( 'Container Margin', 'cubewp-framework' ),
+                'type'       => Controls_Manager::DIMENSIONS,
+                'size_units' => [ 'px', '%', 'em', 'rem', 'custom' ],
+                'selectors'  => [
+                    '{{WRAPPER}} .cubewp-tabber-buttons' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
         // Tabber Button Position
         $this->add_control(
             'tabber_button_position',
@@ -364,6 +460,23 @@ class CubeWp_Elementor_Search_Widget extends Widget_Base
             ]
         );
 
+        $this->add_control(
+            'tabber_button_icon_visibility',
+            [
+                'label'        => esc_html__( 'Button Icon', 'cubewp-framework' ),
+                'type'         => Controls_Manager::SWITCHER,
+                'label_on'     => esc_html__( 'Show', 'cubewp-framework' ),
+                'label_off'    => esc_html__( 'Hide', 'cubewp-framework' ),
+                'return_value' => 'none',
+                'default'      => 'inline-flex',
+                'selectors'    => [
+                    '{{WRAPPER}} .cubewp-tabber-buttons .tabber-btn i,
+                    {{WRAPPER}} .cubewp-tabber-buttons .tabber-btn svg'
+                    => 'display: {{VALUE}};',
+                ],
+            ]
+        );
+
 
         // Tabber Button Hover Styles
         $this->start_controls_tabs('tabber_button_tabs');
@@ -429,6 +542,23 @@ class CubeWp_Elementor_Search_Widget extends Widget_Base
             ]
         );
 
+        $this->add_control(
+            'tabber_button_icon_visibility_hover',
+            [
+                'label'        => esc_html__( 'Button Icon', 'cubewp-framework' ),
+                'type'         => Controls_Manager::SWITCHER,
+                'label_on'     => esc_html__( 'Show', 'cubewp-framework' ),
+                'label_off'    => esc_html__( 'Hide', 'cubewp-framework' ),
+                'return_value' => 'none',
+                'default'      => 'inline-flex',
+                'selectors'    => [
+                    '{{WRAPPER}} .cubewp-tabber-buttons .tabber-btn:hover i,
+                    {{WRAPPER}} .cubewp-tabber-buttons .tabber-btn:hover svg'
+                    => 'display: {{VALUE}};',
+                ],
+            ]
+        );
+
         $this->end_controls_tab();
 
         // Active Tab
@@ -487,6 +617,23 @@ class CubeWp_Elementor_Search_Widget extends Widget_Base
                 'type' => Controls_Manager::COLOR,
                 'selectors' => [
                     '{{WRAPPER}} .cubewp-tabber-buttons .tabber-btn.active i, {{WRAPPER}} .cubewp-tabber-buttons .tabber-btn.active svg' => 'color: {{VALUE}}; fill: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'tabber_button_icon_visibility_active',
+            [
+                'label'        => esc_html__( 'Button Icon', 'cubewp-framework' ),
+                'type'         => Controls_Manager::SWITCHER,
+                'label_on'     => esc_html__( 'Show', 'cubewp-framework' ),
+                'label_off'    => esc_html__( 'Hide', 'cubewp-framework' ),
+                'return_value' => 'none',
+                'default'      => 'inline-flex',
+                'selectors'    => [
+                    '{{WRAPPER}} .cubewp-tabber-buttons .tabber-btn.active i,
+                    {{WRAPPER}} .cubewp-tabber-buttons .tabber-btn.active svg'
+                    => 'display: {{VALUE}};',
                 ],
             ]
         );
@@ -838,6 +985,17 @@ class CubeWp_Elementor_Search_Widget extends Widget_Base
                     ],
                     'color' => '#ddd',
                     'style' => 'solid',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'input_focus_border_color',
+            [
+                'label' => esc_html__( 'Focus Border Color', 'cubewp-framework' ),
+                'type'  => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-field-container input:focus'  => 'border-color: {{VALUE}};',
                 ],
             ]
         );
@@ -2529,13 +2687,13 @@ class CubeWp_Elementor_Search_Widget extends Widget_Base
         $this->add_control(
 			'cwp_keyword_suggestions_thumbnail_align_items',
 			[
-				'label' => __('Align Items', 'plugin-name'),
+				'label' => __('Align Items', 'cubewp-framework'),
 				'type' => Controls_Manager::SELECT,
 				'options' => [
-					'flex-start' => __('Start', 'plugin-name'),
-					'center' => __('Center', 'plugin-name'),
-					'flex-end' => __('End', 'plugin-name'),
-					'stretch' => __('Stretch', 'plugin-name'),
+					'flex-start' => __('Start', 'cubewp-framework'),
+					'center' => __('Center', 'cubewp-framework'),
+					'flex-end' => __('End', 'cubewp-framework'),
+					'stretch' => __('Stretch', 'cubewp-framework'),
 				],
 				'default' => 'center',
 				'selectors' => [
@@ -2786,6 +2944,24 @@ class CubeWp_Elementor_Search_Widget extends Widget_Base
                             'heading_size' => 'h6',
                         ]
                     );
+                    $this->add_control(
+                        'field_' . $field_key . '_visibility',
+                        [
+                            'label'        => esc_html__( 'Show Field', 'cubewp-framework' ),
+                            'type'         => Controls_Manager::SWITCHER,
+                            'label_on'     => esc_html__( 'Show', 'cubewp-framework' ),
+                            'label_off'    => esc_html__( 'Hide', 'cubewp-framework' ),
+                            'return_value' => 'yes',
+                            'default'      => 'yes',
+                            'selectors'    => [
+                                $selector => 'display: {{VALUE}};',
+                            ],
+                            'selectors_dictionary' => [
+                                'yes' => 'block',
+                                ''    => 'none',
+                            ],
+                        ]
+                    );
                     $this->add_responsive_control(
                         'field_' . $field_key . '_label_bg_color',
                         [
@@ -2953,7 +3129,7 @@ class CubeWp_Elementor_Search_Widget extends Widget_Base
                             'type' => Controls_Manager::DIMENSIONS,
                             'size_units' => ['px', '%', 'vw'],
                             'selectors' => [
-                                $selector . ' select, ' . $selector . ' input' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}} !important; position: relative;',
+                                $selector . ' select, ' . $selector . ' input, ' . $selector . ' span.select2-selection.select2-selection--single, ' . $selector . ' .select2-container--default .select2-selection--multiple' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}} !important; position: relative;',
                             ],
                         ]
                     );
@@ -2962,7 +3138,7 @@ class CubeWp_Elementor_Search_Widget extends Widget_Base
                         [
                             'label' => esc_html__('Width', 'cubewp-framework'),
                             'type' => Controls_Manager::SLIDER,
-                            'size_units' => ['px', '%', 'vw'],
+                            'size_units' => ['px', '%', 'vw', 'custom'],
                             'default' => [
                                 'size' => 100,
                                 'unit' => '%',
@@ -3498,6 +3674,18 @@ class CubeWp_Elementor_Search_Widget extends Widget_Base
                 ],
             ]
         );
+        $this->add_control(
+			'submit_button_transition',
+			array(
+				'label'       => esc_html__( 'Transition', 'cubewp-framework' ),
+				'type'        => \Elementor\Controls_Manager::TEXT,
+				'default'     => '0.3s ease',
+				'placeholder' => '0.3s ease',
+				'selectors'   => array(
+					'{{WRAPPER}} .cwp-submit-search' => 'transition: {{VALUE}};',
+				),
+			)
+		);
 
         $this->add_control(
             'submit_button_hover_transform',
@@ -3553,6 +3741,28 @@ class CubeWp_Elementor_Search_Widget extends Widget_Base
                 'default' => [
                     'size' => 40,
                     'unit' => 'px',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'submit_button_width',
+            [
+                'label' => esc_html__('Width', 'cubewp-framework'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', '%', 'em', 'custom'],
+                'range' => [
+                    'px' => [
+                        'min' => 20,
+                        'max' => 10000,
+                    ],
+                    '%' => [
+                        'min' => 10,
+                        'max' => 100,
+                    ],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-submit-search' => 'width: {{SIZE}}{{UNIT}};',
                 ],
             ]
         );

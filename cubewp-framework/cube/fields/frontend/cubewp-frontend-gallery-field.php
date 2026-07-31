@@ -70,6 +70,7 @@ class CubeWp_Frontend_Gallery_Field extends CubeWp_Frontend
 						'name'  => ! empty($args['custom_name']) ? $args['custom_name'] . '[]' : $args['name'],
 						'value' => $rand_id,
 					);
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 					echo cwp_render_hidden_input($input_attrs);
 					if (isset($args["file_types"]) && !empty($args["file_types"])) {
 						$accept = 'accept="' . $args["file_types"] . '"';
@@ -84,6 +85,7 @@ class CubeWp_Frontend_Gallery_Field extends CubeWp_Frontend
 						'value'       => '',
 						'extra_attrs' => $accept . ' multiple="multiple"',
 					);
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 					echo  cwp_render_file_input($input_attrs);
 					?>
 				</div>

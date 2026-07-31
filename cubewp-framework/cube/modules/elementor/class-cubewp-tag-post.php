@@ -243,7 +243,7 @@ class CubeWp_Tag_Post extends Data_Tag
 			'post_status'    => 'publish',
 			'posts_per_page' => -1,
 			'fields'         => 'ids',
-			'meta_query'     => $meta_query,
+			'meta_query'     => $meta_query, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Custom-field filtering is the core purpose of this framework.
 			'no_found_rows'  => true,
 		));
 

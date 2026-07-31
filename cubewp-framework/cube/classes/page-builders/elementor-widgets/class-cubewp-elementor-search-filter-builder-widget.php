@@ -713,7 +713,7 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                         'type' => Controls_Manager::SELECT,
                         'default' => 'checkbox',
                         'options' => [
-                            'checkbox' => esc_html__('Checkbox', 'cubewp-framework'), 
+                            'checkbox' => esc_html__('Checkbox', 'cubewp-framework'),
                             'select' => esc_html__('Select', 'cubewp-framework'),
                             'select2' => esc_html__('Select2', 'cubewp-framework'),
                         ],
@@ -1070,7 +1070,7 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                         'type' => Controls_Manager::SELECT,
                         'default' => 'checkbox',
                         'options' => [
-                            'checkbox' => esc_html__('Checkbox', 'cubewp-framework'), 
+                            'checkbox' => esc_html__('Checkbox', 'cubewp-framework'),
                             'select' => esc_html__('Select', 'cubewp-framework'),
                             'select2' => esc_html__('Select2', 'cubewp-framework'),
                         ],
@@ -1078,7 +1078,7 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                             'popup_field_type' => 'taxonomies',
                         ],
                     ]
-                ); 
+                );
 
                 // Allow Near Me Option for Popup Repeater (for Google Address fields)
                 $popup_custom_repeater->add_control(
@@ -1883,7 +1883,7 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
             [
                 'label' => esc_html__('Margin', 'cubewp-framework'),
                 'type' => Controls_Manager::DIMENSIONS,
-                'size_units' => ['px', '%', 'em','custom'],
+                'size_units' => ['px', '%', 'em', 'custom'],
                 'default' => [
                     'top' => '0',
                     'right' => '0',
@@ -2811,7 +2811,7 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                     ],
                     'em' => [
                         'min' => 0,
-                        'max' => 5, 
+                        'max' => 5,
                     ],
                     'rem' => [
                         'min' => 0,
@@ -3908,6 +3908,98 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
             ]
         );
 
+        // Label Background Color
+        $this->add_control(
+            'checkbox_radio_label_bg_color',
+            [
+                'label' => esc_html__('Label Background Color', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-field-checkbox-container .cwp-field-checkbox label' => 'background-color: {{VALUE}};',
+                    '{{WRAPPER}} .cwp-field-radio-container .cwp-field-radio label' => 'background-color: {{VALUE}};',
+                ],
+                'condition' => [
+                    'enable_custom_checkbox_radio' => 'yes',
+                ],
+            ]
+        );
+
+        // Label Border
+        $this->add_group_control(
+            Group_Control_Border::get_type(),
+            [
+                'name' => 'checkbox_radio_label_border',
+                'label' => esc_html__('Label Border', 'cubewp-framework'),
+                'selector' => '{{WRAPPER}} .cwp-field-checkbox-container .cwp-field-checkbox label, {{WRAPPER}} .cwp-field-radio-container .cwp-field-radio label',
+                'condition' => [
+                    'enable_custom_checkbox_radio' => 'yes',
+                ],
+            ]
+        );
+
+        // Label Border Radius
+        $this->add_responsive_control(
+            'checkbox_radio_label_border_radius',
+            [
+                'label' => esc_html__('Label Border Radius', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%'],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-field-checkbox-container .cwp-field-checkbox label' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                    '{{WRAPPER}} .cwp-field-radio-container .cwp-field-radio label' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+                'condition' => [
+                    'enable_custom_checkbox_radio' => 'yes',
+                ],
+            ]
+        );
+
+        // Label Padding
+        $this->add_responsive_control(
+            'checkbox_radio_label_padding',
+            [
+                'label' => esc_html__('Label Padding', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', 'em', '%'],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-field-checkbox-container .cwp-field-checkbox label' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}} !important;',
+                    '{{WRAPPER}} .cwp-field-radio-container .cwp-field-radio label' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}} !important;',
+                ],
+                'condition' => [
+                    'enable_custom_checkbox_radio' => 'yes',
+                ],
+            ]
+        );
+
+        // Label Box Shadow
+        $this->add_group_control(
+            Group_Control_Box_Shadow::get_type(),
+            [
+                'name' => 'checkbox_radio_label_box_shadow',
+                'label' => esc_html__('Label Box Shadow', 'cubewp-framework'),
+                'selector' => '{{WRAPPER}} .cwp-field-checkbox-container .cwp-field-checkbox label, {{WRAPPER}} .cwp-field-radio-container .cwp-field-radio label',
+                'condition' => [
+                    'enable_custom_checkbox_radio' => 'yes',
+                ],
+            ]
+        );
+
+        // Label Transition
+        $this->add_control(
+            'checkbox_radio_label_transition',
+            [
+                'label' => esc_html__('Label Transition', 'cubewp-framework'),
+                'type' => Controls_Manager::TEXT,
+                'default' => '0.3s ease',
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-field-checkbox-container .cwp-field-checkbox label,
+             {{WRAPPER}} .cwp-field-radio-container .cwp-field-radio label' => 'transition: {{VALUE}};',
+                ],
+                'condition' => [
+                    'enable_custom_checkbox_radio' => 'yes',
+                ],
+            ]
+        );
 
         // Spacing between checkbox/radio and label text
         $this->add_responsive_control(
@@ -3956,7 +4048,7 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
             [
                 'label' => esc_html__('Width', 'cubewp-framework'),
                 'type' => Controls_Manager::SLIDER,
-                'size_units' => ['px', '%', 'em', 'rem'],
+                'size_units' => ['px', '%', 'em', 'rem', 'custom'],
                 'range' => [
                     'px' => [
                         'min' => 0,
@@ -4178,7 +4270,50 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
             ]
         );
 
+        // Label Background Color (Checked)
+        $this->add_control(
+            'checkbox_radio_label_bg_color_checked',
+            [
+                'label' => esc_html__('Label Background Color (Checked)', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-field-checkbox-container .cwp-field-checkbox input[type="checkbox"]:checked + label' => 'background-color: {{VALUE}};',
+                    '{{WRAPPER}} .cwp-field-radio-container .cwp-field-radio input[type="radio"]:checked + label' => 'background-color: {{VALUE}};',
+                ],
+                'condition' => [
+                    'enable_custom_checkbox_radio' => 'yes',
+                ],
+            ]
+        );
 
+        // Label Border Color (Checked)
+        $this->add_control(
+            'checkbox_radio_label_border_color_checked',
+            [
+                'label' => esc_html__('Label Border Color (Checked)', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-field-checkbox-container .cwp-field-checkbox input[type="checkbox"]:checked + label' => 'border-color: {{VALUE}};',
+                    '{{WRAPPER}} .cwp-field-radio-container .cwp-field-radio input[type="radio"]:checked + label' => 'border-color: {{VALUE}};',
+                ],
+                'condition' => [
+                    'enable_custom_checkbox_radio' => 'yes',
+                ],
+            ]
+        );
+
+        // Label Box Shadow (Checked)
+        $this->add_group_control(
+            Group_Control_Box_Shadow::get_type(),
+            [
+                'name' => 'checkbox_radio_label_box_shadow_checked',
+                'label' => esc_html__('Label Box Shadow (Checked)', 'cubewp-framework'),
+                'selector' => '{{WRAPPER}} .cwp-field-checkbox-container .cwp-field-checkbox input[type="checkbox"]:checked + label, {{WRAPPER}} .cwp-field-radio-container .cwp-field-radio input[type="radio"]:checked + label',
+                'condition' => [
+                    'enable_custom_checkbox_radio' => 'yes',
+                ],
+            ]
+        );
 
 
         $this->end_controls_tab();
@@ -4303,6 +4438,659 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
 
         $this->end_controls_section();
 
+        // Taxonomy checkbox hierarchy (parent / child lists)
+        $this->start_controls_section(
+            'section_taxonomy_checkbox_hierarchy',
+            [
+                'label'     => esc_html__('Taxonomy Checkbox Hierarchy', 'cubewp-framework'),
+                'tab'       => Controls_Manager::TAB_STYLE,
+                'condition' => [
+                    'filter_type' => 'filters',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'taxonomy_checkbox_accordion',
+            [
+                'label'        => esc_html__('Child Terms Accordion', 'cubewp-framework'),
+                'type'         => Controls_Manager::SWITCHER,
+                'label_on'     => esc_html__('Yes', 'cubewp-framework'),
+                'label_off'    => esc_html__('No', 'cubewp-framework'),
+                'return_value' => 'yes',
+                'default'      => '',
+                'description'  => esc_html__('Adds toggle arrows on parent terms. Child lists open and close on click.', 'cubewp-framework'),
+            ]
+        );
+
+        $this->add_control(
+            'taxonomy_children_collapsed',
+            [
+                'label'        => esc_html__('Hide Child Terms by Default', 'cubewp-framework'),
+                'type'         => Controls_Manager::SWITCHER,
+                'label_on'     => esc_html__('Yes', 'cubewp-framework'),
+                'label_off'    => esc_html__('No', 'cubewp-framework'),
+                'return_value' => 'yes',
+                'default'      => 'yes',
+                'condition'    => [
+                    'taxonomy_checkbox_accordion' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'taxonomy_accordion_duration',
+            [
+                'label'      => esc_html__('Accordion Animation (ms)', 'cubewp-framework'),
+                'type'       => Controls_Manager::NUMBER,
+                'min'        => 0,
+                'max'        => 2000,
+                'step'       => 50,
+                'default'    => 300,
+                'condition'  => [
+                    'taxonomy_checkbox_accordion' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'taxonomy_parent_list_heading',
+            [
+                'label'     => esc_html__('Parent List (root)', 'cubewp-framework'),
+                'type'      => Controls_Manager::HEADING,
+                'separator' => 'before',
+            ]
+        );
+
+        $this->add_responsive_control(
+            'taxonomy_parent_ul_gap',
+            [
+                'label'      => esc_html__('List Gap', 'cubewp-framework'),
+                'type'       => Controls_Manager::SLIDER,
+                'size_units' => ['px', 'em'],
+                'range'      => [
+                    'px' => ['min' => 0, 'max' => 60],
+                ],
+                'selectors'  => [
+                    '{{WRAPPER}} .cwp-taxonomy-checkbox-tree.cwp-field-checkbox-container' => 'gap: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'taxonomy_parent_ul_padding',
+            [
+                'label'      => esc_html__('List Padding', 'cubewp-framework'),
+                'type'       => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', 'em', '%'],
+                'selectors'  => [
+                    '{{WRAPPER}} .cwp-taxonomy-checkbox-tree.cwp-field-checkbox-container' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'taxonomy_parent_li_gap',
+            [
+                'label'      => esc_html__('Parent Item Gap', 'cubewp-framework'),
+                'type'       => Controls_Manager::SLIDER,
+                'size_units' => ['px', 'em'],
+                'range'      => [
+                    'px' => ['min' => 0, 'max' => 60],
+                ],
+                'selectors'  => [
+                    '{{WRAPPER}} .cwp-taxonomy-checkbox-tree > li.cwp-taxonomy-depth-0' => 'margin-bottom: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'taxonomy_parent_li_padding',
+            [
+                'label'      => esc_html__('Parent Item Padding', 'cubewp-framework'),
+                'type'       => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', 'em', '%'],
+                'selectors'  => [
+                    '{{WRAPPER}} .cwp-taxonomy-checkbox-tree > li.cwp-taxonomy-depth-0 > .cwp-taxonomy-term-head' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'taxonomy_child_list_heading',
+            [
+                'label'     => esc_html__('Child List (nested)', 'cubewp-framework'),
+                'type'      => Controls_Manager::HEADING,
+                'separator' => 'before',
+            ]
+        );
+
+        $this->add_responsive_control(
+            'taxonomy_child_ul_indent',
+            [
+                'label'      => esc_html__('Child Indent (left)', 'cubewp-framework'),
+                'type'       => Controls_Manager::SLIDER,
+                'size_units' => ['px', 'em'],
+                'range'      => [
+                    'px' => ['min' => 0, 'max' => 80],
+                ],
+                'default'    => [
+                    'size' => 16,
+                    'unit' => 'px',
+                ],
+                'selectors'  => [
+                    '{{WRAPPER}} .cwp-taxonomy-checkbox-tree .cwp-taxonomy-children-list' => 'padding-left: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'taxonomy_child_ul_gap',
+            [
+                'label'      => esc_html__('Child List Gap', 'cubewp-framework'),
+                'type'       => Controls_Manager::SLIDER,
+                'size_units' => ['px', 'em'],
+                'range'      => [
+                    'px' => ['min' => 0, 'max' => 60],
+                ],
+                'selectors'  => [
+                    '{{WRAPPER}} .cwp-taxonomy-checkbox-tree .cwp-taxonomy-children-list' => 'gap: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'taxonomy_child_ul_padding',
+            [
+                'label'      => esc_html__('Child List Padding', 'cubewp-framework'),
+                'type'       => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', 'em', '%'],
+                'selectors'  => [
+                    '{{WRAPPER}} .cwp-taxonomy-checkbox-tree .cwp-taxonomy-children-list' => 'padding-top: {{TOP}}{{UNIT}}; padding-right: {{RIGHT}}{{UNIT}}; padding-bottom: {{BOTTOM}}{{UNIT}}; padding-left: {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'taxonomy_child_li_gap',
+            [
+                'label'      => esc_html__('Child Item Gap', 'cubewp-framework'),
+                'type'       => Controls_Manager::SLIDER,
+                'size_units' => ['px', 'em'],
+                'range'      => [
+                    'px' => ['min' => 0, 'max' => 40],
+                ],
+                'selectors'  => [
+                    '{{WRAPPER}} .cwp-taxonomy-checkbox-tree .cwp-taxonomy-children-list > li' => 'margin-bottom: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'taxonomy_child_li_padding',
+            [
+                'label'      => esc_html__('Child Item Padding', 'cubewp-framework'),
+                'type'       => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', 'em', '%'],
+                'selectors'  => [
+                    '{{WRAPPER}} .cwp-taxonomy-checkbox-tree .cwp-taxonomy-children-list > li > .cwp-taxonomy-term-head' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'taxonomy_child_label_heading',
+            [
+                'label'     => esc_html__('Child Term Labels', 'cubewp-framework'),
+                'type'      => Controls_Manager::HEADING,
+                'separator' => 'before',
+            ]
+        );
+
+        $this->add_group_control(
+            Group_Control_Typography::get_type(),
+            [
+                'name'     => 'taxonomy_child_label_typography',
+                'label'    => esc_html__('Child Typography', 'cubewp-framework'),
+                'selector' => '{{WRAPPER}} .cwp-taxonomy-checkbox-tree .cwp-taxonomy-children-list .cwp-field-checkbox label',
+            ]
+        );
+
+        $this->add_control(
+            'taxonomy_child_label_color',
+            [
+                'label'     => esc_html__('Child Text Color', 'cubewp-framework'),
+                'type'      => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-taxonomy-checkbox-tree .cwp-taxonomy-children-list .cwp-field-checkbox label' => 'color: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'taxonomy_child_label_color_checked',
+            [
+                'label'     => esc_html__('Child Text Color (Checked)', 'cubewp-framework'),
+                'type'      => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-taxonomy-checkbox-tree .cwp-taxonomy-children-list .cwp-field-checkbox input[type="checkbox"]:checked + label' => 'color: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'taxonomy_accordion_arrow_heading',
+            [
+                'label'     => esc_html__('Accordion Arrow', 'cubewp-framework'),
+                'type'      => Controls_Manager::HEADING,
+                'separator' => 'before',
+                'condition' => [
+                    'taxonomy_checkbox_accordion' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'taxonomy_accordion_toggle_position',
+            [
+                'label'     => esc_html__('Toggle Position', 'cubewp-framework'),
+                'type'      => Controls_Manager::SELECT,
+                'default'   => 'right',
+                'options'   => [
+                    'left'  => esc_html__('Left', 'cubewp-framework'),
+                    'right' => esc_html__('Right', 'cubewp-framework'),
+                ],
+                'condition' => [
+                    'taxonomy_checkbox_accordion' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'taxonomy_accordion_toggle_absolute',
+            [
+                'label'        => esc_html__('Absolute Position Toggle', 'cubewp-framework'),
+                'type'         => Controls_Manager::SWITCHER,
+                'label_on'     => esc_html__('Yes', 'cubewp-framework'),
+                'label_off'    => esc_html__('No', 'cubewp-framework'),
+                'return_value' => 'yes',
+                'default'      => '',
+                'condition'    => [
+                    'taxonomy_checkbox_accordion' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'taxonomy_accordion_arrow_size',
+            [
+                'label'      => esc_html__('Arrow Size', 'cubewp-framework'),
+                'type'       => Controls_Manager::SLIDER,
+                'size_units' => ['px'],
+                'range'      => [
+                    'px' => ['min' => 6, 'max' => 24],
+                ],
+                'default'    => [
+                    'size' => 8,
+                    'unit' => 'px',
+                ],
+                'selectors'  => [
+                    '{{WRAPPER}} .cwp-taxonomy-accordion-icon' => 'width: {{SIZE}}{{UNIT}}; height: {{SIZE}}{{UNIT}};',
+                ],
+                'condition'  => [
+                    'taxonomy_checkbox_accordion' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'taxonomy_accordion_arrow_color',
+            [
+                'label'     => esc_html__('Arrow Color', 'cubewp-framework'),
+                'type'      => Controls_Manager::COLOR,
+                'default'   => '#50575e',
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-taxonomy-accordion-icon' => 'border-color: {{VALUE}};',
+                ],
+                'condition' => [
+                    'taxonomy_checkbox_accordion' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'taxonomy_accordion_toggle_spacing_left',
+            [
+                'label'      => esc_html__('Toggle Spacing (Left position)', 'cubewp-framework'),
+                'type'       => Controls_Manager::SLIDER,
+                'size_units' => ['px', 'em'],
+                'range'      => [
+                    'px' => ['min' => 0, 'max' => 30],
+                ],
+                'default'    => [
+                    'size' => 8,
+                    'unit' => 'px',
+                ],
+                'selectors'  => [
+                    '{{WRAPPER}} .cwp-taxonomy-toggle-pos-left .cwp-taxonomy-accordion-toggle' => 'margin-right: {{SIZE}}{{UNIT}};',
+                ],
+                'condition'  => [
+                    'taxonomy_checkbox_accordion' => 'yes',
+                    'taxonomy_accordion_toggle_position' => 'left',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'taxonomy_accordion_toggle_spacing_right',
+            [
+                'label'      => esc_html__('Toggle Spacing (Right position)', 'cubewp-framework'),
+                'type'       => Controls_Manager::SLIDER,
+                'size_units' => ['px', 'em'],
+                'range'      => [
+                    'px' => ['min' => 0, 'max' => 30],
+                ],
+                'default'    => [
+                    'size' => 8,
+                    'unit' => 'px',
+                ],
+                'selectors'  => [
+                    '{{WRAPPER}} .cwp-taxonomy-toggle-pos-right .cwp-taxonomy-accordion-toggle' => 'margin-left: {{SIZE}}{{UNIT}};',
+                ],
+                'condition'  => [
+                    'taxonomy_checkbox_accordion' => 'yes',
+                    'taxonomy_accordion_toggle_position' => 'right',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'taxonomy_accordion_toggle_offset_y',
+            [
+                'label'      => esc_html__('Absolute Offset Top', 'cubewp-framework'),
+                'type'       => Controls_Manager::SLIDER,
+                'size_units' => ['px', '%'],
+                'range'      => [
+                    'px' => ['min' => 0, 'max' => 100],
+                    '%'  => ['min' => 0, 'max' => 100],
+                ],
+                'selectors'  => [
+                    '{{WRAPPER}} .cwp-taxonomy-toggle-absolute .cwp-taxonomy-accordion-toggle' => 'top: {{SIZE}}{{UNIT}};',
+                ],
+                'condition'  => [
+                    'taxonomy_checkbox_accordion' => 'yes',
+                    'taxonomy_accordion_toggle_absolute' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'taxonomy_accordion_toggle_offset_right',
+            [
+                'label'      => esc_html__('Absolute Offset Right', 'cubewp-framework'),
+                'type'       => Controls_Manager::SLIDER,
+                'size_units' => ['px', '%'],
+                'range'      => [
+                    'px' => ['min' => 0, 'max' => 100],
+                ],
+                'selectors'  => [
+                    '{{WRAPPER}} .cwp-taxonomy-toggle-absolute.cwp-taxonomy-toggle-pos-right .cwp-taxonomy-accordion-toggle' => 'right: {{SIZE}}{{UNIT}};',
+                ],
+                'condition'  => [
+                    'taxonomy_checkbox_accordion' => 'yes',
+                    'taxonomy_accordion_toggle_absolute' => 'yes',
+                    'taxonomy_accordion_toggle_position' => 'right',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'taxonomy_accordion_toggle_offset_left',
+            [
+                'label'      => esc_html__('Absolute Offset Left', 'cubewp-framework'),
+                'type'       => Controls_Manager::SLIDER,
+                'size_units' => ['px', '%'],
+                'range'      => [
+                    'px' => ['min' => 0, 'max' => 100],
+                ],
+                'selectors'  => [
+                    '{{WRAPPER}} .cwp-taxonomy-toggle-absolute.cwp-taxonomy-toggle-pos-left .cwp-taxonomy-accordion-toggle' => 'left: {{SIZE}}{{UNIT}};',
+                ],
+                'condition'  => [
+                    'taxonomy_checkbox_accordion' => 'yes',
+                    'taxonomy_accordion_toggle_absolute' => 'yes',
+                    'taxonomy_accordion_toggle_position' => 'left',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'taxonomy_terms_show_more_heading',
+            [
+                'label'     => esc_html__('View More / Less', 'cubewp-framework'),
+                'type'      => Controls_Manager::HEADING,
+                'separator' => 'before',
+            ]
+        );
+
+        $this->add_control(
+            'taxonomy_terms_show_more',
+            [
+                'label'        => esc_html__('Enable View More', 'cubewp-framework'),
+                'type'         => Controls_Manager::SWITCHER,
+                'label_on'     => esc_html__('Yes', 'cubewp-framework'),
+                'label_off'    => esc_html__('No', 'cubewp-framework'),
+                'return_value' => 'yes',
+                'default'      => '',
+                'description'  => esc_html__('Limits how many terms (parents + children) show initially. Applies to the full taxonomy tree.', 'cubewp-framework'),
+            ]
+        );
+
+        $this->add_control(
+            'taxonomy_terms_visible_count',
+            [
+                'label'     => esc_html__('Visible Terms (default)', 'cubewp-framework'),
+                'type'      => Controls_Manager::NUMBER,
+                'min'       => 1,
+                'max'       => 500,
+                'step'      => 1,
+                'default'   => 10,
+                'condition' => [
+                    'taxonomy_terms_show_more' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'taxonomy_terms_more_text',
+            [
+                'label'     => esc_html__('View More Text', 'cubewp-framework'),
+                'type'      => Controls_Manager::TEXT,
+                'default'   => esc_html__('View more', 'cubewp-framework'),
+                'condition' => [
+                    'taxonomy_terms_show_more' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'taxonomy_terms_less_text',
+            [
+                'label'     => esc_html__('View Less Text', 'cubewp-framework'),
+                'type'      => Controls_Manager::TEXT,
+                'default'   => esc_html__('View less', 'cubewp-framework'),
+                'condition' => [
+                    'taxonomy_terms_show_more' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'taxonomy_show_more_style_heading',
+            [
+                'label'     => esc_html__('View More Button Style', 'cubewp-framework'),
+                'type'      => Controls_Manager::HEADING,
+                'separator' => 'before',
+                'condition' => [
+                    'taxonomy_terms_show_more' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_group_control(
+            Group_Control_Typography::get_type(),
+            [
+                'name'      => 'taxonomy_show_more_typography',
+                'selector'  => '{{WRAPPER}} .cwp-taxonomy-terms-show-more',
+                'condition' => [
+                    'taxonomy_terms_show_more' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'taxonomy_show_more_color',
+            [
+                'label'     => esc_html__('Text Color', 'cubewp-framework'),
+                'type'      => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-taxonomy-terms-show-more' => 'color: {{VALUE}};',
+                ],
+                'condition' => [
+                    'taxonomy_terms_show_more' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'taxonomy_show_more_color_hover',
+            [
+                'label'     => esc_html__('Text Color (Hover)', 'cubewp-framework'),
+                'type'      => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-taxonomy-terms-show-more:hover' => 'color: {{VALUE}};',
+                ],
+                'condition' => [
+                    'taxonomy_terms_show_more' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'taxonomy_show_more_bg_color',
+            [
+                'label'     => esc_html__('Background Color', 'cubewp-framework'),
+                'type'      => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-taxonomy-terms-show-more' => 'background-color: {{VALUE}};',
+                ],
+                'condition' => [
+                    'taxonomy_terms_show_more' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'taxonomy_show_more_bg_color_hover',
+            [
+                'label'     => esc_html__('Background Color (Hover)', 'cubewp-framework'),
+                'type'      => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-taxonomy-terms-show-more:hover' => 'background-color: {{VALUE}};',
+                ],
+                'condition' => [
+                    'taxonomy_terms_show_more' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'taxonomy_show_more_align',
+            [
+                'label'     => esc_html__('Alignment', 'cubewp-framework'),
+                'type'      => Controls_Manager::CHOOSE,
+                'options'   => [
+                    'left'   => [
+                        'title' => esc_html__('Left', 'cubewp-framework'),
+                        'icon'  => 'eicon-text-align-left',
+                    ],
+                    'center' => [
+                        'title' => esc_html__('Center', 'cubewp-framework'),
+                        'icon'  => 'eicon-text-align-center',
+                    ],
+                    'right'  => [
+                        'title' => esc_html__('Right', 'cubewp-framework'),
+                        'icon'  => 'eicon-text-align-right',
+                    ],
+                ],
+                'default'   => 'left',
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-taxonomy-terms-show-more-wrap' => 'text-align: {{VALUE}};',
+                ],
+                'condition' => [
+                    'taxonomy_terms_show_more' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'taxonomy_show_more_padding',
+            [
+                'label'      => esc_html__('Padding', 'cubewp-framework'),
+                'type'       => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', 'em', '%'],
+                'selectors'  => [
+                    '{{WRAPPER}} .cwp-taxonomy-terms-show-more' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+                'condition'  => [
+                    'taxonomy_terms_show_more' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'taxonomy_show_more_margin',
+            [
+                'label'      => esc_html__('Margin', 'cubewp-framework'),
+                'type'       => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', 'em', '%'],
+                'selectors'  => [
+                    '{{WRAPPER}} .cwp-taxonomy-terms-show-more' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+                'condition'  => [
+                    'taxonomy_terms_show_more' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_group_control(
+            Group_Control_Border::get_type(),
+            [
+                'name'      => 'taxonomy_show_more_border',
+                'selector'  => '{{WRAPPER}} .cwp-taxonomy-terms-show-more',
+                'condition' => [
+                    'taxonomy_terms_show_more' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'taxonomy_show_more_radius',
+            [
+                'label'      => esc_html__('Border Radius', 'cubewp-framework'),
+                'type'       => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em'],
+                'selectors'  => [
+                    '{{WRAPPER}} .cwp-taxonomy-terms-show-more' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+                'condition'  => [
+                    'taxonomy_terms_show_more' => 'yes',
+                ],
+            ]
+        );
+
+        $this->end_controls_section();
+
         // Dropdown Style Section
 
 
@@ -4324,7 +5112,7 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
             'popup_dropdown_settings_notice',
             [
                 'type' => \Elementor\Controls_Manager::RAW_HTML,
-                'raw' => '<div style="margin-bottom: 15px; color: #1e87f0;"><strong>' . esc_html__('Note:') . '</strong> ' . esc_html__('All these settings will apply to both Dropdown and Popup display modes.', 'cubewp-framework') . '</div>',
+                'raw' => '<div style="margin-bottom: 15px; color: #1e87f0;"><strong>' . esc_html__('Note:', 'cubewp-framework') . '</strong> ' . esc_html__('All these settings will apply to both Dropdown and Popup display modes.', 'cubewp-framework') . '</div>',
                 'content_classes' => 'elementor-panel-alert elementor-panel-alert-info',
             ]
         );
@@ -6232,6 +7020,38 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
             ]
         );
 
+        $this->add_responsive_control(
+            'sorting_dropdown_item_margin',
+            [
+                'label' => esc_html__('Margin', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em'],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-sorting-dropdown-item' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+                'condition' => [
+                    'filter_type' => 'sorting',
+                    'sorting_display_type' => 'dropdown',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'sorting_dropdown_item_last_margin',
+            [
+                'label' => esc_html__('Last Item Margin', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em'],
+                'selectors' => [
+                    '{{WRAPPER}} .cubewp-sorting-dropdown-item:last-child' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+                'condition' => [
+                    'filter_type' => 'sorting',
+                    'sorting_display_type' => 'dropdown',
+                ],
+            ]
+        );
+
         $this->add_control(
             'sorting_dropdown_item_color_hover',
             [
@@ -6520,41 +7340,41 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
     }
 
     protected function get_term_meta_key_options($post_type = '')
-	{
-		$options = array('' => esc_html__('Select Term Meta Key', 'cubewp-frontend'));
+    {
+        $options = array('' => esc_html__('Select Term Meta Key', 'cubewp-framework'));
 
-		if (empty($post_type) || !function_exists('CWP')) {
-			return $options;
-		}
+        if (empty($post_type) || !function_exists('CWP')) {
+            return $options;
+        }
 
-		// Get all taxonomies for this post type
-		$taxonomies = get_object_taxonomies($post_type, 'objects');
-		if (empty($taxonomies) || !is_array($taxonomies)) {
-			return $options;
-		}
+        // Get all taxonomies for this post type
+        $taxonomies = get_object_taxonomies($post_type, 'objects');
+        if (empty($taxonomies) || !is_array($taxonomies)) {
+            return $options;
+        }
 
-		// Get taxonomy custom fields from CubeWP
-		$tax_custom_fields = CWP()->get_custom_fields('taxonomy');
+        // Get taxonomy custom fields from CubeWP
+        $tax_custom_fields = CWP()->get_custom_fields('taxonomy');
 
-		if (!empty($tax_custom_fields) && is_array($tax_custom_fields)) {
-			foreach ($taxonomies as $taxonomy) {
-				$taxonomy_name = $taxonomy->name;
-				
-				// Check if this taxonomy has custom fields
-				if (isset($tax_custom_fields[$taxonomy_name]) && !empty($tax_custom_fields[$taxonomy_name])) {
-					foreach ($tax_custom_fields[$taxonomy_name] as $field) {
-						// Only include taxonomy type fields (which can store term relationships)
-						if (isset($field['type']) && $field['type'] === 'taxonomy' && isset($field['slug']) && isset($field['name'])) {
-							$field_label = !empty($field['label']) ? $field['label'] : $field['name'];
-							$options[$field['slug']] = $field_label . ' (' . $taxonomy->label . ')';
-						}
-					}
-				}
-			}
-		}
+        if (!empty($tax_custom_fields) && is_array($tax_custom_fields)) {
+            foreach ($taxonomies as $taxonomy) {
+                $taxonomy_name = $taxonomy->name;
 
-		return $options;
-	}
+                // Check if this taxonomy has custom fields
+                if (isset($tax_custom_fields[$taxonomy_name]) && !empty($tax_custom_fields[$taxonomy_name])) {
+                    foreach ($tax_custom_fields[$taxonomy_name] as $field) {
+                        // Only include taxonomy type fields (which can store term relationships)
+                        if (isset($field['type']) && $field['type'] === 'taxonomy' && isset($field['slug']) && isset($field['name'])) {
+                            $field_label = !empty($field['label']) ? $field['label'] : $field['name'];
+                            $options[$field['slug']] = $field_label . ' (' . $taxonomy->label . ')';
+                        }
+                    }
+                }
+            }
+        }
+
+        return $options;
+    }
 
     /**
      * Get custom fields for a post type
@@ -6683,6 +7503,7 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
         $this->enqueue_filter_scripts();
 
         $settings = $this->get_settings_for_display();
+        $this->set_taxonomy_checkbox_ui_context($settings);
         $filter_type = isset($settings['filter_type']) ? $settings['filter_type'] : 'filters';
         $show_data_for = isset($settings['show_data_for']) ? $settings['show_data_for'] : 'mobile_desktop';
         $post_type = isset($settings['post_type']) ? $settings['post_type'] : 'post';
@@ -6694,10 +7515,12 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
         if (!cubewp_is_elementor_editing()) {
             if ($show_data_for == 'mobile') {
                 if (!wp_is_mobile()) {
+                    $this->clear_taxonomy_checkbox_ui_context();
                     return;
                 }
             } elseif ($show_data_for == 'desktop') {
                 if (wp_is_mobile()) {
+                    $this->clear_taxonomy_checkbox_ui_context();
                     return;
                 }
             }
@@ -6705,11 +7528,13 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
         // If sorting is selected, render sorting instead of filters
         if ($filter_type === 'sorting') {
             $this->render_sorting($settings, $post_type);
+            $this->clear_taxonomy_checkbox_ui_context();
             return;
         }
 
         if ($filter_type === 'reset') {
             $this->render_reset_button($settings, $post_type);
+            $this->clear_taxonomy_checkbox_ui_context();
             return;
         }
 
@@ -6753,7 +7578,7 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
         $taxonomy_name = '';
         $taxonomy_display_type = isset($settings['taxonomy_display_type_' . $post_type]) ? $settings['taxonomy_display_type_' . $post_type] : 'checkbox';
         $taxonomy_placeholder = isset($settings['taxonomy_display_type_placeholder' . $post_type]) ? $settings['taxonomy_display_type_placeholder' . $post_type] : '';
-      
+
         $is_business_hours = false;
         $is_google_address = false;
         $business_hours_options = [];
@@ -6871,8 +7696,20 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
             $additional_classes .= ' cubewp-filter-accordion-mode';
         }
 
-        // Prepare data attributes for custom icons
+        // Prepare data attributes for custom icons / taxonomy accordion
         $data_attrs = '';
+        if (isset($settings['taxonomy_checkbox_accordion']) && $settings['taxonomy_checkbox_accordion'] === 'yes') {
+            $accordion_duration = isset($settings['taxonomy_accordion_duration']) ? absint($settings['taxonomy_accordion_duration']) : 300;
+            $data_attrs .= ' data-taxonomy-accordion="yes" data-taxonomy-accordion-duration="' . esc_attr((string) $accordion_duration) . '"';
+        }
+        if (isset($settings['taxonomy_terms_show_more']) && $settings['taxonomy_terms_show_more'] === 'yes') {
+            $visible_count = isset($settings['taxonomy_terms_visible_count']) ? max(1, absint($settings['taxonomy_terms_visible_count'])) : 10;
+            $more_text     = isset($settings['taxonomy_terms_more_text']) ? $settings['taxonomy_terms_more_text'] : esc_html__('View more', 'cubewp-framework');
+            $less_text     = isset($settings['taxonomy_terms_less_text']) ? $settings['taxonomy_terms_less_text'] : esc_html__('View less', 'cubewp-framework');
+            $data_attrs   .= ' data-taxonomy-show-more="yes" data-taxonomy-visible-count="' . esc_attr((string) $visible_count) . '"';
+            $data_attrs   .= ' data-taxonomy-more-text="' . esc_attr($more_text) . '" data-taxonomy-less-text="' . esc_attr($less_text) . '"';
+        }
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $data_attrs is a pre-built attribute string; every dynamic value in it is escaped with esc_attr() above.
         echo '<div class="cubewp-filter-builder-container ' . esc_attr($class_checkbox_enabled) . esc_attr($additional_classes) . '" id="' . esc_attr($widget_id) . '" data-post-type="' . esc_attr($post_type) . '" data-widget-id="' . esc_attr($this->get_id()) . '"' . $data_attrs . '>';
 
         // Render based on display type
@@ -6892,17 +7729,17 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                     // Get custom label for taxonomy
                     $taxonomy_label_key = 'taxonomy_label_' . $post_type;
                     $custom_taxonomy_label = isset($settings[$taxonomy_label_key]) ? $settings[$taxonomy_label_key] : '';
-                    
+
                     // Get conditional taxonomy settings for simple display type
                     $enable_conditional_key = 'enable_conditional_taxonomy_' . $post_type;
                     $conditional_taxonomy_key = 'conditional_taxonomy_' . $post_type;
                     $conditional_term_meta_key_key = 'conditional_term_meta_key_' . $post_type;
-                    
+
                     $enable_conditional = isset($settings[$enable_conditional_key]) ? $settings[$enable_conditional_key] : 'no';
                     $conditional_taxonomy = isset($settings[$conditional_taxonomy_key]) ? $settings[$conditional_taxonomy_key] : '';
                     $conditional_term_meta_key = isset($settings[$conditional_term_meta_key_key]) ? $settings[$conditional_term_meta_key_key] : '';
-                    
-                    
+
+
                     $this->render_simple_taxonomy($field_icon, $taxonomy_name, $post_type, $taxonomy_display_type, $custom_taxonomy_label, $taxonomy_placeholder, $enable_conditional, $conditional_taxonomy, $conditional_term_meta_key);
                 } elseif ($is_business_hours && !empty($business_hours_options)) {
 
@@ -6987,6 +7824,8 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
         }
 
         echo '</div>';
+
+        $this->clear_taxonomy_checkbox_ui_context();
     }
 
 
@@ -7083,7 +7922,7 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
             $field_output = CubeWp_Frontend_Search_Filter::get_filters_content($search_filter, $field_name);
             $field_output = str_replace('cwp-field-container', 'cubewp-filter-builder-field-container cwp-field-container', $field_output);
             $field_output = str_replace('cwp-search-field', 'cubewp-filter-builder-search-field cwp-search-field', $field_output);
-            echo $field_output;
+            echo $field_output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Search filter field markup; attribute values are escaped by cwp_esc_field_attrs() in the field renderers.
         } else {
             // Try to render field directly
             $this->render_field_directly($field_name, $post_type, $custom_label, $placeholder, $range_overrides);
@@ -7126,7 +7965,7 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
             $popup_wrapper_class .= ' cubewp-filter-dropdown-mode';
         }
 
-        echo '<div class="' . $popup_wrapper_class . '">';
+        echo '<div class="' . esc_attr($popup_wrapper_class) . '">';
         echo '<button type="button" class="cubewp-filter-popup-button" data-target="' . esc_attr($popup_id) . '">';
         echo '<span class="cubewp-button-content-wrapper cubewp-icon-' . esc_attr($button_icon_position) . '">';
 
@@ -7177,12 +8016,12 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                     $popup_taxonomy_name = isset($popup_field['popup_taxonomy_name']) ? $popup_field['popup_taxonomy_name'] : '';
                     $popup_taxonomy_display = isset($popup_field['popup_taxonomy_display']) ? $popup_field['popup_taxonomy_display'] : 'checkbox';
                     $popup_taxonomy_label = isset($popup_field['popup_taxonomy_label']) ? $popup_field['popup_taxonomy_label'] : '';
-                    
+
                     // Get conditional taxonomy settings for popup display type
                     $popup_enable_conditional = isset($popup_field['popup_enable_conditional_taxonomy']) ? $popup_field['popup_enable_conditional_taxonomy'] : 'no';
                     $popup_conditional_taxonomy = isset($popup_field['popup_conditional_taxonomy']) ? $popup_field['popup_conditional_taxonomy'] : '';
                     $popup_conditional_term_meta_key = isset($popup_field['popup_conditional_term_meta_key']) ? $popup_field['popup_conditional_term_meta_key'] : '';
-                    
+
                     if (!empty($popup_taxonomy_name)) {
                         $field_icon = '';
                         $this->render_simple_taxonomy($field_icon, $popup_taxonomy_name, $post_type, $popup_taxonomy_display, $popup_taxonomy_label, $taxonomy_placeholder, $popup_enable_conditional, $popup_conditional_taxonomy, $popup_conditional_term_meta_key);
@@ -7290,6 +8129,7 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 ' data-conditional-taxonomy-field="taxonomy_' . esc_attr($conditional_taxonomy) . '" style="display:none;"';
         }
 
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $container_attrs is a pre-built attribute string; every dynamic value in it is escaped with esc_attr() above.
         echo '<div class="cubewp-filter-builder-field" data-field-name="' . esc_attr($taxonomy_name) . '" ' . $container_attrs . '>';
         if (!empty($field_icon['value'])) {
             echo '<span class="cubewp-field-icon">';
@@ -7347,12 +8187,82 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 $field_output = preg_replace('/(<input[^>]*type=["\']checkbox["\'][^>]*)(>)/i', '$1 data-radio-mode="1"$2', $field_output);
             }
 
-            echo $field_output;
+            if ($display_type === 'checkbox') {
+                $field_output = $this->apply_taxonomy_checkbox_hierarchy_classes($field_output);
+            }
+
+            echo $field_output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Taxonomy filter field markup; attribute values are escaped by cwp_esc_field_attrs() in the field renderers.
         }
 
         echo '</div>';
     }
 
+    /**
+     * Store taxonomy checkbox UI flags for CubeWP field renderers.
+     *
+     * @param array $settings Widget settings.
+     * @return void
+     */
+    private function set_taxonomy_checkbox_ui_context($settings)
+    {
+        global $cubewp_elementor_filter_taxonomy_ui;
+
+        $toggle_position = isset($settings['taxonomy_accordion_toggle_position']) && $settings['taxonomy_accordion_toggle_position'] === 'left' ? 'left' : 'right';
+
+        $cubewp_elementor_filter_taxonomy_ui = array(
+            'accordion'         => (isset($settings['taxonomy_checkbox_accordion']) && $settings['taxonomy_checkbox_accordion'] === 'yes'),
+            'collapsed_default' => (isset($settings['taxonomy_children_collapsed']) && $settings['taxonomy_children_collapsed'] === 'yes'),
+            'toggle_position'   => $toggle_position,
+            'toggle_absolute'   => (isset($settings['taxonomy_accordion_toggle_absolute']) && $settings['taxonomy_accordion_toggle_absolute'] === 'yes'),
+            'show_more'         => (isset($settings['taxonomy_terms_show_more']) && $settings['taxonomy_terms_show_more'] === 'yes'),
+            'visible_count'     => isset($settings['taxonomy_terms_visible_count']) ? max(1, absint($settings['taxonomy_terms_visible_count'])) : 10,
+            'more_text'         => isset($settings['taxonomy_terms_more_text']) ? $settings['taxonomy_terms_more_text'] : esc_html__('View more', 'cubewp-framework'),
+            'less_text'         => isset($settings['taxonomy_terms_less_text']) ? $settings['taxonomy_terms_less_text'] : esc_html__('View less', 'cubewp-framework'),
+        );
+    }
+
+    /**
+     * Clear taxonomy checkbox UI context after widget render.
+     *
+     * @return void
+     */
+    private function clear_taxonomy_checkbox_ui_context()
+    {
+        global $cubewp_elementor_filter_taxonomy_ui;
+        unset($cubewp_elementor_filter_taxonomy_ui);
+    }
+
+    /**
+     * Add hierarchy / accordion classes to taxonomy checkbox markup.
+     *
+     * @param string $field_output Rendered field HTML.
+     * @return string
+     */
+    private function apply_taxonomy_checkbox_hierarchy_classes($field_output)
+    {
+        global $cubewp_elementor_filter_taxonomy_ui;
+
+        $ui = is_array($cubewp_elementor_filter_taxonomy_ui) ? $cubewp_elementor_filter_taxonomy_ui : array();
+        $classes = 'cwp-field-checkbox-container cwp-taxonomy-checkbox-tree';
+
+        if (!empty($ui['accordion'])) {
+            $classes .= ' cwp-taxonomy-accordion-enabled';
+            if (!empty($ui['collapsed_default'])) {
+                $classes .= ' cwp-taxonomy-accordion-collapsed-default';
+            }
+            $toggle_position = isset($ui['toggle_position']) && $ui['toggle_position'] === 'left' ? 'left' : 'right';
+            $classes        .= ' cwp-taxonomy-toggle-pos-' . $toggle_position;
+            if (!empty($ui['toggle_absolute'])) {
+                $classes .= ' cwp-taxonomy-toggle-absolute';
+            }
+        }
+
+        if (!empty($ui['show_more'])) {
+            $classes .= ' cwp-taxonomy-show-more-enabled';
+        }
+
+        return str_replace('cwp-field-checkbox-container cwp-taxonomy-checkbox-tree', $classes, str_replace('cwp-field-checkbox-container', $classes, $field_output));
+    }
 
     /**
      * Check if a field is a business hours field
@@ -7587,7 +8497,7 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
             // Add prefix classes
             $field_output = str_replace('cwp-field-container', 'cubewp-filter-builder-field-container cwp-field-container', $field_output);
             $field_output = str_replace('cwp-search-field', 'cubewp-filter-builder-search-field cwp-search-field', $field_output);
-            echo $field_output;
+            echo $field_output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Taxonomy filter field markup; attribute values are escaped by cwp_esc_field_attrs() in the field renderers.
             return;
         }
 
@@ -7597,6 +8507,7 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
             $placeholder = !empty($placeholder) ? $placeholder : esc_html__('Search...', 'cubewp-framework');
             echo '<div class="cubewp-filter-builder-field-container cwp-field-container">';
             echo '<label class="cubewp-filter-builder-label">' . esc_html($custom_label) . '</label>';
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public front-end search filter value read from the URL for display only; no state change.
             $keyword_value = isset($_GET['keyword']) && !empty($_GET['keyword']) ? sanitize_text_field(wp_unslash($_GET['keyword'])) : '';
             echo '<input type="text" name="s" class="cubewp-filter-builder-input" value="' . esc_attr($keyword_value) . '" placeholder="' . esc_attr($placeholder) . '" />';
             echo '</div>';
@@ -7625,7 +8536,9 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
                 'placeholder' => $placeholder,
             ]);
 
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public front-end search filter value read from the URL for display only; no state change.
             if (isset($_GET[$field_name]) && !empty($_GET[$field_name])) {
+                // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public front-end search filter value read from the URL for display only; no state change.
                 $fieldOptions['value'] = sanitize_text_field(wp_unslash($_GET[$field_name]));
             }
 
@@ -7633,11 +8546,11 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
             // Ensure prefix classes are added
             $field_output = str_replace('cwp-field-container', 'cubewp-filter-builder-field-container cwp-field-container', $field_output);
             $field_output = str_replace('cwp-search-field', 'cubewp-filter-builder-search-field cwp-search-field', $field_output);
-            echo $field_output;
+            echo $field_output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Custom field filter markup; attribute values are escaped by cwp_esc_field_attrs() in the field renderers.
         } else {
             $field_output = apply_filters("cubewp/search_filter_builder/{$field_name}/field", '', $field_name, $post_type);
-            if(!empty($field_output)) {
-                echo $field_output;
+            if (!empty($field_output)) {
+                echo $field_output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Field markup supplied by the cubewp/search_filter_builder filter; escaping is the responsibility of the filter callback.
             }
         }
     }
@@ -7695,6 +8608,7 @@ class CubeWp_Elementor_Search_Filter_Builder_Widget extends Widget_Base
 
 
         // Get current orderby value from URL
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public front-end search filter value read from the URL for display only; no state change.
         $current_orderby = isset($_GET['orderby']) && !empty($_GET['orderby']) ? sanitize_text_field(wp_unslash($_GET['orderby'])) : '';
 
         $widget_id = 'cubewp-sorting-' . $this->get_id();

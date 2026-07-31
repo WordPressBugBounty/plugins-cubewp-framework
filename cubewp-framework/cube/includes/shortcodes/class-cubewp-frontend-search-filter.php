@@ -276,16 +276,16 @@ class CubeWp_Frontend_Search_Filter {
         }else{
             $page_num = '1';
         }
-        $output = '<input type="hidden" id="cwp-page-num" name="page_num" value="'.$page_num.'">';
+        $output = '<input type="hidden" id="cwp-page-num" name="page_num" value="'.esc_attr($page_num).'">';
         if(isset($type) && !is_tax()){
-            $output .= '<input type="hidden" id="cwp-posttype-name-archive" name="post_type" value="'.$type.'">';
+            $output .= '<input type="hidden" id="cwp-posttype-name-archive" name="post_type" value="'.esc_attr($type).'">';
         }
         if(!is_archive()){
             $output .= '<input type="hidden" name="page" value="page">';
         }
 
         if(!empty($style)){
-            $output .= '<input type="hidden" name="style" value="'.$style.'">';
+            $output .= '<input type="hidden" name="style" value="'.esc_attr($style).'">';
         }
         
         

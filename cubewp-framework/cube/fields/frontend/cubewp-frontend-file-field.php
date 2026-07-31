@@ -64,7 +64,7 @@ class CubeWp_Frontend_File_Field extends CubeWp_Frontend {
 						'name'  => ! empty($args['custom_name']) ? $args['custom_name'] : $args['name'],
 						'value' => '0',
 					);
-					echo cwp_render_hidden_input( $input_attrs );
+					echo cwp_render_hidden_input( $input_attrs ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Returns an <input> element; all attributes are escaped by cwp_esc_field_attrs().
 				}
 				$input_attrs = array(
 					'type'  => ! empty($args['type']) ? $args['type'] : 'file',
@@ -74,7 +74,7 @@ class CubeWp_Frontend_File_Field extends CubeWp_Frontend {
 					'value' => '',
 					'extra_attrs' => $args['extra_attrs'],
 				);
-				echo cwp_render_file_input( $input_attrs );
+				echo cwp_render_file_input( $input_attrs ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Returns the file <input> element; all attributes are escaped by cwp_esc_field_attrs().
 				?>
 			</div>
 			<?php
@@ -104,7 +104,7 @@ class CubeWp_Frontend_File_Field extends CubeWp_Frontend {
 						'class'  => 'cwp-image-preview',
 						'value' => $args['value'],
 					);
-					echo cwp_render_hidden_input( $input_attrs ); //
+					echo cwp_render_hidden_input( $input_attrs ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Returns the existing-attachment <input> element; all attributes are escaped by cwp_esc_field_attrs().
 					?>
 				</div>
 			<?php } else { ?>

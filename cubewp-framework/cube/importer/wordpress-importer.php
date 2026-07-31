@@ -10,6 +10,10 @@ Text Domain: wordpress-importer
 License: GPL version 2 or later - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
 
 if ( ! defined( 'WP_LOAD_IMPORTERS' ) )

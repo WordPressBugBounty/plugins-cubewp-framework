@@ -116,8 +116,10 @@ class CubeWp_Tag_Post_Content extends \Elementor\Core\DynamicTags\Tag
             }
         }
         if ( $wrap_with_clamp ) {
-            echo '<div class="cubewp-post-content-tag cubewp-clamp-' . $line_limit_int . '">' . $content . '</div>';
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Post content is intentionally rendered as HTML, same as core the_content().
+            echo '<div class="cubewp-post-content-tag cubewp-clamp-' . esc_attr( $line_limit_int ) . '">' . $content . '</div>';
         } else {
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Post content is intentionally rendered as HTML, same as core the_content().
             echo $content;
         }
     }

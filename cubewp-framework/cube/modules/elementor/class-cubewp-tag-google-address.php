@@ -167,7 +167,7 @@ class CubeWp_Tag_Google_Address extends \Elementor\Core\DynamicTags\Tag {
 		if ( $use_line_clamp ) {
 			echo '<span class="cubewp-google-address-field-tag cubewp-clamp-' . intval( $line_limit ) . '">' . esc_html( $out ) . '</span>';
 		} else {
-			echo $out;
+			echo esc_html( $out );
 		}
 	}
 }

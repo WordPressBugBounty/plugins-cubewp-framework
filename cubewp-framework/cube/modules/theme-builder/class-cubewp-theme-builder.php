@@ -117,6 +117,7 @@ class CubeWp_Theme_Builder
                 'archive' => esc_html__("Archive", 'cubewp-framework'),
                 'postcard' => esc_html__("Post Cards", 'cubewp-framework'),
                 'termcard' => esc_html__("Term Cards", 'cubewp-framework'),
+                'usercard' => esc_html__("User Cards", 'cubewp-framework'),
                 'block' => esc_html__("Hooks", 'cubewp-framework'),
                 'shop' => esc_html__("Shop", 'cubewp-framework'),
                 'mega-menu' => esc_html__("Mega Menu", 'cubewp-framework'),
@@ -197,12 +198,13 @@ class CubeWp_Theme_Builder
                                     <option value="archive">Archive</option>
                                     <option value="postcard">Post Card</option>
                                     <option value="termcard">Term Card</option>
+                                    <option value="usercard">User Card</option>
                                     <?php
                                     // Check if there are blocks available via PHP
                                     $blocks = apply_filters('cubewp/theme_builder/blocks', array());
-                                    if (!empty($blocks)) {
+                                    ////if (!empty($blocks)) {
                                         echo '<option value="block">Hooks</option>';
-                                    }
+                                    //}
                                     if (class_exists('WooCommerce')) {
                                         echo '<option value="shop">Shop Page</option>';
                                     }
@@ -228,9 +230,14 @@ class CubeWp_Theme_Builder
                                 <input type="text" name="template_name" id="template_name" placeholder="Enter Template Name..." required>
                             </div>
                             <div class="cubewp-form-fileds">
-                                <label for="template_location">Display On</label>
-                                <select name="template_location" id="template_location" required>
-                                </select>
+                                <label for="template_location"><?php esc_html_e('Display On', 'cubewp-framework'); ?></label>
+                                <div class="cwp-tb-template-location-field" id="cwp_tb_template_location_wrap">
+                                    <select name="template_location" id="template_location" class="cwp-tb-template-location-select" data-placeholder="<?php esc_attr_e('Select display location(s)', 'cubewp-framework'); ?>" required>
+                                    </select>
+                                </div>
+                                <p class="description cwp-tb-multi-location-hint" id="cwp_tb_multi_location_hint" style="display:none;">
+                                    <?php esc_html_e('Select multiple archive, header, or footer locations for this template.', 'cubewp-framework'); ?>
+                                </p>
                             </div>
                             <div class="cubewp-form-fileds cwp-tb-mobile-view-field" id="cwp_tb_mobile_view_wrap" style="display:none;">
                                 <label for="template_mobile_view">
@@ -283,7 +290,7 @@ class CubeWp_Theme_Builder
 
         $template_type = sanitize_text_field($form_data['template_type']);
         $template_name = sanitize_text_field($form_data['template_name']);
-        $template_location = sanitize_text_field($form_data['template_location']);
+        $template_locations = self::parse_template_locations_from_form($form_data);
         $is_mobile_template = ( ! empty($form_data['template_mobile_view']) || ! empty($form_data['template_app_view']) )
             && self::template_type_supports_mobile_view($template_type);
 
@@ -298,7 +305,7 @@ class CubeWp_Theme_Builder
             return;
         }
 
-        if (empty($template_location)) {
+        if (empty($template_locations)) {
             wp_send_json_error(['message' => 'Template location is required']);
             return;
         }
@@ -306,69 +313,27 @@ class CubeWp_Theme_Builder
         $post_id = false;
         // FOR EDITING EXISTING TEMPLATE
         if (isset($form_data['ctb_edit_template_id']) && !empty($form_data['ctb_edit_template_id'])) {
-            $post_id = $form_data['ctb_edit_template_id'];
+            $post_id = absint($form_data['ctb_edit_template_id']);
             wp_update_post(array(
                 'ID' => $post_id,
                 'post_title' => $template_name,
             ));
         }
 
-        // Query for existing posts with the same type, location, and mobile / standard bucket.
-        $args = array(
-            'post_type' => 'cubewp-tb',
-            'post_status' => 'publish',
-            'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-                'relation' => 'AND',
-                array(
-                    'key' => 'template_type',
-                    'value' => $template_type,
-                    'compare' => '='
-                ),
-                array(
-                    'key' => 'template_location',
-                    'value' => $template_location,
-                    'compare' => '='
-                ),
-            ),
-            'fields' => 'ids'
+        // Deactivate other published templates that share any selected location (same type + mobile bucket).
+        $singleActiveTypes = array(
+            'mega-menu',
+            'cubewp_post_promotional_card',
+            'postcard',
+            'termcard',
+            'usercard',
+            'single',
+            'archive',
+            'header',
+            'footer',
         );
-
-        if (self::template_type_supports_mobile_view($template_type)) {
-            if ($is_mobile_template) {
-                $args['meta_query'][] = self::meta_clause_is_mobile_template();
-            } else {
-                $args['meta_query'][] = self::meta_clause_is_not_mobile_only_template();
-            }
-        }
-
-        $existing_posts = new WP_Query($args);
-
-        // Change status to 'inactive' for existing posts
-        if ($existing_posts->have_posts()) {
-            // Bulk load meta cache to prevent N+1 queries
-            update_meta_cache('post', $existing_posts->posts);
-            // Deactivate other published templates of these types at this location (same mobile / standard bucket when applicable).
-            $singleActiveTypes = array(
-                'mega-menu',
-                'cubewp_post_promotional_card',
-                'postcard',
-                'termcard',
-                'single',
-                'archive',
-                'header',
-                'footer',
-            );
-            if (in_array($template_type, $singleActiveTypes, true)) {
-                foreach ($existing_posts->posts as $existing_post_id) {
-                    if ((int) $existing_post_id === (int) $post_id) {
-                        continue; // don't deactivate the one we're editing/creating
-                    }
-                    wp_update_post([
-                        'ID'          => $existing_post_id,
-                        'post_status' => 'inactive',
-                    ]);
-                }
-            }
+        if (in_array($template_type, $singleActiveTypes, true)) {
+            self::deactivate_conflicting_templates($template_type, $template_locations, $post_id, $is_mobile_template);
         }
 
         // FOR CREATING NEW TEMPLATE
@@ -385,7 +350,7 @@ class CubeWp_Theme_Builder
 
         if ($post_id) {
             update_post_meta($post_id, 'template_type', $template_type);
-            update_post_meta($post_id, 'template_location', $template_location);
+            self::save_template_locations_meta($post_id, $template_locations);
 
             if (self::template_type_supports_mobile_view($template_type)) {
                 if ($is_mobile_template) {
@@ -406,7 +371,7 @@ class CubeWp_Theme_Builder
                 $response['redirect'] = add_query_arg(['action' => 'elementor'], $response['redirect']);
 
                 if ($template_type == 'single') {
-                    $post_type_slug = CubeWp_Theme_Builder_Table::get_post_type_slug($template_location);
+                    $post_type_slug = CubeWp_Theme_Builder_Table::get_post_type_slug($template_locations[0]);
                     $tb_demo_id = CubeWp_Theme_Builder_Table::get_first_post_id_by_post_type($post_type_slug);
                     $response['redirect'] = add_query_arg(['action' => 'elementor', 'tb_demo_id' => $tb_demo_id], $response['redirect']);
                 }
@@ -493,7 +458,7 @@ class CubeWp_Theme_Builder
                 if ($get_postType === '') {
                     /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
                     if (isset($_GET['post_type'])) {
-                        /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
+                        /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Unslashed here so the array form can be normalised below; sanitized with sanitize_text_field() a few lines down before any use. */
                         $post_type_from_get = wp_unslash($_GET['post_type']);
                         if (is_array($post_type_from_get)) {
                             $post_type_from_get = reset($post_type_from_get);
@@ -686,13 +651,13 @@ class CubeWp_Theme_Builder
      */
     public static function get_template_post_id_by_location($location, $type, $scope = 'default')
     {
+        $location = sanitize_text_field($location);
+        if ($location === '' || $type === '') {
+            return false;
+        }
+
         $meta_query = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
             'relation' => 'AND',
-            array(
-                'key'     => 'template_location',
-                'value'   => $location,
-                'compare' => '=',
-            ),
             array(
                 'key'     => 'template_type',
                 'value'   => $type,
@@ -711,21 +676,222 @@ class CubeWp_Theme_Builder
         $args = array(
             'post_type'      => 'cubewp-tb',
             'post_status'    => 'publish',
-            'meta_query'     => $meta_query,
+            'meta_query'     => $meta_query, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Custom-field filtering is the core purpose of this framework.
             'fields'         => 'ids',
+            'posts_per_page' => -1,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
         );
 
         $query = new WP_Query($args);
 
         if ($query->have_posts()) {
-            $post_id = $query->posts[0];
-            // Bulk load meta cache to prevent N+1 queries
             update_meta_cache('post', $query->posts);
+            foreach ($query->posts as $candidate_id) {
+                if (self::template_matches_location((int) $candidate_id, $location)) {
+                    wp_reset_postdata();
+                    return (int) $candidate_id;
+                }
+            }
             wp_reset_postdata();
-            return $post_id;
         }
 
         return false;
+    }
+
+    /**
+     * Template types that may assign multiple display locations (archive, header, footer).
+     *
+     * @param string $template_type Template type slug.
+     * @return bool
+     */
+    public static function template_type_supports_multiple_locations($template_type)
+    {
+        $types = array('archive', 'header', 'footer');
+
+        /**
+         * @param string[] $types Template types that support multi-select locations.
+         */
+        $types = apply_filters('cubewp/theme_builder/multiple_location_template_types', $types);
+
+        return in_array($template_type, $types, true);
+    }
+
+    /**
+     * Read locations from save form (multi or single select).
+     *
+     * @param array $form_data Parsed form data.
+     * @return string[]
+     */
+    public static function parse_template_locations_from_form($form_data)
+    {
+        $locations = array();
+
+        if (! empty($form_data['template_locations']) && is_array($form_data['template_locations'])) {
+            foreach ($form_data['template_locations'] as $loc) {
+                $loc = sanitize_text_field(wp_unslash($loc));
+                if ($loc !== '') {
+                    $locations[] = $loc;
+                }
+            }
+        } elseif (! empty($form_data['template_location'])) {
+            if (is_array($form_data['template_location'])) {
+                foreach ($form_data['template_location'] as $loc) {
+                    $loc = sanitize_text_field(wp_unslash($loc));
+                    if ($loc !== '') {
+                        $locations[] = $loc;
+                    }
+                }
+            } else {
+                $loc = sanitize_text_field(wp_unslash($form_data['template_location']));
+                if ($loc !== '') {
+                    $locations[] = $loc;
+                }
+            }
+        }
+
+        return array_values(array_unique($locations));
+    }
+
+    /**
+     * All display locations stored on a template.
+     *
+     * @param int $post_id Template post ID.
+     * @return string[]
+     */
+    public static function get_template_locations($post_id)
+    {
+        $post_id = (int) $post_id;
+        if ($post_id <= 0) {
+            return array();
+        }
+
+        $locations = get_post_meta($post_id, 'template_locations', true);
+        if (is_array($locations) && ! empty($locations)) {
+            $out = array();
+            foreach ($locations as $loc) {
+                $loc = sanitize_text_field((string) $loc);
+                if ($loc !== '') {
+                    $out[] = $loc;
+                }
+            }
+            return array_values(array_unique($out));
+        }
+
+        $single = get_post_meta($post_id, 'template_location', true);
+        if (is_string($single) && $single !== '') {
+            return array(sanitize_text_field($single));
+        }
+
+        return array();
+    }
+
+    /**
+     * Persist locations (keeps legacy template_location as first entry).
+     *
+     * @param int      $post_id   Template post ID.
+     * @param string[] $locations Location keys.
+     * @return void
+     */
+    public static function save_template_locations_meta($post_id, $locations)
+    {
+        $post_id   = (int) $post_id;
+        $locations = is_array($locations) ? array_values(array_unique(array_filter($locations))) : array();
+
+        if ($post_id <= 0) {
+            return;
+        }
+
+        if (! empty($locations)) {
+            update_post_meta($post_id, 'template_locations', $locations);
+            update_post_meta($post_id, 'template_location', $locations[0]);
+        } else {
+            delete_post_meta($post_id, 'template_locations');
+            delete_post_meta($post_id, 'template_location');
+        }
+    }
+
+    /**
+     * Whether a template is assigned to a location key.
+     *
+     * @param int    $post_id  Template post ID.
+     * @param string $location Location key.
+     * @return bool
+     */
+    public static function template_matches_location($post_id, $location)
+    {
+        $location = sanitize_text_field($location);
+        if ($location === '') {
+            return false;
+        }
+
+        return in_array($location, self::get_template_locations($post_id), true);
+    }
+
+    /**
+     * Deactivate published templates that overlap any of the given locations.
+     *
+     * @param string   $template_type      Template type.
+     * @param string[] $template_locations New locations.
+     * @param int|false $exclude_post_id   Current template ID to keep active.
+     * @param bool     $is_mobile_template Mobile-only bucket.
+     * @return void
+     */
+    protected static function deactivate_conflicting_templates($template_type, $template_locations, $exclude_post_id, $is_mobile_template)
+    {
+        if (empty($template_locations)) {
+            return;
+        }
+
+        $meta_query = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+            'relation' => 'AND',
+            array(
+                'key'     => 'template_type',
+                'value'   => $template_type,
+                'compare' => '=',
+            ),
+        );
+
+        if (self::template_type_supports_mobile_view($template_type)) {
+            if ($is_mobile_template) {
+                $meta_query[] = self::meta_clause_is_mobile_template();
+            } else {
+                $meta_query[] = self::meta_clause_is_not_mobile_only_template();
+            }
+        }
+
+        $existing_posts = new WP_Query(
+            array(
+                'post_type'      => 'cubewp-tb',
+                'post_status'    => 'publish',
+                'meta_query'     => $meta_query, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Custom-field filtering is the core purpose of this framework.
+                'fields'         => 'ids',
+                'posts_per_page' => -1,
+            )
+        );
+
+        if (! $existing_posts->have_posts()) {
+            return;
+        }
+
+        update_meta_cache('post', $existing_posts->posts);
+
+        foreach ($existing_posts->posts as $existing_post_id) {
+            $existing_post_id = (int) $existing_post_id;
+            if ($exclude_post_id && $existing_post_id === (int) $exclude_post_id) {
+                continue;
+            }
+
+            $existing_locations = self::get_template_locations($existing_post_id);
+            if (! empty(array_intersect($template_locations, $existing_locations))) {
+                wp_update_post(
+                    array(
+                        'ID'          => $existing_post_id,
+                        'post_status' => 'inactive',
+                    )
+                );
+            }
+        }
     }
 
     /**

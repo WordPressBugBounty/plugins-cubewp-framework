@@ -99,8 +99,15 @@ class CubeWp_Theme_Builder_Table extends WP_List_Table
 
         $title = '<strong>' . ucfirst($item['name']) . '</strong> ' . $status . $mobile_badge;
         $tmobile = ! empty($item['mobile_view']) ? '1' : '0';
+        $stored_locations = ! empty($item['locations_json'])
+            ? json_decode($item['locations_json'], true)
+            : array();
+        if ( ! is_array( $stored_locations ) || empty( $stored_locations ) ) {
+            $stored_locations = ! empty($item['location']) ? array($item['location']) : array();
+        }
+        $locations_json = wp_json_encode(array_values($stored_locations));
         $actions = [
-            'edit' => '<a href="#" data-tid="' . esc_attr($item['ID']) . '" data-tlocation="' . esc_attr($item['location']) . '" data-ttype="' . esc_attr($item['type']) . '" data-tname="' . esc_attr($item['name']) . '" data-tmobileview="' . esc_attr($tmobile) . '" class="ctb-add-new-template ctb-edit-template">Edit</a>',
+            'edit' => '<a href="#" data-tid="' . esc_attr($item['ID']) . '" data-tlocation="' . esc_attr($item['location']) . '" data-tlocations="' . esc_attr($locations_json) . '" data-ttype="' . esc_attr($item['type']) . '" data-tname="' . esc_attr($item['name']) . '" data-tmobileview="' . esc_attr($tmobile) . '" class="ctb-add-new-template ctb-edit-template">Edit</a>',
         ];
         $actions['delete'] = sprintf('<a href="%s">' . esc_html__('Delete', 'cubewp-framework') . '</a>', CubeWp_Submenu::_page_action('cubewp-theme-builder', 'delete', '&template_id=' . absint($item['ID']), '&_wpnonce=' . wp_create_nonce('cwp_delete_group')));
 
@@ -374,23 +381,30 @@ class CubeWp_Theme_Builder_Table extends WP_List_Table
             $_data = array();
             foreach ($posts as $post) {
                 $type = get_post_meta($post, 'template_type', true);
-                $tem_location = get_post_meta($post, 'template_location', true);
-                if (! empty($type) && $type === 'header' && ! empty($tem_location) && strpos($tem_location, 'single_page_') === 0) {
-                    $page_id = (int) str_replace('single_page_', '', $tem_location);
-                    if ($page_id > 0) {
-                        $title = get_the_title($page_id);
-                        if ($title && ! is_wp_error($title)) {
-                            $tem_location = $title;
+                $tem_locations = class_exists('CubeWp_Theme_Builder')
+                    ? CubeWp_Theme_Builder::get_template_locations($post)
+                    : array(get_post_meta($post, 'template_location', true));
+                $location_labels = array();
+                foreach ($tem_locations as $tem_location) {
+                    if (! empty($type) && $type === 'header' && strpos($tem_location, 'single_page_') === 0) {
+                        $page_id = (int) str_replace('single_page_', '', $tem_location);
+                        if ($page_id > 0) {
+                            $title = get_the_title($page_id);
+                            if ($title && ! is_wp_error($title)) {
+                                $tem_location = $title;
+                            }
                         }
                     }
+                    $location_labels[] = self::convert_to_capitalized_words($tem_location);
                 }
 
                 $data = array();
                 $data['ID']          = $post;
                 $data['name']  = get_the_title($post);
                 $data['type']  = $type;
-                $data['location']  = $tem_location;
-                $data['location_display']  = self::convert_to_capitalized_words($tem_location);
+                $data['location']  = ! empty($tem_locations) ? $tem_locations[0] : '';
+                $data['locations_json'] = wp_json_encode($tem_locations);
+                $data['location_display']  = ! empty($location_labels) ? implode(', ', $location_labels) : '';
                 $data['mobile_view'] = class_exists('CubeWp_Theme_Builder') && CubeWp_Theme_Builder::is_mobile_theme_template($post);
 
                 if ($type == 'single') {

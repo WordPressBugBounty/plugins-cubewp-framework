@@ -81,6 +81,7 @@ class CubeWp_Form_Builder {
         }
         // phpcs:ignore WordPress.Security.NonceVerification.Missing
         if(isset($_POST['form_relation']) && isset($_POST['form_type'])){
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Handler is gated by current_user_can('manage_options') above; values are sanitized by cwpform_form_section().
             foreach($_POST as $key => $POST){
                 $section_args[$key] = $POST;
             }

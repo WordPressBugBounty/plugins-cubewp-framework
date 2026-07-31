@@ -563,6 +563,15 @@ class CubeWp_Settings_Fields {
     
     public function typography_field( $output = '', $args = array() ){
         $args   =  $this->default_input_parameters( $args );
+
+        if ( function_exists( 'cubewp_typography_responsive_default_keys' ) ) {
+            $responsive_defaults = cubewp_typography_responsive_default_keys();
+            if ( isset( $args['value'] ) && is_array( $args['value'] ) ) {
+                $args['value'] = wp_parse_args( $args['value'], $responsive_defaults );
+            } else {
+                $args['value'] = $responsive_defaults;
+            }
+        }
         
         $output = apply_filters("cubewp/settings/heading/field", '', $args);
         
@@ -624,7 +633,7 @@ class CubeWp_Settings_Fields {
                     $output .= '</div>';
 
                     $output .= '<div class="input_wrapper font-size">';
-                        $output .= '<label for="'. $args['id']. '-font-size">'.esc_html__("Font Size (px)", "cubewp-framework") .'</label>';
+                        $output .= '<label for="'. $args['id']. '-font-size">'.esc_html__("Font Size (Desktop)", "cubewp-framework") .'</label>';
                         $field_args = array(
                             'id'                =>  $args['id'].'-font-size',
                             'name'              =>  $args['id'].'[font-size]',
@@ -634,6 +643,30 @@ class CubeWp_Settings_Fields {
                         );
                         $output .= cwp_render_text_input( $field_args );
                         $output .= apply_filters("cubewp/settings/desc/field", '', $args);
+                    $output .= '</div>';
+
+                    $output .= '<div class="input_wrapper font-size-tablet">';
+                        $output .= '<label for="'. esc_attr( $args['id'] ) . '-font-size-tablet">'.esc_html__( 'Font Size (Tablet)', 'cubewp-framework' ) .'</label>';
+                        $field_args = array(
+                            'id'                =>  $args['id'] . '-font-size-tablet',
+                            'name'              =>  $args['id'] . '[font-size-tablet]',
+                            'placeholder'       =>  esc_attr__( 'e.g. 18px — max-width 1024px', 'cubewp-framework' ),
+                            'class'             =>  $args['class'],
+                            'value'             =>  isset( $args['value']['font-size-tablet'] ) ? $args['value']['font-size-tablet'] : '',
+                        );
+                        $output .= cwp_render_text_input( $field_args );
+                    $output .= '</div>';
+
+                    $output .= '<div class="input_wrapper font-size-mobile">';
+                        $output .= '<label for="'. esc_attr( $args['id'] ) . '-font-size-mobile">'.esc_html__( 'Font Size (Mobile)', 'cubewp-framework' ) .'</label>';
+                        $field_args = array(
+                            'id'                =>  $args['id'] . '-font-size-mobile',
+                            'name'              =>  $args['id'] . '[font-size-mobile]',
+                            'placeholder'       =>  esc_attr__( 'e.g. 16px — max-width 767px', 'cubewp-framework' ),
+                            'class'             =>  $args['class'],
+                            'value'             =>  isset( $args['value']['font-size-mobile'] ) ? $args['value']['font-size-mobile'] : '',
+                        );
+                        $output .= cwp_render_text_input( $field_args );
                     $output .= '</div>';
                     
                     $output .= '<div class="input_wrapper line-height">';

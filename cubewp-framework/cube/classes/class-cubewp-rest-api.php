@@ -472,9 +472,41 @@ class CubeWp_Rest_API extends WP_REST_Controller
 		$args['f_type']  = $request->get_param(self::F_TYPE);
 		$args['f_name']  = $request->get_param(self::F_NAME);
 		$args['p_id'] = $request->get_param(self::P_ID);
+
+		$source_post = get_post($args['p_id']);
+		if (! $this->can_user_read_post($source_post)) {
+			return wp_send_json('');
+		}
+
 		if ($args['f_type']  == 'user_custom_fields') {
 			$args['p_id']  = get_post_field('post_author', $args['p_id']);
+			if (get_current_user_id() != $args['p_id'] && ! current_user_can('edit_user', $args['p_id'])) {
+				return wp_send_json('');
+			}
+			$allowed_fields = array();
+			$user_role      = function_exists('cwp_get_user_roles_by_id') ? cwp_get_user_roles_by_id($args['p_id']) : '';
+			$user_groups    = ($user_role && function_exists('cwp_get_groups_by_user_role')) ? cwp_get_groups_by_user_role($user_role) : array();
+			if (is_array($user_groups)) {
+				foreach ($user_groups as $group) {
+					$group_fields = function_exists('cwp_get_user_fields_by_group_id') ? cwp_get_user_fields_by_group_id($group) : array();
+					if (is_array($group_fields)) {
+						foreach ($group_fields as $field_id) {
+							$field_option = function_exists('get_user_field_options') ? get_user_field_options($field_id) : array();
+							if (! empty($field_option['name'])) {
+								$allowed_fields[] = $field_option['name'];
+							}
+						}
+					}
+				}
+			}
+		} else {
+			$allowed_fields = class_exists('CubeWp_Single_Cpt') ? array_keys(CubeWp_Single_Cpt::cubewp_post_metas($source_post->ID)) : array();
 		}
+
+		if (! in_array($args['f_name'], $allowed_fields, true)) {
+			return wp_send_json('');
+		}
+
 		$value = get_any_field_value($args);
 		return wp_send_json($value);
 	}

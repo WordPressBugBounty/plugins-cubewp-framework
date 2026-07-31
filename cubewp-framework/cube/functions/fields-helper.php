@@ -999,3 +999,19 @@ if ( ! function_exists("cubewp_dynamic_options")) {
 	add_action('wp_ajax_cubewp_dynamic_options', 'cubewp_dynamic_options');
 	add_action('wp_ajax_nopriv_cubewp_dynamic_options', 'cubewp_dynamic_options');
 }
+
+if (! function_exists('cubewp_typography_responsive_default_keys')) {
+	/**
+	 * Default keys merged into CubeWP settings "typography" field values for responsive font sizes.
+	 * Themes can add the same keys to their field `default` arrays; the settings UI always merges these.
+	 *
+	 * @return array<string, string>
+	 */
+	function cubewp_typography_responsive_default_keys() {
+		$defaults = array(
+			'font-size-tablet' => '',
+			'font-size-mobile' => '',
+		);
+		return apply_filters('cubewp_typography_responsive_default_keys', $defaults);
+	}
+}

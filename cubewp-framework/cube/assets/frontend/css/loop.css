@@ -241,11 +241,15 @@ select#cwp-order-filter:disabled {
     color: #fff;
 }
 
-span.cwp-main.cwp-save-post svg:nth-child(2) {
+span.cwp-main.cwp-save-post svg:nth-child(2),
+span.cwp-main.cwp-save-post i:nth-child(2)
+{
     display: none;
 }
 
-span.cwp-main.cwp-saved-post svg:first-child {
+span.cwp-main.cwp-saved-post svg:first-child,
+span.cwp-main.cwp-saved-post i:first-child
+{
     display: none;
 }
 

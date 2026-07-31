@@ -1,5 +1,8 @@
 <?php
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 get_header();
 global $cubewp_frontend, $cwpOptions;
 

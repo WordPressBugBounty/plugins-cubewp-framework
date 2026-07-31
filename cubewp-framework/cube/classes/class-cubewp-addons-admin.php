@@ -65,6 +65,65 @@ class CubeWp_Addons_Admin {
 		return 'https://cubewp.com';
 	}
 
+	/**
+	 * Site URL for EDD SL (activate / check / deactivate / get_version). Matches {@see CubeWp_Add_Ons::add_on_management()}.
+	 *
+	 * @return string
+	 */
+	private function edd_license_client_site_url() {
+		return home_url();
+	}
+
+	/**
+	 * Product fields for EDD API: same shape as CubeWp_Add_Ons (item_name sent with urlencode when set; else item_id).
+	 *
+	 * @param array<string, mixed> $addon Row with item_name / item_id.
+	 * @return array<string, string>
+	 */
+	private function edd_sl_addon_product_params( array $addon ) {
+		$params    = array();
+		$item_name = isset( $addon['item_name'] ) ? trim( (string) $addon['item_name'] ) : '';
+		$item_id   = isset( $addon['item_id'] ) ? trim( (string) $addon['item_id'] ) : '';
+
+		if ( '' !== $item_name ) {
+			$params['item_name'] = urlencode( $item_name );
+		} elseif ( '' !== $item_id ) {
+			$params['item_id'] = $item_id;
+		}
+
+		return $params;
+	}
+
+	/**
+	 * Resolve EDD license post ID from the hub catalog for a slug + key (multi-license products).
+	 *
+	 * @param string $slug         Sanitized product slug.
+	 * @param string $license_key License key.
+	 * @return int 0 if unknown.
+	 */
+	private function hub_license_id_for_slug_and_license_key( $slug, $license_key ) {
+		$slug        = sanitize_key( (string) $slug );
+		$license_key = trim( (string) $license_key );
+		if ( '' === $slug || '' === $license_key ) {
+			return 0;
+		}
+		$item = $this->hub_item_for_slug( $slug );
+		if ( ! is_array( $item ) ) {
+			return 0;
+		}
+		if ( ! empty( $item['licenses'] ) && is_array( $item['licenses'] ) ) {
+			foreach ( $item['licenses'] as $row ) {
+				if ( is_array( $row ) && ! empty( $row['license_key'] ) && (string) $row['license_key'] === $license_key && ! empty( $row['license_id'] ) ) {
+					return (int) $row['license_id'];
+				}
+			}
+		}
+		if ( ! empty( $item['license_key'] ) && (string) $item['license_key'] === $license_key && ! empty( $item['license_id'] ) ) {
+			return (int) $item['license_id'];
+		}
+		return 0;
+	}
+
 	private function hub_base_url() {
 		$base = self::DEFAULT_HUB_BASE_URL;
 
@@ -181,6 +240,87 @@ class CubeWp_Addons_Admin {
 		return null;
 	}
 
+	/**
+	 * All license keys from the hub snapshot for a slug (flat + `licenses` list).
+	 *
+	 * @return array<int, string>
+	 */
+	private function hub_license_keys_for_slug( $slug ) {
+		$item = $this->hub_item_for_slug( $slug );
+		if ( ! is_array( $item ) ) {
+			return array();
+		}
+		$keys = array();
+		if ( ! empty( $item['licenses'] ) && is_array( $item['licenses'] ) ) {
+			foreach ( $item['licenses'] as $row ) {
+				if ( is_array( $row ) && ! empty( $row['license_key'] ) ) {
+					$keys[] = (string) $row['license_key'];
+				}
+			}
+		}
+		if ( ! empty( $item['license_key'] ) ) {
+			$keys[] = (string) $item['license_key'];
+		}
+		$keys = array_values( array_unique( array_filter( $keys ) ) );
+		return $keys;
+	}
+
+	/**
+	 * @param int $license_id EDD SL license post ID.
+	 */
+	private function hub_license_id_is_allowed( $license_id ) {
+		$license_id = (int) $license_id;
+		if ( $license_id <= 0 ) {
+			return false;
+		}
+		foreach ( $this->hub_get_items() as $item ) {
+			if ( ! is_array( $item ) ) {
+				continue;
+			}
+			if ( ! empty( $item['licenses'] ) && is_array( $item['licenses'] ) ) {
+				foreach ( $item['licenses'] as $row ) {
+					if ( is_array( $row ) && (int) ( $row['license_id'] ?? 0 ) === $license_id ) {
+						return true;
+					}
+				}
+			}
+			if ( (int) ( $item['license_id'] ?? 0 ) === $license_id ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Posted `license_key` (optional) must match a hub snapshot key for this slug.
+	 *
+	 * @param string               $slug
+	 * @param array<string, mixed> $addon Catalog row.
+	 * @return string|WP_Error
+	 */
+	private function resolve_license_key_for_slug_or_fail( $slug, $addon ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce and capability are verified by the calling handler (verify_post()/handle_ajax()) before this helper runs.
+		$posted = isset( $_POST['license_key'] ) ? sanitize_text_field( wp_unslash( (string) $_POST['license_key'] ) ) : '';
+		if ( $posted !== '' ) {
+			$allowed = $this->hub_license_keys_for_slug( $slug );
+			if ( ! in_array( $posted, $allowed, true ) ) {
+				return new WP_Error(
+					'cubewp_invalid_license_choice',
+					__( 'That license key is not in your hub purchase list for this product.', 'cubewp-framework' )
+				);
+			}
+			return $posted;
+		}
+		$key = $this->get_effective_license_key( $slug, $addon );
+		if ( $key === '' ) {
+			return new WP_Error(
+				'cubewp_missing_license',
+				__( 'Connect to CubeWP.com to sync a license first.', 'cubewp-framework' )
+			);
+		}
+		return $key;
+	}
+
 	private function license_option_key( $slug ) {
 		return sanitize_key( (string) $slug ).'_key';
 	}
@@ -200,14 +340,55 @@ class CubeWp_Addons_Admin {
 	}
 
 	/**
-	 * Hub items first, then option populated by hub sync (no manual UI).
+	 * Save `{slug}_key` only after install/activate — not when syncing the hub catalog.
+	 * When connected to the hub, the key must exist in the current snapshot for that slug.
+	 *
+	 * @param string $slug        Addon/theme slug.
+	 * @param string $license_key License key that was used for EDD on this site.
+	 */
+	private function persist_addon_license_key_for_slug( $slug, $license_key ) {
+		$slug        = sanitize_key( (string) $slug );
+		$license_key = trim( (string) $license_key );
+		if ( '' === $slug || '' === $license_key ) {
+			return;
+		}
+		if ( $this->hub_is_connected() ) {
+			$allowed = $this->hub_license_keys_for_slug( $slug );
+			if ( ! empty( $allowed ) && ! in_array( $license_key, $allowed, true ) ) {
+				return;
+			}
+		}
+		update_option( $this->license_option_key( $slug ), $license_key, false );
+	}
+
+	/**
+	 * Hub snapshot first, then optional `{slug}_key` saved when the user installs/activates (see persist_addon_license_key_for_slug).
+	 * When the hub lists multiple keys for one product, prefer the key already saved locally if it matches.
 	 */
 	private function get_effective_license_key( $slug, $addon ) {
 		$item = $this->hub_item_for_slug( $slug );
-		if ( is_array( $item ) && ! empty( $item['license_key'] ) ) {
+		if ( ! is_array( $item ) ) {
+			return $this->get_license_key( $slug );
+		}
+		$saved = $this->get_license_key( $slug );
+		if ( ! empty( $item['licenses'] ) && is_array( $item['licenses'] ) ) {
+			if ( $saved !== '' ) {
+				foreach ( $item['licenses'] as $row ) {
+					if ( is_array( $row ) && ! empty( $row['license_key'] ) && (string) $row['license_key'] === $saved ) {
+						return (string) $row['license_key'];
+					}
+				}
+			}
+			$list = $item['licenses'];
+			$last = end( $list );
+			if ( is_array( $last ) && ! empty( $last['license_key'] ) ) {
+				return (string) $last['license_key'];
+			}
+		}
+		if ( ! empty( $item['license_key'] ) ) {
 			return (string) $item['license_key'];
 		}
-		return $this->get_license_key( $slug );
+		return $saved;
 	}
 
 	/**
@@ -368,7 +549,7 @@ class CubeWp_Addons_Admin {
 			trailingslashit( $this->hub_base_url() ) . 'my-account/'
 		);
 
-		wp_redirect( esc_url_raw( $url ) );
+		wp_safe_redirect( esc_url_raw( $url ) );
 		exit;
 	}
 
@@ -408,14 +589,6 @@ class CubeWp_Addons_Admin {
 		$items = isset( $data['items'] ) && is_array( $data['items'] ) ? $data['items'] : array();
 		update_option( self::OPT_HUB_ITEMS, $items, false );
 
-		// Also populate per-addon license options for existing installer logic/config.txt writer.
-		foreach ( $items as $item ) {
-			if ( ! is_array( $item ) || empty( $item['slug'] ) || empty( $item['license_key'] ) ) {
-				continue;
-			}
-			update_option( $this->license_option_key( $item['slug'] ), (string) $item['license_key'], false );
-		}
-
 		return true;
 	}
 
@@ -423,14 +596,18 @@ class CubeWp_Addons_Admin {
 		if ( ! is_admin() || ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- OAuth callback from CubeWP.com; CSRF is enforced by the user-bound state transient validated below.
 		if ( empty( $_GET['cubewp_hub_callback'] ) ) {
 			return;
 		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- OAuth callback from CubeWP.com; CSRF is enforced by the user-bound state transient validated below.
 		if ( empty( $_GET['code'] ) || empty( $_GET['state'] ) ) {
 			return;
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- OAuth callback from CubeWP.com; CSRF is enforced by the user-bound state transient validated below.
 		$code  = sanitize_text_field( wp_unslash( $_GET['code'] ) );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- OAuth callback from CubeWP.com; CSRF is enforced by the user-bound state transient validated below.
 		$state = sanitize_text_field( wp_unslash( $_GET['state'] ) );
 
 		$t = get_transient( self::STATE_PREFIX . md5( $state ) );
@@ -653,17 +830,9 @@ class CubeWp_Addons_Admin {
 					}
 
 					if ( ! empty( $license_key ) && ( empty( $addon['license_type'] ) || 'free' !== $addon['license_type'] ) ) {
-						$act = $this->activate_license_for_site( $this->addon_for_edd_api( $addon ), $license_key );
-						if ( is_wp_error( $act ) ) {
-							wp_send_json_error( array( 'message' => $act->get_error_message() ), 400 );
-						}
-						$status = isset( $act['license'] ) ? (string) $act['license'] : '';
-						if ( '' !== $status && ! in_array( $status, array( 'valid', 'active' ), true ) ) {
-							$msg = __( 'License activation failed for this site.', 'cubewp-framework' ) . ' License: ' . $status;
-							if ( ! empty( $act['error'] ) ) {
-								$msg .= ' Error: ' . (string) $act['error'];
-							}
-							wp_send_json_error( array( 'message' => $msg ), 400 );
+						$ensured = $this->ensure_edd_license_for_package_download( $this->addon_for_edd_api( $addon ), $license_key );
+						if ( is_wp_error( $ensured ) ) {
+							wp_send_json_error( array( 'message' => $ensured->get_error_message() ), 400 );
 						}
 					}
 
@@ -717,6 +886,9 @@ class CubeWp_Addons_Admin {
 					}
 
 					$this->maybe_write_config_txt( $addon, $slug, $base );
+					if ( ! empty( $license_key ) ) {
+						$this->persist_addon_license_key_for_slug( $slug, $license_key );
+					}
 
 					wp_send_json_success(
 						array(
@@ -737,11 +909,27 @@ class CubeWp_Addons_Admin {
 						$addon = isset( $catalog[ $slug ] ) ? $catalog[ $slug ] : null;
 						if ( is_array( $addon ) ) {
 							$this->maybe_write_config_txt( $addon, $slug, $base );
+							$lk = $this->get_effective_license_key( $slug, $addon );
+							if ( ! empty( $lk ) && $this->catalog_addon_requires_edd_license( $addon ) ) {
+								$ensured = $this->ensure_edd_license_for_package_download( $this->addon_for_edd_api( $addon ), $lk );
+								if ( is_wp_error( $ensured ) ) {
+									wp_send_json_error( array( 'message' => $ensured->get_error_message() ), 400 );
+								}
+							}
 						}
 					}
 					$result = activate_plugin( $base );
 					if ( is_wp_error( $result ) ) {
 						wp_send_json_error( array( 'message' => $result->get_error_message() ), 400 );
+					}
+					if ( ! empty( $slug ) ) {
+						$addon_row = isset( $catalog[ $slug ] ) ? $catalog[ $slug ] : null;
+						if ( is_array( $addon_row ) ) {
+							$lk = $this->get_effective_license_key( $slug, $addon_row );
+							if ( ! empty( $lk ) ) {
+								$this->persist_addon_license_key_for_slug( $slug, $lk );
+							}
+						}
 					}
 					wp_send_json_success( array( 'message' => __( 'Plugin activated.', 'cubewp-framework' ), 'status' => 'active' ) );
 
@@ -770,17 +958,9 @@ class CubeWp_Addons_Admin {
 						$addon_for_api['item_id'] = (string) $row['_hub']['download_id'];
 					}
 
-					$act = $this->activate_license_for_site( $addon_for_api, $license_key );
+					$act = $this->ensure_edd_license_for_package_download( $addon_for_api, $license_key );
 					if ( is_wp_error( $act ) ) {
 						wp_send_json_error( array( 'message' => $act->get_error_message() ), 400 );
-					}
-					$status = isset( $act['license'] ) ? (string) $act['license'] : '';
-					if ( '' !== $status && ! in_array( $status, array( 'valid', 'active' ), true ) ) {
-						$msg = __( 'License activation failed for this site.', 'cubewp-framework' ) . ' License: ' . $status;
-						if ( ! empty( $act['error'] ) ) {
-							$msg .= ' Error: ' . (string) $act['error'];
-						}
-						wp_send_json_error( array( 'message' => $msg ), 400 );
 					}
 
 					$package = $this->get_download_package_url( $addon_for_api, $license_key );
@@ -818,6 +998,7 @@ class CubeWp_Addons_Admin {
 						$msg .= ' Package: ' . $package;
 						wp_send_json_error( array( 'message' => $msg ), 400 );
 					}
+					$this->persist_addon_license_key_for_slug( $slug, $license_key );
 					wp_send_json_success( array( 'message' => __( 'Theme installed.', 'cubewp-framework' ), 'status' => 'installed' ) );
 
 				case 'theme_activate':
@@ -832,7 +1013,35 @@ class CubeWp_Addons_Admin {
 					if ( ! $theme->exists() ) {
 						wp_send_json_error( array( 'message' => __( 'Theme is not installed.', 'cubewp-framework' ) ), 400 );
 					}
+					$matched_slug = '';
+					$matched_row    = null;
+					foreach ( $catalog as $th_slug => $th_row ) {
+						if ( ! is_array( $th_row ) || empty( $th_row['type'] ) || 'theme' !== $th_row['type'] ) {
+							continue;
+						}
+						$ts = isset( $th_row['stylesheet'] ) ? (string) $th_row['stylesheet'] : '';
+						if ( $ts !== '' && $ts === $stylesheet ) {
+							$matched_slug = sanitize_key( (string) $th_slug );
+							$matched_row  = $th_row;
+							break;
+						}
+					}
+					if ( null !== $matched_row ) {
+						$lk = $this->get_effective_license_key( $matched_slug, $matched_row );
+						if ( ! empty( $lk ) && $this->catalog_addon_requires_edd_license( $matched_row ) ) {
+							$ensured = $this->ensure_edd_license_for_package_download( $this->addon_for_edd_api( $matched_row ), $lk );
+							if ( is_wp_error( $ensured ) ) {
+								wp_send_json_error( array( 'message' => $ensured->get_error_message() ), 400 );
+							}
+						}
+					}
 					switch_theme( $stylesheet );
+					if ( null !== $matched_row ) {
+						$lk = $this->get_effective_license_key( $matched_slug, $matched_row );
+						if ( ! empty( $lk ) ) {
+							$this->persist_addon_license_key_for_slug( $matched_slug, $lk );
+						}
+					}
 					wp_send_json_success( array( 'message' => __( 'Theme activated.', 'cubewp-framework' ), 'status' => 'active' ) );
 
 				case 'license_check':
@@ -843,29 +1052,60 @@ class CubeWp_Addons_Admin {
 					if ( empty( $slug ) || ! is_array( $addon ) ) {
 						wp_send_json_error( array( 'message' => __( 'Addon not found.', 'cubewp-framework' ) ), 404 );
 					}
-					$license_key = $this->get_effective_license_key( $slug, $addon );
-					if ( empty( $license_key ) ) {
-						wp_send_json_error( array( 'message' => __( 'Connect to CubeWP.com to sync a license first.', 'cubewp-framework' ) ), 400 );
+					$license_key = $this->resolve_license_key_for_slug_or_fail( $slug, $addon );
+					if ( is_wp_error( $license_key ) ) {
+						wp_send_json_error( array( 'message' => $license_key->get_error_message() ), 400 );
 					}
+					$license_key = (string) $license_key;
 
 					if ( 'license_check' === $op ) {
 						$data = $this->check_license_for_site( $this->addon_for_edd_api( $addon ), $license_key );
 					} elseif ( 'license_deactivate' === $op ) {
 						$data = $this->deactivate_license_for_site( $this->addon_for_edd_api( $addon ), $license_key );
 					} else {
-						$data = $this->activate_license_for_site( $this->addon_for_edd_api( $addon ), $license_key );
+						// license_activate (Manage modal): same rules as package install — limits, check then activate, post-activate verify.
+						if ( '' !== $license_key && $this->catalog_addon_requires_edd_license( $addon ) ) {
+							$ensured = $this->ensure_edd_license_for_package_download( $this->addon_for_edd_api( $addon ), $license_key );
+							if ( is_wp_error( $ensured ) ) {
+								wp_send_json_error( array( 'message' => $ensured->get_error_message() ), 400 );
+							}
+						}
+						$data = $this->check_license_for_site( $this->addon_for_edd_api( $addon ), $license_key );
 					}
 
 					if ( is_wp_error( $data ) ) {
 						wp_send_json_error( array( 'message' => $data->get_error_message() ), 400 );
 					}
+
+					$api_ok = $this->assert_edd_license_api_success( $data );
+					if ( is_wp_error( $api_ok ) ) {
+						wp_send_json_error( array( 'message' => $api_ok->get_error_message() ), 400 );
+					}
+
+					if ( 'license_activate' === $op ) {
+						$act_ok = $this->assert_edd_license_allowed_for_site_response( $data );
+						if ( is_wp_error( $act_ok ) ) {
+							wp_send_json_error( array( 'message' => $act_ok->get_error_message() ), 400 );
+						}
+					}
+
 					$lic_status = isset( $data['license'] ) ? (string) $data['license'] : '';
-					wp_send_json_success(
-						array(
-							'message' => __( 'License request completed.', 'cubewp-framework' ),
-							'license' => $lic_status,
-						)
+					$out        = array(
+						'message' => __( 'License request completed.', 'cubewp-framework' ),
+						'license' => $lic_status,
 					);
+					if ( 'license_activate' === $op && in_array( $lic_status, array( 'valid', 'active' ), true ) ) {
+						$this->persist_addon_license_key_for_slug( $slug, $license_key );
+						$this->maybe_write_config_txt( $addon, $slug, isset( $addon['base'] ) ? (string) $addon['base'] : '' );
+					}
+					// license_deactivate: EDD removes this URL from the license only. Keep `{slug}_key` (and any `{slug}_status`) so the product still knows which key to prefer for re-activation / installs.
+					if ( 'license_deactivate' === $op && '' !== $lic_status ) {
+						$status_key = sanitize_key( (string) $slug ) . '_status';
+						if ( false !== get_option( $status_key, false ) ) {
+							update_option( $status_key, $lic_status, false );
+						}
+					}
+					wp_send_json_success( $out );
 
 				case 'manage_details':
 					$slug = isset( $_POST['addon_slug'] ) ? sanitize_text_field( wp_unslash( $_POST['addon_slug'] ) ) : '';
@@ -874,46 +1114,98 @@ class CubeWp_Addons_Admin {
 						wp_send_json_error( array( 'message' => __( 'Addon not found.', 'cubewp-framework' ) ), 404 );
 					}
 					$hub = $this->hub_item_for_slug( sanitize_key( $slug ) );
-					$license_id = ( is_array( $hub ) && ! empty( $hub['license_id'] ) ) ? (int) $hub['license_id'] : 0;
-					$license_key = $this->get_effective_license_key( $slug, $addon );
-
-					if ( empty( $license_key ) || empty( $license_id ) ) {
+					if ( ! is_array( $hub ) ) {
 						wp_send_json_error( array( 'message' => __( 'No license found for this product.', 'cubewp-framework' ) ), 400 );
 					}
 
-					$sites = $this->hub_get_license_sites( $license_id );
-					if ( is_wp_error( $sites ) ) {
-						wp_send_json_error( array( 'message' => $sites->get_error_message() ), 400 );
+					$license_rows = array();
+					if ( ! empty( $hub['licenses'] ) && is_array( $hub['licenses'] ) ) {
+						$license_rows = $hub['licenses'];
+					} elseif ( ! empty( $hub['license_key'] ) && ! empty( $hub['license_id'] ) ) {
+						$license_rows = array(
+							array(
+								'license_key' => (string) $hub['license_key'],
+								'license_id'  => (int) $hub['license_id'],
+								'payment_id'  => isset( $hub['payment_id'] ) ? (int) $hub['payment_id'] : 0,
+							),
+						);
+					}
+
+					if ( empty( $license_rows ) ) {
+						wp_send_json_error( array( 'message' => __( 'No license found for this product.', 'cubewp-framework' ) ), 400 );
 					}
 
 					$download_name = isset( $addon['item_name'] ) ? (string) $addon['item_name'] : (string) $slug;
-					$check         = $this->check_license_for_site( $this->addon_for_edd_api( $addon ), $license_key );
-					$summary       = '';
-					if ( ! is_wp_error( $check ) && is_array( $check ) ) {
-						$parts = array();
-						if ( isset( $check['license'] ) ) {
-							$parts[] = 'Status: ' . (string) $check['license'];
+					$edd_addon     = $this->addon_for_edd_api( $addon );
+					$licenses_out  = array();
+
+					foreach ( $license_rows as $row ) {
+						if ( ! is_array( $row ) ) {
+							continue;
 						}
-						if ( isset( $check['expires'] ) ) {
-							$parts[] = 'Expires: ' . (string) $check['expires'];
+						$lid = isset( $row['license_id'] ) ? (int) $row['license_id'] : 0;
+						$lk  = isset( $row['license_key'] ) ? (string) $row['license_key'] : '';
+						if ( $lid <= 0 || $lk === '' ) {
+							continue;
 						}
-						if ( isset( $check['site_count'] ) ) {
-							$parts[] = 'Sites: ' . (string) $check['site_count'];
+
+						$sites = $this->hub_get_license_sites( $lid );
+						if ( is_wp_error( $sites ) ) {
+							wp_send_json_error( array( 'message' => $sites->get_error_message() ), 400 );
 						}
-						if ( isset( $check['license_limit'] ) ) {
-							$parts[] = 'Limit: ' . (string) $check['license_limit'];
+						$sites = is_array( $sites ) ? $sites : array();
+
+						$check   = $this->check_license_for_site( $edd_addon, $lk );
+						$summary = '';
+						if ( ! is_wp_error( $check ) && is_array( $check ) ) {
+							$parts = array();
+							if ( isset( $check['license'] ) ) {
+								$parts[] = 'Status: ' . (string) $check['license'];
+							}
+							if ( isset( $check['expires'] ) ) {
+								$parts[] = 'Expires: ' . (string) $check['expires'];
+							}
+							if ( isset( $check['site_count'] ) ) {
+								$parts[] = 'Sites: ' . (string) $check['site_count'];
+							}
+							if ( isset( $check['license_limit'] ) ) {
+								$parts[] = 'Limit: ' . (string) $check['license_limit'];
+							}
+							$summary = ! empty( $parts ) ? implode( ' ', $parts ) : '';
 						}
-						$summary = ! empty( $parts ) ? implode( ' ' , $parts ) : '';
+
+						$lic_status = ( ! is_wp_error( $check ) && is_array( $check ) && isset( $check['license'] ) )
+							? (string) $check['license']
+							: '';
+						$on_site    = in_array( $lic_status, array( 'valid', 'active' ), true );
+
+						$licenses_out[] = array(
+							'id'           => $lid,
+							'key'          => $lk,
+							'payment_id'   => isset( $row['payment_id'] ) ? (int) $row['payment_id'] : 0,
+							'summary'      => $summary,
+							'sites'        => $sites,
+							'on_this_site' => $on_site,
+						);
 					}
+
+					if ( empty( $licenses_out ) ) {
+						wp_send_json_error( array( 'message' => __( 'No license found for this product.', 'cubewp-framework' ) ), 400 );
+					}
+
+					$n       = count( $licenses_out );
+					$primary = $n > 0 ? $licenses_out[ $n - 1 ] : array();
 
 					wp_send_json_success(
 						array(
-							'license' => array(
-								'key'     => (string) $license_key,
+							'product'   => (string) $download_name,
+							'licenses'  => $licenses_out,
+							'license'   => array(
+								'key'     => (string) ( $primary['key'] ?? '' ),
 								'product' => (string) $download_name,
-								'id'      => (int) $license_id,
-								'sites'   => is_array( $sites ) ? $sites : array(),
-								'summary' => (string) $summary,
+								'id'      => (int) ( $primary['id'] ?? 0 ),
+								'sites'   => isset( $primary['sites'] ) && is_array( $primary['sites'] ) ? $primary['sites'] : array(),
+								'summary' => (string) ( $primary['summary'] ?? '' ),
 							),
 						)
 					);
@@ -923,6 +1215,9 @@ class CubeWp_Addons_Admin {
 					$site_id    = isset( $_POST['site_id'] ) ? absint( wp_unslash( $_POST['site_id'] ) ) : 0;
 					if ( empty( $license_id ) || empty( $site_id ) ) {
 						wp_send_json_error( array( 'message' => __( 'Missing license or site.', 'cubewp-framework' ) ), 400 );
+					}
+					if ( ! $this->hub_license_id_is_allowed( $license_id ) ) {
+						wp_send_json_error( array( 'message' => __( 'That license is not in your hub list.', 'cubewp-framework' ) ), 403 );
 					}
 					$res = $this->hub_deactivate_license_site( $license_id, $site_id );
 					if ( is_wp_error( $res ) ) {
@@ -1067,25 +1362,25 @@ class CubeWp_Addons_Admin {
 	}
 
 	private function get_download_package_url( $addon, $license_key ) {
-		$item_id   = isset( $addon['item_id'] ) ? (string) $addon['item_id'] : '';
-		$item_name = isset( $addon['item_name'] ) ? (string) $addon['item_name'] : '';
+		$license_key = (string) $license_key;
 
-		$params = array(
-			'edd_action' => 'get_version',
-			'license'    => (string) $license_key,
-			'url'        => home_url(),
+		$params = array_merge(
+			array(
+				'edd_action' => 'get_version',
+				'license'    => $license_key,
+				'url'        => $this->edd_license_client_site_url(),
+			),
+			$this->edd_sl_addon_product_params( is_array( $addon ) ? $addon : array() )
 		);
-
-		// Prefer item_id if present (less ambiguous than item_name).
-		if ( ! empty( $item_id ) ) {
-			$params['item_id'] = $item_id;
-		} else {
-			$params['item_name'] = urlencode( $item_name );
-		}
 
 		$data = $this->edd_api_request( $params );
 		if ( is_wp_error( $data ) ) {
 			return $data;
+		}
+
+		$pkg_ok = $this->assert_edd_get_version_allows_package( $data, trim( $license_key ) !== '' );
+		if ( is_wp_error( $pkg_ok ) ) {
+			return $pkg_ok;
 		}
 
 		if ( isset( $data['package'] ) && is_string( $data['package'] ) && ! empty( $data['package'] ) ) {
@@ -1096,66 +1391,271 @@ class CubeWp_Addons_Admin {
 	}
 
 	private function activate_license_for_site( $addon, $license_key ) {
-		$item_id   = isset( $addon['item_id'] ) ? (string) $addon['item_id'] : '';
-		$item_name = isset( $addon['item_name'] ) ? (string) $addon['item_name'] : '';
+		$license_key = (string) $license_key;
+		$site_url    = $this->edd_license_client_site_url();
+		$slug        = isset( $addon['slug'] ) ? sanitize_key( (string) $addon['slug'] ) : '';
 
-		$params = array(
-			'edd_action' => 'activate_license',
-			'license'    => (string) $license_key,
-			'url'        => home_url(),
-		);
-
-		if ( ! empty( $item_id ) ) {
-			$params['item_id'] = $item_id;
-		} else {
-			$params['item_name'] = urlencode( $item_name );
+		if ( $this->hub_is_connected() && '' !== $slug && '' !== $license_key ) {
+			$lid = $this->hub_license_id_for_slug_and_license_key( $slug, $license_key );
+			if ( $lid > 0 ) {
+				$hub = $this->hub_api_request(
+					'POST',
+					'/licenses/' . $lid . '/activate-site',
+					array( 'site_url' => $site_url )
+				);
+				if ( ! is_wp_error( $hub ) && is_array( $hub ) ) {
+					return $hub;
+				}
+			}
 		}
 
-		$data = $this->edd_api_request( $params );
-		return $data;
+		$params = array_merge(
+			array(
+				'edd_action' => 'activate_license',
+				'license'    => $license_key,
+				'url'        => $site_url,
+			),
+			$this->edd_sl_addon_product_params( is_array( $addon ) ? $addon : array() )
+		);
+
+		return $this->edd_api_request( $params );
 	}
 
 	private function deactivate_license_for_site( $addon, $license_key ) {
-		$item_id   = isset( $addon['item_id'] ) ? (string) $addon['item_id'] : '';
-		$item_name = isset( $addon['item_name'] ) ? (string) $addon['item_name'] : '';
-
-		$params = array(
-			'edd_action' => 'deactivate_license',
-			'license'    => (string) $license_key,
-			'url'        => home_url(),
+		$params = array_merge(
+			array(
+				'edd_action' => 'deactivate_license',
+				'license'    => (string) $license_key,
+				'url'        => $this->edd_license_client_site_url(),
+			),
+			$this->edd_sl_addon_product_params( is_array( $addon ) ? $addon : array() )
 		);
-
-		if ( ! empty( $item_id ) ) {
-			$params['item_id'] = $item_id;
-		} else {
-			$params['item_name'] = urlencode( $item_name );
-		}
 
 		$data = $this->edd_api_request( $params );
 		return $data;
 	}
 
 	private function check_license_for_site( $addon, $license_key ) {
-		$item_id   = isset( $addon['item_id'] ) ? (string) $addon['item_id'] : '';
-		$item_name = isset( $addon['item_name'] ) ? (string) $addon['item_name'] : '';
-
-		$params = array(
-			'edd_action' => 'check_license',
-			'license'    => (string) $license_key,
-			'url'        => home_url(),
+		$params = array_merge(
+			array(
+				'edd_action' => 'check_license',
+				'license'    => (string) $license_key,
+				'url'        => $this->edd_license_client_site_url(),
+			),
+			$this->edd_sl_addon_product_params( is_array( $addon ) ? $addon : array() )
 		);
-
-		if ( ! empty( $item_id ) ) {
-			$params['item_id'] = $item_id;
-		} else {
-			$params['item_name'] = urlencode( $item_name );
-		}
 
 		return $this->edd_api_request( $params );
 	}
 
+	/**
+	 * EDD SL uses "valid" / "active" when this site URL is licensed.
+	 *
+	 * @param string $status Raw status from API.
+	 */
+	private static function edd_license_status_allows_this_site( $status ) {
+		$s = strtolower( trim( (string) $status ) );
+		return in_array( $s, array( 'valid', 'active' ), true );
+	}
+
+	/**
+	 * @param array<string, mixed> $data Decoded EDD SL JSON.
+	 * @return true|WP_Error
+	 */
+	private function assert_edd_license_api_success( array $data ) {
+		if ( isset( $data['success'] ) ) {
+			$s = $data['success'];
+			if ( false === $s || 0 === $s || '0' === $s || 0.0 === $s ) {
+				$msg = ! empty( $data['error'] ) ? (string) $data['error'] : __( 'The licensing server rejected this request.', 'cubewp-framework' );
+				return new WP_Error( 'cubewp_edd_license_rejected', $msg, $data );
+			}
+			if ( is_string( $s ) && 'false' === strtolower( $s ) ) {
+				$msg = ! empty( $data['error'] ) ? (string) $data['error'] : __( 'The licensing server rejected this request.', 'cubewp-framework' );
+				return new WP_Error( 'cubewp_edd_license_rejected', $msg, $data );
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * After activate_license or check_license: require success + valid/active when a status is returned.
+	 *
+	 * @param array<string, mixed> $data
+	 * @return true|WP_Error
+	 */
+	private function assert_edd_license_allowed_for_site_response( array $data ) {
+		$r = $this->assert_edd_license_api_success( $data );
+		if ( is_wp_error( $r ) ) {
+			return $r;
+		}
+		if ( isset( $data['license'] ) ) {
+			$lic = strtolower( trim( (string) $data['license'] ) );
+			if ( '' !== $lic && ! self::edd_license_status_allows_this_site( $lic ) ) {
+				$msg = ! empty( $data['error'] ) ? (string) $data['error'] : sprintf(
+					/* translators: %s: license state from EDD Software Licensing */
+					__( 'This license is not active for this site (%s). If your plan allows one site, deactivate it elsewhere or use a different license key.', 'cubewp-framework' ),
+					$lic
+				);
+				return new WP_Error( 'cubewp_edd_license_state', $msg, $data );
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * get_version responses must not report failure or a non-licensed state when a package is returned.
+	 *
+	 * @param array<string, mixed> $data              Decoded EDD SL JSON.
+	 * @param bool                 $license_was_sent  When true, reject explicit non-active `license` values; if `license` is absent, allow when a non-empty `package` is returned (many stores omit `license` on get_version).
+	 * @return true|WP_Error
+	 */
+	private function assert_edd_get_version_allows_package( array $data, $license_was_sent = true ) {
+		$r = $this->assert_edd_license_api_success( $data );
+		if ( is_wp_error( $r ) ) {
+			return $r;
+		}
+		if ( $license_was_sent ) {
+			if ( isset( $data['license'] ) && trim( (string) $data['license'] ) !== '' ) {
+				$lic = strtolower( trim( (string) $data['license'] ) );
+				if ( ! self::edd_license_status_allows_this_site( $lic ) ) {
+					$msg = ! empty( $data['error'] ) ? (string) $data['error'] : __( 'Download is not permitted for this license on this site (activation limit or invalid license).', 'cubewp-framework' );
+					return new WP_Error( 'cubewp_edd_package_license', $msg, $data );
+				}
+			} elseif ( ! isset( $data['package'] ) || ! is_string( $data['package'] ) || trim( $data['package'] ) === '' ) {
+				// Many EDD SL builds omit `license` on get_version even when the download is allowed; only fail if there is no package either.
+				return new WP_Error(
+					'cubewp_edd_package_license_missing',
+					__( 'The licensing server did not confirm this site for downloads (missing license state and no package URL). If this license is limited to one site, deactivate it elsewhere first.', 'cubewp-framework' ),
+					$data
+				);
+			}
+		} elseif ( isset( $data['license'] ) ) {
+			$lic = strtolower( trim( (string) $data['license'] ) );
+			if ( '' !== $lic && ! self::edd_license_status_allows_this_site( $lic ) ) {
+				$msg = ! empty( $data['error'] ) ? (string) $data['error'] : __( 'Download is not permitted for this license on this site (activation limit or invalid license).', 'cubewp-framework' );
+				return new WP_Error( 'cubewp_edd_package_license', $msg, $data );
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * When EDD reports this URL as licensed, sanity-check site_count vs license_limit (fail closed on inconsistent data).
+	 *
+	 * @param array<string, mixed> $check check_license JSON.
+	 * @return true|WP_Error
+	 */
+	private function assert_edd_check_license_site_cap_coherent( array $check ) {
+		$st = isset( $check['license'] ) ? strtolower( trim( (string) $check['license'] ) ) : '';
+		if ( ! self::edd_license_status_allows_this_site( $st ) ) {
+			return true;
+		}
+		$limit = isset( $check['license_limit'] ) ? (int) $check['license_limit'] : 0;
+		$count = isset( $check['site_count'] ) ? (int) $check['site_count'] : -1;
+		if ( $limit > 0 && $count >= 0 && $count > $limit ) {
+			return new WP_Error(
+				'cubewp_edd_site_cap',
+				__( 'This license reports more active sites than allowed. Deactivate it on another installation or contact support.', 'cubewp-framework' ),
+				$check
+			);
+		}
+		return true;
+	}
+
+	/**
+	 * Re-check license state on the server after activate_license so we never treat a failed activation as success.
+	 *
+	 * @param array<string, mixed> $edd         Row for EDD API.
+	 * @param string               $license_key License key.
+	 * @return true|WP_Error
+	 */
+	private function assert_fresh_check_license_allows_download( array $edd, $license_key ) {
+		$recheck = $this->check_license_for_site( $edd, $license_key );
+		if ( is_wp_error( $recheck ) ) {
+			return $recheck;
+		}
+		$r = $this->assert_edd_license_api_success( $recheck );
+		if ( is_wp_error( $r ) ) {
+			return $r;
+		}
+		$r = $this->assert_edd_license_allowed_for_site_response( $recheck );
+		if ( is_wp_error( $r ) ) {
+			return $r;
+		}
+		return $this->assert_edd_check_license_site_cap_coherent( $recheck );
+	}
+
+	/**
+	 * @param array<string, mixed> $addon Catalog row.
+	 */
+	private function catalog_addon_requires_edd_license( array $addon ) {
+		return empty( $addon['license_type'] ) || 'free' !== $addon['license_type'];
+	}
+
+	/**
+	 * Check current URL first; activate only when needed so EDD limits apply consistently (hub + legacy).
+	 *
+	 * @param array<string, mixed> $addon Row with item_id / item_name for API.
+	 * @param string               $license_key
+	 * @return true|WP_Error
+	 */
+	private function ensure_edd_license_for_package_download( array $addon, $license_key ) {
+		$license_key = (string) $license_key;
+		if ( '' === $license_key ) {
+			return true;
+		}
+		$edd = $this->addon_for_edd_api( $addon );
+
+		$check = $this->check_license_for_site( $edd, $license_key );
+		if ( is_wp_error( $check ) ) {
+			return $check;
+		}
+		$check_success = $this->assert_edd_license_api_success( $check );
+		if ( is_wp_error( $check_success ) ) {
+			return $check_success;
+		}
+
+		$st = isset( $check['license'] ) ? strtolower( trim( (string) $check['license'] ) ) : '';
+		if ( self::edd_license_status_allows_this_site( $st ) ) {
+			$r = $this->assert_edd_license_allowed_for_site_response( $check );
+			if ( is_wp_error( $r ) ) {
+				return $r;
+			}
+			$r = $this->assert_edd_check_license_site_cap_coherent( $check );
+			if ( is_wp_error( $r ) ) {
+				return $r;
+			}
+			return true;
+		}
+
+		$blocked = array( 'expired', 'disabled', 'invalid', 'revoked', 'missing' );
+		if ( in_array( $st, $blocked, true ) ) {
+			return new WP_Error(
+				'cubewp_edd_license_terminal',
+				sprintf(
+					/* translators: %s: license state */
+					__( 'License cannot be used on this site (%s).', 'cubewp-framework' ),
+					$st
+				),
+				$check
+			);
+		}
+
+		$act = $this->activate_license_for_site( $edd, $license_key );
+		if ( is_wp_error( $act ) ) {
+			return $act;
+		}
+		$r = $this->assert_edd_license_allowed_for_site_response( $act );
+		if ( is_wp_error( $r ) ) {
+			return $r;
+		}
+		return $this->assert_fresh_check_license_allows_download( $edd, $license_key );
+	}
+
 	private function notice_from_query() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin notice text from our own redirect; no state change.
 		$type = isset( $_GET['cwp_notice_type'] ) ? sanitize_key( wp_unslash( $_GET['cwp_notice_type'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin notice text from our own redirect; no state change.
 		$msg  = isset( $_GET['cwp_notice'] ) ? sanitize_text_field( wp_unslash( $_GET['cwp_notice'] ) ) : '';
 		if ( empty( $type ) || empty( $msg ) ) {
 			return;
@@ -1170,7 +1670,9 @@ class CubeWp_Addons_Admin {
 	public function handle_install() {
 		$this->verify_post();
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce and capability are verified by verify_post() at the top of this handler.
 		$slug = isset( $_POST['addon_slug'] ) ? sanitize_text_field( wp_unslash( $_POST['addon_slug'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce and capability are verified by verify_post() at the top of this handler.
 		$base = isset( $_POST['addon_base'] ) ? sanitize_text_field( wp_unslash( $_POST['addon_base'] ) ) : '';
 
 		$catalog = $this->get_catalog_rows();
@@ -1188,18 +1690,9 @@ class CubeWp_Addons_Admin {
 
 		// Ensure the license is activated for this site before requesting a package URL.
 		if ( ! empty( $license_key ) && ( empty( $addon['license_type'] ) || 'free' !== $addon['license_type'] ) ) {
-			$act = $this->activate_license_for_site( $this->addon_for_edd_api( $addon ), $license_key );
-			if ( is_wp_error( $act ) ) {
-				wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'error', 'cwp_notice' => $act->get_error_message() ) ) );
-				exit;
-			}
-			$status = isset( $act['license'] ) ? (string) $act['license'] : '';
-			if ( '' !== $status && ! in_array( $status, array( 'valid', 'active' ), true ) ) {
-				$msg = __( 'License activation failed for this site.', 'cubewp-framework' ) . ' License: ' . $status;
-				if ( ! empty( $act['error'] ) ) {
-					$msg .= ' Error: ' . (string) $act['error'];
-				}
-				wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'error', 'cwp_notice' => $msg ) ) );
+			$ensured = $this->ensure_edd_license_for_package_download( $this->addon_for_edd_api( $addon ), $license_key );
+			if ( is_wp_error( $ensured ) ) {
+				wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'error', 'cwp_notice' => $ensured->get_error_message() ) ) );
 				exit;
 			}
 		}
@@ -1260,6 +1753,9 @@ class CubeWp_Addons_Admin {
 
 		// Ensure add-on activation passes CubeWP's own config.txt check.
 		$this->maybe_write_config_txt( $addon, $slug, $base );
+		if ( ! empty( $license_key ) ) {
+			$this->persist_addon_license_key_for_slug( $slug, $license_key );
+		}
 
 		wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'success', 'cwp_notice' => 'Addon installed.' ) ) );
 		exit;
@@ -1268,6 +1764,7 @@ class CubeWp_Addons_Admin {
 	public function handle_install_theme() {
 		$this->verify_post();
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce and capability are verified by verify_post() at the top of this handler.
 		$slug = isset( $_POST['theme_slug'] ) ? sanitize_text_field( wp_unslash( $_POST['theme_slug'] ) ) : '';
 		$catalog = $this->get_catalog_rows();
 		$row     = isset( $catalog[ $slug ] ) ? $catalog[ $slug ] : null;
@@ -1290,18 +1787,9 @@ class CubeWp_Addons_Admin {
 
 		// Ensure the license is activated for this site before requesting a package URL.
 		if ( ! empty( $license_key ) ) {
-			$act = $this->activate_license_for_site( $addon_for_api, $license_key );
-			if ( is_wp_error( $act ) ) {
-				wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'error', 'cwp_notice' => $act->get_error_message() ) ) );
-				exit;
-			}
-			$status = isset( $act['license'] ) ? (string) $act['license'] : '';
-			if ( '' !== $status && ! in_array( $status, array( 'valid', 'active' ), true ) ) {
-				$msg = __( 'License activation failed for this site.', 'cubewp-framework' ) . ' License: ' . $status;
-				if ( ! empty( $act['error'] ) ) {
-					$msg .= ' Error: ' . (string) $act['error'];
-				}
-				wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'error', 'cwp_notice' => $msg ) ) );
+			$ensured = $this->ensure_edd_license_for_package_download( $addon_for_api, $license_key );
+			if ( is_wp_error( $ensured ) ) {
+				wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'error', 'cwp_notice' => $ensured->get_error_message() ) ) );
 				exit;
 			}
 		}
@@ -1347,6 +1835,7 @@ class CubeWp_Addons_Admin {
 			exit;
 		}
 
+		$this->persist_addon_license_key_for_slug( $slug, $license_key );
 		wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'success', 'cwp_notice' => __( 'Theme installed.', 'cubewp-framework' ) ) ) );
 		exit;
 	}
@@ -1354,6 +1843,7 @@ class CubeWp_Addons_Admin {
 	public function handle_activate_theme() {
 		$this->verify_post();
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce and capability are verified by verify_post() at the top of this handler.
 		$stylesheet = isset( $_POST['theme_stylesheet'] ) ? sanitize_text_field( wp_unslash( $_POST['theme_stylesheet'] ) ) : '';
 		if ( empty( $stylesheet ) ) {
 			wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'error', 'cwp_notice' => 'Missing theme.' ) ) );
@@ -1371,7 +1861,38 @@ class CubeWp_Addons_Admin {
 			exit;
 		}
 
+		$catalog      = $this->get_catalog_rows();
+		$matched_slug = '';
+		$matched_row  = null;
+		foreach ( $catalog as $th_slug => $th_row ) {
+			if ( ! is_array( $th_row ) || empty( $th_row['type'] ) || 'theme' !== $th_row['type'] ) {
+				continue;
+			}
+			$ts = isset( $th_row['stylesheet'] ) ? (string) $th_row['stylesheet'] : '';
+			if ( $ts !== '' && $ts === $stylesheet ) {
+				$matched_slug = sanitize_key( (string) $th_slug );
+				$matched_row  = $th_row;
+				break;
+			}
+		}
+		if ( null !== $matched_row ) {
+			$lk = $this->get_effective_license_key( $matched_slug, $matched_row );
+			if ( ! empty( $lk ) && $this->catalog_addon_requires_edd_license( $matched_row ) ) {
+				$ensured = $this->ensure_edd_license_for_package_download( $this->addon_for_edd_api( $matched_row ), $lk );
+				if ( is_wp_error( $ensured ) ) {
+					wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'error', 'cwp_notice' => $ensured->get_error_message() ) ) );
+					exit;
+				}
+			}
+		}
+
 		switch_theme( $stylesheet );
+		if ( null !== $matched_row ) {
+			$lk = $this->get_effective_license_key( $matched_slug, $matched_row );
+			if ( ! empty( $lk ) ) {
+				$this->persist_addon_license_key_for_slug( $matched_slug, $lk );
+			}
+		}
 		wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'success', 'cwp_notice' => __( 'Theme activated.', 'cubewp-framework' ) ) ) );
 		exit;
 	}
@@ -1381,19 +1902,29 @@ class CubeWp_Addons_Admin {
 
 		require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce and capability are verified by verify_post() at the top of this handler.
 		$slug = isset( $_POST['addon_slug'] ) ? sanitize_text_field( wp_unslash( $_POST['addon_slug'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce and capability are verified by verify_post() at the top of this handler.
 		$base = isset( $_POST['addon_base'] ) ? sanitize_text_field( wp_unslash( $_POST['addon_base'] ) ) : '';
 		if ( empty( $base ) ) {
 			wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'error', 'cwp_notice' => 'Missing plugin base.' ) ) );
 			exit;
 		}
 
-		// If the plugin was installed earlier without config.txt, fix it before activation.
+		$addon = null;
 		if ( ! empty( $slug ) ) {
 			$catalog = $this->get_catalog_rows();
 			$addon   = isset( $catalog[ $slug ] ) ? $catalog[ $slug ] : null;
 			if ( is_array( $addon ) ) {
 				$this->maybe_write_config_txt( $addon, $slug, $base );
+				$lk = $this->get_effective_license_key( $slug, $addon );
+				if ( ! empty( $lk ) && $this->catalog_addon_requires_edd_license( $addon ) ) {
+					$ensured = $this->ensure_edd_license_for_package_download( $this->addon_for_edd_api( $addon ), $lk );
+					if ( is_wp_error( $ensured ) ) {
+						wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'error', 'cwp_notice' => $ensured->get_error_message() ) ) );
+						exit;
+					}
+				}
 			}
 		}
 
@@ -1401,6 +1932,13 @@ class CubeWp_Addons_Admin {
 		if ( is_wp_error( $result ) ) {
 			wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'error', 'cwp_notice' => $result->get_error_message() ) ) );
 			exit;
+		}
+
+		if ( ! empty( $slug ) && is_array( $addon ) ) {
+			$lk = $this->get_effective_license_key( $slug, $addon );
+			if ( ! empty( $lk ) ) {
+				$this->persist_addon_license_key_for_slug( $slug, $lk );
+			}
 		}
 
 		wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'success', 'cwp_notice' => 'Plugin activated.' ) ) );
@@ -1412,6 +1950,7 @@ class CubeWp_Addons_Admin {
 
 		require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce and capability are verified by verify_post() at the top of this handler.
 		$base = isset( $_POST['addon_base'] ) ? sanitize_text_field( wp_unslash( $_POST['addon_base'] ) ) : '';
 		if ( empty( $base ) ) {
 			wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'error', 'cwp_notice' => 'Missing plugin base.' ) ) );
@@ -1426,6 +1965,7 @@ class CubeWp_Addons_Admin {
 	public function handle_license_activate() {
 		$this->verify_post();
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce and capability are verified by verify_post() at the top of this handler.
 		$slug    = isset( $_POST['addon_slug'] ) ? sanitize_text_field( wp_unslash( $_POST['addon_slug'] ) ) : '';
 		$catalog = $this->get_catalog_rows();
 		$addon   = isset( $catalog[ $slug ] ) ? $catalog[ $slug ] : null;
@@ -1446,6 +1986,11 @@ class CubeWp_Addons_Admin {
 			wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'error', 'cwp_notice' => $data->get_error_message() ) ) );
 			exit;
 		}
+		$ok = $this->assert_edd_license_allowed_for_site_response( $data );
+		if ( is_wp_error( $ok ) ) {
+			wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'error', 'cwp_notice' => $ok->get_error_message() ) ) );
+			exit;
+		}
 
 		$msg = isset( $data['license'] ) ? 'License: ' . $data['license'] : 'License activation requested.';
 		wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'success', 'cwp_notice' => $msg ) ) );
@@ -1455,6 +2000,7 @@ class CubeWp_Addons_Admin {
 	public function handle_license_deactivate() {
 		$this->verify_post();
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce and capability are verified by verify_post() at the top of this handler.
 		$slug    = isset( $_POST['addon_slug'] ) ? sanitize_text_field( wp_unslash( $_POST['addon_slug'] ) ) : '';
 		$catalog = $this->get_catalog_rows();
 		$addon   = isset( $catalog[ $slug ] ) ? $catalog[ $slug ] : null;
@@ -1475,6 +2021,11 @@ class CubeWp_Addons_Admin {
 			wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'error', 'cwp_notice' => $data->get_error_message() ) ) );
 			exit;
 		}
+		$deact_ok = $this->assert_edd_license_api_success( $data );
+		if ( is_wp_error( $deact_ok ) ) {
+			wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'error', 'cwp_notice' => $deact_ok->get_error_message() ) ) );
+			exit;
+		}
 
 		$msg = isset( $data['license'] ) ? 'License: ' . $data['license'] : 'License deactivation requested.';
 		wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'success', 'cwp_notice' => $msg ) ) );
@@ -1484,6 +2035,7 @@ class CubeWp_Addons_Admin {
 	public function handle_license_check() {
 		$this->verify_post();
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce and capability are verified by verify_post() at the top of this handler.
 		$slug    = isset( $_POST['addon_slug'] ) ? sanitize_text_field( wp_unslash( $_POST['addon_slug'] ) ) : '';
 		$catalog = $this->get_catalog_rows();
 		$addon   = isset( $catalog[ $slug ] ) ? $catalog[ $slug ] : null;
@@ -1502,6 +2054,11 @@ class CubeWp_Addons_Admin {
 		$data = $this->check_license_for_site( $this->addon_for_edd_api( $addon ), $license_key );
 		if ( is_wp_error( $data ) ) {
 			wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'error', 'cwp_notice' => $data->get_error_message() ) ) );
+			exit;
+		}
+		$chk_ok = $this->assert_edd_license_api_success( $data );
+		if ( is_wp_error( $chk_ok ) ) {
+			wp_safe_redirect( $this->back_url( array( 'cwp_notice_type' => 'error', 'cwp_notice' => $chk_ok->get_error_message() ) ) );
 			exit;
 		}
 

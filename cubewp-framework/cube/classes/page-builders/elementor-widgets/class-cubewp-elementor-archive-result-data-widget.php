@@ -37,12 +37,27 @@ class CubeWp_Elementor_Archive_Result_Data_Widget extends Widget_Base {
         );
 
         $this->add_control(
+            'show_default_text',
+            [
+                'label'        => esc_html__( 'Show Default Text', 'cubewp-framework' ),
+                'type'         => Controls_Manager::SWITCHER,
+                'label_on'     => esc_html__( 'Show', 'cubewp-framework' ),
+                'label_off'    => esc_html__( 'Hide', 'cubewp-framework' ),
+                'return_value' => 'yes',
+                'default'      => 'yes',
+            ]
+        );
+
+        $this->add_control(
             'default_text',
             [
-                'label' => __( 'Default Text', 'cubewp-framework' ),
-                'type' => Controls_Manager::TEXT,
-                'default' => __( 'Results Found', 'cubewp-framework' ),
+                'label'       => __( 'Default Text', 'cubewp-framework' ),
+                'type'        => Controls_Manager::TEXT,
+                'default'     => __( 'Results Found', 'cubewp-framework' ),
                 'placeholder' => __( 'Results Found', 'cubewp-framework' ),
+                'condition'   => [
+                    'show_default_text' => 'yes',
+                ],
             ]
         );
 
@@ -163,12 +178,12 @@ class CubeWp_Elementor_Archive_Result_Data_Widget extends Widget_Base {
     protected function render() {
         $settings = $this->get_settings_for_display();
         $default_text = $settings['default_text'] ? $settings['default_text'] : __( 'Results Found', 'cubewp-framework' );
-        
+
         $output = '<div class="cwp-filtered-result-count">';
         $data =  esc_html__( '0 ', 'cubewp-framework' ) . $default_text;
         $output .= '<div class="cwp-total-results">'. wp_kses_post($data) .'</div>';
         $output .= '</div>';
-        
+
         echo wp_kses_post( $output );
     }
 }

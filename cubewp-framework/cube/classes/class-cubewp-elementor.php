@@ -146,6 +146,7 @@ final class CubeWp_Elementor {
 		$classes = array(
 			'Taxonomy_Widget',
 			'Posts_Widget',
+			'Users_Widget',
 			'Saved_Posts_Widget',
 			'CubeWP_Form_Widget',
 			'Search_Widget',

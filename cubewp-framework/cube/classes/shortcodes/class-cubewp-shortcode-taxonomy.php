@@ -23,11 +23,285 @@ class CubeWp_Shortcode_Taxonomy
 		add_action('update_option_cwpOptions', array($this, 'clear_taxonomy_cache_when_reenabled'), 10, 3);
 	}
 
+	/**
+	 * Normalize taxonomy setting (string, array, or comma-separated) to a list of slugs.
+	 *
+	 * @param mixed $taxonomy Taxonomy slug(s).
+	 * @return array<int, string>
+	 */
+	public static function normalize_taxonomy_list( $taxonomy ) {
+		if ( empty( $taxonomy ) ) {
+			return array();
+		}
+		if ( is_array( $taxonomy ) ) {
+			$list = array_map( 'sanitize_key', $taxonomy );
+		} else {
+			$list = array_map( 'trim', explode( ',', (string) $taxonomy ) );
+			$list = array_map( 'sanitize_key', $list );
+		}
+		$list = array_values( array_unique( array_filter( $list, 'taxonomy_exists' ) ) );
+		return $list;
+	}
+
+	/**
+	 * Map per-taxonomy Elementor settings (output_style_{taxonomy}, etc.) onto flat keys.
+	 *
+	 * @param array  $parameters Widget/shortcode parameters.
+	 * @param string $taxonomy   Taxonomy slug.
+	 * @return array
+	 */
+	public static function resolve_taxonomy_output_settings( $parameters, $taxonomy ) {
+		if ( empty( $taxonomy ) || ! is_array( $parameters ) ) {
+			return $parameters;
+		}
+		$style_key = 'output_style_' . $taxonomy;
+		if ( isset( $parameters[ $style_key ] ) && '' !== $parameters[ $style_key ] ) {
+			$parameters['output_style']    = $parameters[ $style_key ];
+			$parameters['icon_media_name']   = isset( $parameters[ 'icon_media_name_' . $taxonomy ] ) ? $parameters[ 'icon_media_name_' . $taxonomy ] : '';
+			$parameters['terms_box_color']   = isset( $parameters[ 'terms_box_color_' . $taxonomy ] ) ? $parameters[ 'terms_box_color_' . $taxonomy ] : array();
+		}
+		return $parameters;
+	}
+
+	/**
+	 * Taxonomy slugs for queries (supports one or many).
+	 *
+	 * @param mixed $taxonomy Taxonomy setting.
+	 * @return array<int, string>
+	 */
+	public static function get_taxonomy_slugs( $taxonomy ) {
+		if ( is_array( $taxonomy ) ) {
+			return array_values( array_filter( array_map( 'sanitize_key', $taxonomy ), 'taxonomy_exists' ) );
+		}
+		if ( is_string( $taxonomy ) && '' !== $taxonomy ) {
+			$slug = sanitize_key( $taxonomy );
+			return taxonomy_exists( $slug ) ? array( $slug ) : array();
+		}
+		return array();
+	}
+
+	/**
+	 * Resolve parent term ID for "children of parent" terms source.
+	 *
+	 * @param array $parameters    Widget/shortcode parameters.
+	 * @param array $taxonomy_list Active taxonomy slugs.
+	 * @return int Parent term ID or 0.
+	 */
+	public static function resolve_parent_term_id( $parameters, $taxonomy_list = array() ) {
+		if ( ! empty( $parameters['parent_term_id'] ) ) {
+			$parent_id = absint( $parameters['parent_term_id'] );
+			$term      = get_term( $parent_id );
+			if ( $term && ! is_wp_error( $term ) ) {
+				if ( empty( $taxonomy_list ) || in_array( $term->taxonomy, $taxonomy_list, true ) ) {
+					return (int) $term->term_id;
+				}
+			}
+		}
+
+		if ( ! empty( $parameters['parent_term_slug'] ) ) {
+			$slug = sanitize_title( wp_unslash( $parameters['parent_term_slug'] ) );
+			if ( $slug ) {
+				$taxonomies = ! empty( $taxonomy_list ) ? $taxonomy_list : array();
+				if ( ! empty( $parameters['parent_term_taxonomy'] ) ) {
+					$taxonomies = array( sanitize_key( $parameters['parent_term_taxonomy'] ) );
+				}
+				foreach ( $taxonomies as $taxonomy_slug ) {
+					if ( ! taxonomy_exists( $taxonomy_slug ) ) {
+						continue;
+					}
+					$term = get_term_by( 'slug', $slug, $taxonomy_slug );
+					if ( $term && ! is_wp_error( $term ) ) {
+						return (int) $term->term_id;
+					}
+				}
+			}
+		}
+
+		$use_archive = ! empty( $parameters['parent_from_archive'] ) && 'yes' === $parameters['parent_from_archive'];
+		if ( $use_archive && is_tax() ) {
+			$queried = get_queried_object();
+			if ( $queried instanceof WP_Term ) {
+				if ( empty( $taxonomy_list ) || in_array( $queried->taxonomy, $taxonomy_list, true ) ) {
+					return (int) $queried->term_id;
+				}
+			}
+		}
+
+		return 0;
+	}
+
+	/**
+	 * Apply terms_source rules to get_terms() arguments.
+	 *
+	 * @param array       $args          Query args (modified by reference).
+	 * @param array       $parameters    Settings.
+	 * @param array       $taxonomy_list Taxonomy slugs.
+	 * @param bool        $child_terms   Show nested child terms in term cards.
+	 * @param array       $term_ids      Pre-filled term IDs.
+	 * @param array       $term_slugs    Pre-filled term slugs.
+	 * @param string      $terms_source  Source mode.
+	 * @param string      $get_terms_from_post yes/no.
+	 * @return array{terms: array|null, fallback_if_no_terms: bool}
+	 */
+	private static function apply_terms_source_to_query_args( &$args, $parameters, $taxonomy_list, $child_terms, $term_ids, $term_slugs, $terms_source, $get_terms_from_post ) {
+		$result = array(
+			'terms'                  => null,
+			'fallback_if_no_terms'   => false,
+		);
+
+		if ( ! empty( $term_ids ) ) {
+			$args['include'] = array_values( array_map( 'intval', $term_ids ) );
+			$args['orderby'] = 'include';
+			unset( $args['order'], $args['parent'] );
+			if ( 'by_ids' === $terms_source ) {
+				$result['fallback_if_no_terms'] = true;
+			}
+			return $result;
+		}
+
+		if ( ! empty( $term_slugs ) ) {
+			$args['slug'] = $term_slugs;
+			unset( $args['parent'] );
+			return $result;
+		}
+
+		if ( 'by_parent' === $terms_source ) {
+			$parent_id = self::resolve_parent_term_id( $parameters, $taxonomy_list );
+			if ( $parent_id > 0 ) {
+				$args['parent'] = $parent_id;
+			} else {
+				$result['terms'] = array();
+			}
+			return $result;
+		}
+
+		if ( 'yes' === $get_terms_from_post ) {
+			$result['terms'] = array();
+			return $result;
+		}
+
+		$args['parent'] = $child_terms ? '' : 0;
+		return $result;
+	}
+
+	/**
+	 * Parse comma-separated (or array) term IDs while preserving input order.
+	 *
+	 * @param mixed $input Term IDs from settings.
+	 * @return int[]
+	 */
+	private static function parse_term_ids_input( $input ) {
+		$parts = is_array( $input ) ? $input : explode( ',', (string) $input );
+		$ids   = array();
+
+		foreach ( $parts as $part ) {
+			$id = (int) trim( (string) $part );
+			if ( $id > 0 && ! in_array( $id, $ids, true ) ) {
+				$ids[] = $id;
+			}
+		}
+
+		return $ids;
+	}
+
+	/**
+	 * Parse comma-separated (or array) term slugs while preserving input order.
+	 *
+	 * @param mixed $input Term slugs from settings.
+	 * @return string[]
+	 */
+	private static function parse_term_slugs_input( $input ) {
+		$parts = is_array( $input ) ? $input : explode( ',', (string) $input );
+		$slugs = array();
+
+		foreach ( $parts as $part ) {
+			$slug = sanitize_title( trim( (string) $part ) );
+			if ( '' !== $slug && ! in_array( $slug, $slugs, true ) ) {
+				$slugs[] = $slug;
+			}
+		}
+
+		return $slugs;
+	}
+
+	/**
+	 * Reorder terms to match the comma-separated slug or ID list from widget settings.
+	 *
+	 * @param array|\WP_Error $terms        Terms from get_terms().
+	 * @param string          $terms_source Source mode.
+	 * @param array           $term_ids     Requested term IDs in order.
+	 * @param array           $term_slugs   Requested term slugs in order.
+	 * @return array|\WP_Error
+	 */
+	private static function order_terms_by_selection( $terms, $terms_source, $term_ids, $term_slugs ) {
+		if ( empty( $terms ) || is_wp_error( $terms ) ) {
+			return $terms;
+		}
+
+		if ( 'by_slugs' === $terms_source && ! empty( $term_slugs ) ) {
+			$order_list = $term_slugs;
+			$field      = 'slug';
+		} elseif ( 'by_ids' === $terms_source && ! empty( $term_ids ) ) {
+			$order_list = array_map( 'intval', $term_ids );
+			$field      = 'term_id';
+		} else {
+			return $terms;
+		}
+
+		$indexed = array();
+		foreach ( $terms as $term ) {
+			$key             = ( 'term_id' === $field ) ? (int) $term->term_id : $term->slug;
+			$indexed[ $key ] = $term;
+		}
+
+		$ordered = array();
+		foreach ( $order_list as $item ) {
+			$key = ( 'term_id' === $field ) ? (int) $item : sanitize_title( $item );
+			if ( isset( $indexed[ $key ] ) ) {
+				$ordered[] = $indexed[ $key ];
+			}
+		}
+
+		return $ordered;
+	}
+
+	/**
+	 * Resolve responsive vertical slider setting for data attributes.
+	 *
+	 * @param array  $parameters Widget/shortcode parameters.
+	 * @param string $device     desktop|tablet|mobile.
+	 * @return string "true" or "false".
+	 */
+	private static function taxonomy_slider_vertical_attr( $parameters, $device = 'desktop' ) {
+		$desktop = ( isset( $parameters['slider_vertical'] ) && 'yes' === $parameters['slider_vertical'] ) ? 'yes' : '';
+		$tablet  = isset( $parameters['slider_vertical_tablet'] ) ? $parameters['slider_vertical_tablet'] : '';
+		$mobile  = isset( $parameters['slider_vertical_mobile'] ) ? $parameters['slider_vertical_mobile'] : '';
+
+		if ( 'tablet' === $device ) {
+			$value = ( '' !== $tablet ) ? $tablet : $desktop;
+		} elseif ( 'mobile' === $device ) {
+			$value = ( '' !== $mobile ) ? $mobile : ( ( '' !== $tablet ) ? $tablet : $desktop );
+		} else {
+			$value = $desktop;
+		}
+
+		return ( 'yes' === $value ) ? 'true' : 'false';
+	}
+
 	public static function cubewp_taxonomy_output($output, $parameters = array())
 	{
 		if (empty($parameters) || count($parameters) == 0) {
 			return $output;
 		}
+
+		$taxonomy_list = self::normalize_taxonomy_list( isset( $parameters['taxonomy'] ) ? $parameters['taxonomy'] : '' );
+		if ( empty( $taxonomy_list ) ) {
+			return $output;
+		}
+
+		// One combined output: pass all taxonomies to get_terms (string when only one for backward compatibility).
+		$parameters['taxonomy'] = 1 === count( $taxonomy_list ) ? $taxonomy_list[0] : $taxonomy_list;
+		$parameters             = self::resolve_taxonomy_output_settings( $parameters, $taxonomy_list[0] );
 
 		$cache_enabled = self::is_taxonomy_cache_enabled();
 		$skip_cache = cubewp_is_elementor_editing() || !is_singular() || !$cache_enabled;
@@ -47,7 +321,8 @@ class CubeWp_Shortcode_Taxonomy
 		if (strpos($output_style, '_vp_elmentor_term_') !== 0) {
 			wp_enqueue_style('cwp-taxonomy-shortcode');
 			$taxonomy        = isset($parameters['taxonomy']) ? $parameters['taxonomy'] : '';
-			if (empty($taxonomy)) {
+			$taxonomy_list   = self::get_taxonomy_slugs( $taxonomy );
+			if (empty($taxonomy_list)) {
 				return $output;
 			}
 
@@ -81,18 +356,14 @@ class CubeWp_Shortcode_Taxonomy
 			$term_ids  = array();
 			$term_slugs = array();
 			
-			if ($terms_source === 'by_ids' && $term_ids_input !== '') {
-				// Parse comma-separated term IDs
-				$term_ids = array_map('intval', array_filter(array_map('trim', explode(',', $term_ids_input))));
-				$term_ids = array_unique(array_filter($term_ids));
+			if ( 'by_ids' === $terms_source && '' !== $term_ids_input ) {
+				$term_ids = self::parse_term_ids_input( $term_ids_input );
 			}
-			if ($terms_source === 'by_slugs' && $term_slugs_input !== '') {
-				// Parse comma-separated term slugs
-				$term_slugs = array_map('trim', array_filter(explode(',', $term_slugs_input)));
-				$term_slugs = array_unique(array_filter($term_slugs));
+			if ( 'by_slugs' === $terms_source && '' !== $term_slugs_input ) {
+				$term_slugs = self::parse_term_slugs_input( $term_slugs_input );
 			}
 			
-			if (empty($term_ids) && empty($term_slugs) && $get_terms_from_post === 'yes') {
+			if ( empty( $term_ids ) && empty( $term_slugs ) && 'by_parent' !== $terms_source && $get_terms_from_post === 'yes' ) {
 				// Get post ID based on source
 				$post_id = 0;
 				
@@ -109,7 +380,7 @@ class CubeWp_Shortcode_Taxonomy
 				
 				// If we have a valid post ID, get its terms
 				if ($post_id > 0) {
-					$post_terms = wp_get_post_terms($post_id, $taxonomy, array('fields' => 'ids'));
+					$post_terms = wp_get_post_terms($post_id, $taxonomy_list, array('fields' => 'ids'));
 					if (!is_wp_error($post_terms) && !empty($post_terms)) {
 						$term_ids = $post_terms;
 					}
@@ -125,25 +396,10 @@ class CubeWp_Shortcode_Taxonomy
 				'order'      => $order,
 			);
 			
-			// If showing specific term IDs (by_ids or from post), use include; if by_slugs, use slug
-			$fallback_if_no_terms = false;
-			if (!empty($term_ids)) {
-				$args['include'] = $term_ids;
-				unset($args['parent']); // So all included IDs are returned regardless of hierarchy
-				if ($terms_source === 'by_ids') {
-					$fallback_if_no_terms = true; // When by_ids yields no terms (e.g. demo import), fall back to "all" by other controls
-				}
-			} elseif (!empty($term_slugs)) {
-				$args['slug'] = $term_slugs;
-				unset($args['parent']); // So all matching slugs are returned regardless of hierarchy
-			} else {
-				// Post-associated terms requested but post has no terms → return nothing
-				if ($get_terms_from_post === 'yes') {
-					$terms = array();
-				} else {
-					// Original logic - get all terms
-					$args['parent'] = $child_terms ? '' : 0;
-				}
+			$source_result       = self::apply_terms_source_to_query_args( $args, $parameters, $taxonomy_list, $child_terms, $term_ids, $term_slugs, $terms_source, $get_terms_from_post );
+			$fallback_if_no_terms = $source_result['fallback_if_no_terms'];
+			if ( null !== $source_result['terms'] ) {
+				$terms = $source_result['terms'];
 			}
 			
 			// Add terms per page limit
@@ -151,14 +407,22 @@ class CubeWp_Shortcode_Taxonomy
 				$args['number'] = $terms_per_page;
 			}
 			
-			if (!isset($terms)) {
-				$terms = get_terms($args);
-				// When source is by_ids and no terms found (e.g. demo import – IDs don't match), fall back to terms by other controls
-				if ($fallback_if_no_terms && (is_wp_error($terms) || empty($terms))) {
-					unset($args['include']);
-					$args['parent'] = $child_terms ? '' : 0;
-					$terms = get_terms($args);
+			$used_terms_fallback = false;
+			if ( ! isset( $terms ) ) {
+				$terms = get_terms( $args );
+				// When source is by_ids and no terms found (e.g. demo import – IDs don't match), fall back to terms by other controls.
+				if ( $fallback_if_no_terms && ( is_wp_error( $terms ) || empty( $terms ) ) ) {
+					unset( $args['include'], $args['slug'] );
+					$args['orderby'] = $orderby;
+					$args['order']   = $order;
+					$args['parent']  = $child_terms ? '' : 0;
+					$terms           = get_terms( $args );
+					$used_terms_fallback = true;
 				}
+			}
+
+			if ( ! $used_terms_fallback ) {
+				$terms = self::order_terms_by_selection( $terms, $terms_source, $term_ids, $term_slugs );
 			}
 
 			// Slider functionality
@@ -192,6 +456,9 @@ class CubeWp_Shortcode_Taxonomy
 				$custom_dots = (isset($parameters['custom_dots']) && $parameters['custom_dots'] === 'yes') ? 'true' : 'false';
 				$enable_wrap_dots_arrows = (isset($parameters['enable_wrap_dots_arrows']) && $parameters['enable_wrap_dots_arrows'] === 'yes') ? 'true' : 'false';
 				$slider_device_option = isset($parameters['slider_device_option']) ? $parameters['slider_device_option'] : 'all_devices';
+				$slider_vertical         = self::taxonomy_slider_vertical_attr( $parameters, 'desktop' );
+				$slider_vertical_tablet  = self::taxonomy_slider_vertical_attr( $parameters, 'tablet' );
+				$slider_vertical_mobile  = self::taxonomy_slider_vertical_attr( $parameters, 'mobile' );
 
 				// Check if slider should be disabled based on term count
 				if (wp_is_mobile() && count($terms) <= $slides_to_show_mobile) {
@@ -254,6 +521,9 @@ class CubeWp_Shortcode_Taxonomy
 					$container_attrs .= ' data-enable-progress-bar="' . esc_attr($enable_progress_bar) . '"';
 					$container_attrs .= ' data-enable-wrapper="' . esc_attr($enable_wrap_dots_arrows) . '"';
 					$container_attrs .= ' data-slider-device-option="' . esc_attr($slider_device_option) . '"';
+					$container_attrs .= ' data-vertical="' . esc_attr($slider_vertical) . '"';
+					$container_attrs .= ' data-vertical-tablet="' . esc_attr($slider_vertical_tablet) . '"';
+					$container_attrs .= ' data-vertical-mobile="' . esc_attr($slider_vertical_mobile) . '"';
 				}
 			}
 
@@ -265,11 +535,16 @@ class CubeWp_Shortcode_Taxonomy
 					<?php foreach ($terms as $term) {
 						$term_id   = $term->term_id;
 						$term_name = $term->name;
-						if ($output_style == 'boxed_view') {
-							$color_count = !empty($terms_box_color) && is_array($terms_box_color) ? count($terms_box_color) : 0;
-							$icon_media  = !empty($icon_media_name) ? get_term_meta($term_id, $icon_media_name, true) : '';
-							$color = (!empty($terms_box_color) && is_array($terms_box_color) && isset($terms_box_color[$counter]['term_box_color']))
-								? sanitize_hex_color($terms_box_color[$counter]['term_box_color'])
+						$term_taxonomy = $term->taxonomy;
+						$term_params   = self::resolve_taxonomy_output_settings( $parameters, $term_taxonomy );
+						$term_style    = isset( $term_params['output_style'] ) ? $term_params['output_style'] : $output_style;
+						$term_icon_meta = isset( $term_params['icon_media_name'] ) ? $term_params['icon_media_name'] : $icon_media_name;
+						$term_box_colors = isset( $term_params['terms_box_color'] ) ? $term_params['terms_box_color'] : $terms_box_color;
+						if ($term_style == 'boxed_view') {
+							$color_count = !empty($term_box_colors) && is_array($term_box_colors) ? count($term_box_colors) : 0;
+							$icon_media  = !empty($term_icon_meta) ? get_term_meta($term_id, $term_icon_meta, true) : '';
+							$color = (!empty($term_box_colors) && is_array($term_box_colors) && isset($term_box_colors[$counter]['term_box_color']))
+								? sanitize_hex_color($term_box_colors[$counter]['term_box_color'])
 								: '#000000';
 							$counter++;
 							if ($color_count > 0 && $counter >= $color_count) {
@@ -299,7 +574,7 @@ class CubeWp_Shortcode_Taxonomy
 									<?php
 									if ($child_terms) {
 										$term_child_args = array(
-											'taxonomy'   => $taxonomy,
+											'taxonomy'   => $term_taxonomy,
 											'hide_empty' => $hide_empty,
 											'parent'     => $term_id,
 										);
@@ -345,7 +620,7 @@ class CubeWp_Shortcode_Taxonomy
 								</div>
 							</div>
 						<?php
-						} else if ($output_style == 'list_view') {
+						} else if ($term_style == 'list_view') {
 						?>
 							<div class="cwp-taxonomy-term">
 								<div class="cwp-taxonomy-term-list">
@@ -353,7 +628,7 @@ class CubeWp_Shortcode_Taxonomy
 									<?php
 									if ($child_terms) {
 										$term_child_args = array(
-											'taxonomy'   => $taxonomy,
+											'taxonomy'   => $term_taxonomy,
 											'hide_empty' => $hide_empty,
 											'parent'     => $term_id,
 										);
@@ -427,8 +702,9 @@ class CubeWp_Shortcode_Taxonomy
 			return $output;
 		}
 
-		$taxonomy = isset($parameters['taxonomy']) ? $parameters['taxonomy'] : '';
-		if (empty($taxonomy)) {
+		$taxonomy      = isset($parameters['taxonomy']) ? $parameters['taxonomy'] : '';
+		$taxonomy_list = self::get_taxonomy_slugs( $taxonomy );
+		if (empty($taxonomy_list)) {
 			return $output;
 		}
 
@@ -477,6 +753,9 @@ class CubeWp_Shortcode_Taxonomy
 			$custom_dots = (isset($parameters['custom_dots']) && $parameters['custom_dots'] === 'yes') ? 'true' : 'false';
 			$enable_wrap_dots_arrows = (isset($parameters['enable_wrap_dots_arrows']) && $parameters['enable_wrap_dots_arrows'] === 'yes') ? 'true' : 'false';
 			$slider_device_option = isset($parameters['slider_device_option']) ? $parameters['slider_device_option'] : 'all_devices';
+			$slider_vertical         = self::taxonomy_slider_vertical_attr( $parameters, 'desktop' );
+			$slider_vertical_tablet  = self::taxonomy_slider_vertical_attr( $parameters, 'tablet' );
+			$slider_vertical_mobile  = self::taxonomy_slider_vertical_attr( $parameters, 'mobile' );
 		}
 
 		// Build term query args
@@ -491,16 +770,14 @@ class CubeWp_Shortcode_Taxonomy
 		$term_ids  = array();
 		$term_slugs = array();
 		
-		if ($terms_source === 'by_ids' && $term_ids_input !== '') {
-			$term_ids = array_map('intval', array_filter(array_map('trim', explode(',', $term_ids_input))));
-			$term_ids = array_unique(array_filter($term_ids));
+		if ( 'by_ids' === $terms_source && '' !== $term_ids_input ) {
+			$term_ids = self::parse_term_ids_input( $term_ids_input );
 		}
-		if ($terms_source === 'by_slugs' && $term_slugs_input !== '') {
-			$term_slugs = array_map('trim', array_filter(explode(',', $term_slugs_input)));
-			$term_slugs = array_unique(array_filter($term_slugs));
+		if ( 'by_slugs' === $terms_source && '' !== $term_slugs_input ) {
+			$term_slugs = self::parse_term_slugs_input( $term_slugs_input );
 		}
 		
-		if (empty($term_ids) && empty($term_slugs) && $get_terms_from_post === 'yes') {
+		if ( empty( $term_ids ) && empty( $term_slugs ) && 'by_parent' !== $terms_source && $get_terms_from_post === 'yes' ) {
 			// Get post ID based on source
 			$post_id = 0;
 			
@@ -514,32 +791,20 @@ class CubeWp_Shortcode_Taxonomy
 			}
 			
 			if ($post_id > 0) {
-				$post_terms = wp_get_post_terms($post_id, $taxonomy, array('fields' => 'ids'));
+				$post_terms = wp_get_post_terms($post_id, $taxonomy_list, array('fields' => 'ids'));
 				if (!is_wp_error($post_terms) && !empty($post_terms)) {
 					$term_ids = $post_terms;
 				}
 			}
 		}
 		
-		// If we have specific term IDs (by_ids or from post), use include; if by_slugs, use slug
-		$fallback_if_no_terms = false;
-		if (!empty($term_ids)) {
-			$args['include'] = $term_ids;
-			unset($args['parent']); // So all included IDs are returned regardless of hierarchy
-			if ($terms_source === 'by_ids') {
-				$fallback_if_no_terms = true; // When by_ids yields no terms (e.g. demo import), fall back to "all" by other controls
-			}
-		} elseif (!empty($term_slugs)) {
-			$args['slug'] = $term_slugs;
-			unset($args['parent']); // So all matching slugs are returned regardless of hierarchy
-		} else {
-			// Post-associated terms requested but post has no terms → return nothing
-			if ($get_terms_from_post === 'yes') {
-				return $output;
-			}
-			if (! $child_terms) {
-				$args['parent'] = 0;
-			}
+		$source_result        = self::apply_terms_source_to_query_args( $args, $parameters, $taxonomy_list, $child_terms, $term_ids, $term_slugs, $terms_source, $get_terms_from_post );
+		$fallback_if_no_terms = $source_result['fallback_if_no_terms'];
+		if ( null !== $source_result['terms'] && empty( $source_result['terms'] ) && 'yes' === $get_terms_from_post ) {
+			return $output;
+		}
+		if ( null !== $source_result['terms'] ) {
+			$terms = $source_result['terms'];
 		}
 
 		// number = no limit if '0' (show all)
@@ -547,12 +812,23 @@ class CubeWp_Shortcode_Taxonomy
 			$args['number'] = (int) $terms_per_page;
 		}
 
-		$terms = get_terms($args);
-		if ($fallback_if_no_terms && (is_wp_error($terms) || empty($terms))) {
-			unset($args['include']);
-			$args['parent'] = $child_terms ? '' : 0;
-			$terms = get_terms($args);
+		$used_terms_fallback = false;
+		if ( ! isset( $terms ) ) {
+			$terms = get_terms( $args );
+			if ( $fallback_if_no_terms && ( is_wp_error( $terms ) || empty( $terms ) ) ) {
+				unset( $args['include'], $args['slug'] );
+				$args['orderby'] = $orderby;
+				$args['order']   = $order;
+				$args['parent']  = $child_terms ? '' : 0;
+				$terms           = get_terms( $args );
+				$used_terms_fallback = true;
+			}
 		}
+
+		if ( ! $used_terms_fallback ) {
+			$terms = self::order_terms_by_selection( $terms, $terms_source, $term_ids, $term_slugs );
+		}
+
 		if (empty($terms) || is_wp_error($terms)) {
 			return $output;
 		}
@@ -618,6 +894,9 @@ class CubeWp_Shortcode_Taxonomy
 			$container_open .= ' data-enable-progress-bar="' . esc_attr($enable_progress_bar) . '"';
 			$container_open .= ' data-enable-wrapper="' . esc_attr($enable_wrap_dots_arrows) . '"';
 			$container_open .= ' data-slider-device-option="' . esc_attr($slider_device_option) . '"';
+			$container_open .= ' data-vertical="' . esc_attr($slider_vertical) . '"';
+			$container_open .= ' data-vertical-tablet="' . esc_attr($slider_vertical_tablet) . '"';
+			$container_open .= ' data-vertical-mobile="' . esc_attr($slider_vertical_mobile) . '"';
 		}
 		$container_open .= '>';
 		$container_close = '</div>';
@@ -785,6 +1064,9 @@ class CubeWp_Shortcode_Taxonomy
 			isset($parameters['terms_source']) ? $parameters['terms_source'] : 'all',
 			isset($parameters['term_ids']) ? $parameters['term_ids'] : '',
 			isset($parameters['term_slugs']) ? $parameters['term_slugs'] : '',
+			isset($parameters['parent_term_id']) ? $parameters['parent_term_id'] : '',
+			isset($parameters['parent_term_slug']) ? $parameters['parent_term_slug'] : '',
+			isset($parameters['parent_from_archive']) ? $parameters['parent_from_archive'] : '',
 			isset($parameters['orderby']) ? $parameters['orderby'] : 'name',
 			isset($parameters['order']) ? $parameters['order'] : 'ASC',
 			isset($parameters['get_terms_from_post']) ? $parameters['get_terms_from_post'] : 'no',
@@ -858,9 +1140,10 @@ class CubeWp_Shortcode_Taxonomy
 			}
 		} else {
 			global $wpdb;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- No core API can enumerate transient names by prefix; static query with no user input, run only when flushing this plugin's own cache.
 			$cache_keys = $wpdb->get_col(
-				"SELECT option_name FROM {$wpdb->options} 
-				WHERE option_name LIKE '_transient_cubewp_taxonomy_%' 
+				"SELECT option_name FROM {$wpdb->options}
+				WHERE option_name LIKE '_transient_cubewp_taxonomy_%'
 				OR option_name LIKE '_transient_timeout_cubewp_taxonomy_%'"
 			);
 			if (is_array($cache_keys)) {

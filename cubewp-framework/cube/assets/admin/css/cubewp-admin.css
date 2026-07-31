@@ -1920,6 +1920,140 @@ cwp-unlock-feature a {
     background-color: #fff !important;
 }
 
+/* Theme Builder - Select2 multi location (matches text inputs above) */
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-container {
+    width: 100% !important;
+}
+
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-container--default .select2-selection--multiple {
+    min-height: 46px;
+    padding: 4px 8px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    background-color: #f1f5f9 !important;
+    transition: all 0.2s ease;
+}
+
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-container--default.select2-container--focus .select2-selection--multiple,
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-container--default.select2-container--open .select2-selection--multiple {
+    outline: none !important;
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+    background-color: #fff !important;
+}
+
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background-color: #6366f1 !important;
+    border: none !important;
+    color: #fff !important;
+    border-radius: 6px !important;
+    padding: 2px 8px 4px !important;
+    margin-top: 5px !important;
+    font-size: 14px;
+    line-height: 24px;
+}
+
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+    color: #fff !important;
+    margin-right: 4px !important;
+}
+
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-container--default .select2-search--inline .select2-search__field {
+    margin-top: 6px !important;
+    font-size: 0.95rem !important;
+    color: #334155 !important;
+}
+
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-dropdown {
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12) !important;
+}
+
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-results__option--highlighted[aria-selected] {
+    background-color: #6366f1 !important;
+}
+
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-container--default .select2-selection--multiple span.select2-selection__clear {
+    display: none;
+}
+
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-container--default .select2-selection--multiple li.select2-search.select2-search--inline,
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-container--default .select2-selection--multiple li.select2-search.select2-search--inline input {
+    line-height: 14px;
+    height: 30px;
+    min-height: 30px;
+}
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-container--default .select2-selection--multiple li.select2-search.select2-search--inline input{
+    margin: 0 !important;
+}/* Theme Builder - Select2 multi location (matches text inputs above) */
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-container {
+    width: 100% !important;
+}
+
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-container--default .select2-selection--multiple {
+    min-height: 46px;
+    padding: 4px 8px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    background-color: #f1f5f9 !important;
+    transition: all 0.2s ease;
+}
+
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-container--default.select2-container--focus .select2-selection--multiple,
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-container--default.select2-container--open .select2-selection--multiple {
+    outline: none !important;
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+    background-color: #fff !important;
+}
+
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background-color: #6366f1 !important;
+    border: none !important;
+    color: #fff !important;
+    border-radius: 6px !important;
+    padding: 2px 8px 4px !important;
+    margin-top: 5px !important;
+    font-size: 14px;
+    line-height: 24px;
+}
+
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+    color: #fff !important;
+    margin-right: 4px !important;
+}
+
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-container--default .select2-search--inline .select2-search__field {
+    margin-top: 6px !important;
+    font-size: 0.95rem !important;
+    color: #334155 !important;
+}
+
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-dropdown {
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12) !important;
+}
+
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-results__option--highlighted[aria-selected] {
+    background-color: #6366f1 !important;
+}
+
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-container--default .select2-selection--multiple span.select2-selection__clear {
+    display: none;
+}
+
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-container--default .select2-selection--multiple li.select2-search.select2-search--inline,
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-container--default .select2-selection--multiple li.select2-search.select2-search--inline input {
+    line-height: 14px;
+    height: 30px;
+    min-height: 30px;
+}
+#ctb-add-template-dialog .cwp-tb-template-location-field.cwp-tb-location-is-multi .select2-container--default .select2-selection--multiple li.select2-search.select2-search--inline input{
+    margin: 0 !important;
+}
+
 /* Checkbox Section */
 #ctb-add-template-dialog #cwp_tb_mobile_view_wrap {
     background: #f8fafc;
@@ -2523,6 +2657,142 @@ cwp-unlock-feature a {
     font-weight: 500;
     color: #64748b;
     margin-top: 10px;
+}
+
+.cwp-manage-licenses-list {
+	max-height: 60vh;
+	overflow-y: auto;
+}
+.cwp-manage-license-block {
+	border: 1px solid #c3c4c7;
+	border-radius: 6px;
+	padding: 12px 14px;
+	margin-bottom: 12px;
+	background: #fcfcfc;
+}
+.cwp-manage-license-block__title {
+	margin: 0 0 6px;
+	font-size: 13px;
+	font-weight: 600;
+}
+.cwp-manage-license-sites {
+	margin-top: 8px;
+}
+.cwp-manage-license-sites th,
+.cwp-manage-license-sites td {
+	padding: 8px 10px;
+}
+/* --- Modal Content Container --- */
+.cwp-modal__content {
+    max-height: 70vh; /* Prevents modal from outgrowing screen */
+    overflow-y: auto; /* Adds scrollbar for long license lists */
+    padding: 10px 5px;
+}
+.cwp-modal__content .description strong {
+    color: var(--cwp-text);
+    font-size: 14px;
+}
+
+[data-cwp-license-product] {
+    color: var(--cwp-primary);
+    font-weight: 700;
+}
+
+.cwp-manage-license-block {
+    background: #f8fafc;
+    border: 1px solid var(--cwp-border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.cwp-manage-license-block__title {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: var(--cwp-text);
+}
+
+.cwp-manage-license-block__title code {
+    background: #e2e8f0;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+    font-size: 12px;
+    color: #475569;
+}
+
+.cwp-manage-license-block .description {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--cwp-text-muted);
+}
+
+.cwp-manage-license-sites {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--cwp-border);
+    margin-top: 10px;
+}
+
+.cwp-manage-license-sites th {
+    background: #f1f5f9;
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.cwp-manage-license-sites td {
+    padding: 8px 12px;
+    border-top: 1px solid #f1f5f9;
+    font-size: 13px;
+}
+
+.cwp-manage-license-sites tr:nth-child(even) {
+    background-color: #fafafa;
+}
+
+.button-link-delete {
+    color: #d63638;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 12px;
+    text-decoration: underline;
+    transition: color 0.2s;
+}
+
+.button-link-delete:hover {
+    color: #9e1b1d;
+}
+.cwp-manage-license-block .button {
+    font-size: 12px !important;
+    padding: 4px 12px !important;
+}
+[data-cwp-modal-note] {
+    background: #fffbeb;
+    border-left: 4px solid #f59e0b;
+    padding: 10px 15px;
+    font-style: italic;
+    font-size: 12px;
+}
+.cwp-modal__content::-webkit-scrollbar {
+    width: 6px;
+}
+.cwp-modal__content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+.cwp-modal__content::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+.cwp-modal__content::-webkit-scrollbar-thumb:hover {
+    background: #999;
 }
 /* CubeWP Hub Connect CSS End */
 

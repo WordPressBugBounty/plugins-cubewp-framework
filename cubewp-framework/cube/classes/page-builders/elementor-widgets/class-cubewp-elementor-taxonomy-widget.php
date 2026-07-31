@@ -78,9 +78,12 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base
 			'tab'   => Controls_Manager::TAB_CONTENT,
 		));
 		$this->add_control('taxonomy', array(
-			'type'    => Controls_Manager::SELECT,
-			'label'   => esc_html__('Select Taxonomy', 'cubewp-framework'),
-			'options' => $taxonomies,
+			'type'        => Controls_Manager::SELECT2,
+			'multiple'    => true,
+			'label'       => esc_html__('Select Taxonomy', 'cubewp-framework'),
+			'options'     => $taxonomies,
+			'label_block' => true,
+			'default'     => array(),
 		));
 		$this->add_control('terms_per_page', array(
 			'type'    => Controls_Manager::SELECT,
@@ -325,16 +328,18 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base
 		);
 
 		// Terms source: all, by IDs, or by slugs
+		$terms_source_options = array(
+			'all'       => esc_html__( 'All Terms', 'cubewp-framework' ),
+			'by_ids'    => esc_html__( 'Specific Term IDs', 'cubewp-framework' ),
+			'by_slugs'  => esc_html__( 'Specific Term Slugs', 'cubewp-framework' ),
+			'by_parent' => esc_html__( 'Children of Parent Term', 'cubewp-framework' ),
+		);
 		$this->add_control(
 			'terms_source',
 			[
 				'type'        => Controls_Manager::SELECT,
 				'label'       => esc_html__('Terms Source', 'cubewp-framework'),
-				'options'     => [
-					'all'       => esc_html__('All Terms', 'cubewp-framework'),
-					'by_ids'    => esc_html__('Specific Term IDs', 'cubewp-framework'),
-					'by_slugs'  => esc_html__('Specific Term Slugs', 'cubewp-framework'),
-				],
+				'options'     => $terms_source_options,
 				'default'     => 'all',
 				'separator'   => 'before',
 			]
@@ -345,7 +350,7 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base
 			[
 				'type'        => Controls_Manager::TEXT,
 				'label'       => esc_html__('Term IDs', 'cubewp-framework'),
-				'description' => esc_html__('Enter comma-separated term IDs to show only those terms (e.g. 5, 12, 23)', 'cubewp-framework'),
+				'description' => esc_html__('Enter comma-separated term IDs. Terms display in the same order you list them (e.g. 23, 5, 12).', 'cubewp-framework'),
 				'placeholder' => '5, 12, 23',
 				'condition'   => [
 					'terms_source' => 'by_ids',
@@ -358,10 +363,51 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base
 			[
 				'type'        => Controls_Manager::TEXT,
 				'label'       => esc_html__('Term Slugs', 'cubewp-framework'),
-				'description' => esc_html__('Enter comma-separated term slugs to show only those terms (e.g. news, events, blog)', 'cubewp-framework'),
+				'description' => esc_html__('Enter comma-separated term slugs. Terms display in the same order you list them (e.g. sports, news, events).', 'cubewp-framework'),
 				'placeholder' => 'news, events, blog',
 				'condition'   => [
 					'terms_source' => 'by_slugs',
+				],
+			]
+		);
+
+		$this->add_control(
+			'parent_term_id',
+			[
+				'type'        => Controls_Manager::NUMBER,
+				'label'       => esc_html__( 'Parent Term ID', 'cubewp-framework' ),
+				'description' => esc_html__( 'Show only direct child terms of this parent term.', 'cubewp-framework' ),
+				'min'         => 1,
+				'condition'   => [
+					'terms_source' => 'by_parent',
+				],
+			]
+		);
+
+		$this->add_control(
+			'parent_term_slug',
+			[
+				'type'        => Controls_Manager::TEXT,
+				'label'       => esc_html__( 'Parent Term Slug', 'cubewp-framework' ),
+				'description' => esc_html__( 'Optional. Used when parent term ID is empty (searches selected taxonomies).', 'cubewp-framework' ),
+				'condition'   => [
+					'terms_source' => 'by_parent',
+				],
+			]
+		);
+
+		$this->add_control(
+			'parent_from_archive',
+			[
+				'type'         => Controls_Manager::SWITCHER,
+				'label'        => esc_html__( 'Use Current Archive Term as Parent', 'cubewp-framework' ),
+				'description'  => esc_html__( 'On taxonomy archive pages, use the viewed term as the parent. Falls back to ID/slug above if not on an archive.', 'cubewp-framework' ),
+				'label_on'     => esc_html__( 'Yes', 'cubewp-framework' ),
+				'label_off'    => esc_html__( 'No', 'cubewp-framework' ),
+				'return_value' => 'yes',
+				'default'      => '',
+				'condition'    => [
+					'terms_source' => 'by_parent',
 				],
 			]
 		);
@@ -384,6 +430,9 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base
 				],
 				'default' => 'name',
 				'separator' => 'before',
+				'condition' => [
+					'terms_source!' => array('by_ids', 'by_slugs'),
+				],
 			]
 		);
 
@@ -437,7 +486,7 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base
 				'label'       => esc_html__('Icon Or Image Term Meta', 'cubewp-framework'),
 				'description' => esc_html__('Enter taxonomy custom field slug for term icon or image.', 'cubewp-framework'),
 				'condition'   => array(
-					'taxonomy' => $taxonomy,
+					'taxonomy'                => $taxonomy,
 					'output_style_' . $taxonomy => 'boxed_view',
 				),
 			));
@@ -474,7 +523,7 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base
 				'title_field' => '{{{ term_box_color }}}',
 				'refresh_preview' => true,
 				'condition'   => array(
-					'taxonomy' => $taxonomy,
+					'taxonomy'                => $taxonomy,
 					'output_style_' . $taxonomy => 'boxed_view',
 				),
 			));
@@ -960,6 +1009,17 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base
 			]
 		);
 
+		$this->add_control(
+            'list_item_border_hover_color',
+            [
+                'label' => esc_html__( 'Border Hover Color', 'cubewp-framework' ),
+                'type'  => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-taxonomy-term-list:hover' => 'border-color: {{VALUE}};',
+                ],
+            ]
+        );
+
 		$this->end_controls_tab();
 
 		$this->end_controls_tabs();
@@ -1261,6 +1321,79 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base
 		);
 
 		$this->end_controls_section();
+
+		// Parent Term Styling
+		$this->start_controls_section(
+			'parent_term_style_section',
+			[
+				'label' => esc_html__( 'Parent Term', 'cubewp-framework' ),
+				'tab'   => Controls_Manager::TAB_STYLE,
+				'condition' => [
+					'child_terms' => 'yes',
+				],
+			]
+		);
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Typography::get_type(),
+			[
+				'name'     => 'parent_term_typography',
+				'label'    => esc_html__( 'Typography', 'cubewp-framework' ),
+				'selector' => '{{WRAPPER}} .cwp-taxonomy-term-list > a, {{WRAPPER}} .cwp-taxonomy-term-box-heading > a',
+			]
+		);
+
+		$this->add_control(
+			'parent_term_link_color',
+			[
+				'label' => esc_html__('Text Color', 'cubewp-framework'),
+				'type' => Controls_Manager::COLOR,
+				'selectors' => [
+					'{{WRAPPER}} .cwp-taxonomy-term-list > a' => 'color: {{VALUE}};',
+					'{{WRAPPER}} .cwp-taxonomy-term-box-heading > a' => 'color: {{VALUE}};',
+				],
+			]
+		);
+
+		$this->add_control(
+			'parent_term_link_hover_color',
+			[
+				'label' => esc_html__('Text Hover Color', 'cubewp-framework'),
+				'type' => Controls_Manager::COLOR,
+				'selectors' => [
+					'{{WRAPPER}} .cwp-taxonomy-term-list > a:hover' => 'color: {{VALUE}};',
+					'{{WRAPPER}} .cwp-taxonomy-term-box-heading > a:hover' => 'color: {{VALUE}};',
+				],
+			]
+		);
+
+		$this->add_control(
+			'parent_term_link_margin',
+			[
+				'label' => esc_html__('Link Margin', 'cubewp-framework'),
+				'type' => Controls_Manager::DIMENSIONS,
+				'size_units' => ['px', 'em', 'rem'],
+				'selectors' => [
+					'{{WRAPPER}} .cwp-taxonomy-term-list > a' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+					'{{WRAPPER}} .cwp-taxonomy-term-box-heading > a' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->add_control(
+			'parent_term_link_padding',
+			[
+				'label' => esc_html__('Link Padding', 'cubewp-framework'),
+				'type' => Controls_Manager::DIMENSIONS,
+				'size_units' => ['px', 'em', 'rem'],
+				'selectors' => [
+					'{{WRAPPER}} .cwp-taxonomy-term-list > a' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+					'{{WRAPPER}} .cwp-taxonomy-term-box-heading > a' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->end_controls_section();
 	}
 
 	public function cwp_get_taxonomies_label($taxonomies)
@@ -1301,16 +1434,14 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base
 		if (isset($settings['terms_per_page']) && $settings['terms_per_page'] === 'custom' && isset($settings['custom_terms_count']) && is_numeric($settings['custom_terms_count']) && $settings['custom_terms_count'] > 0) {
 			$settings['terms_per_page'] = intval($settings['custom_terms_count']);
 		}
-		$taxonomies = get_taxonomies();
-		foreach ($taxonomies as $taxonomy) {
-			if (isset($settings['taxonomy']) && $settings['taxonomy'] == $taxonomy && isset($settings['output_style_' . $taxonomy])) {
-				$settings['output_style'] = $settings['output_style_' . $taxonomy];
-				$settings['icon_media_name'] = isset($settings['icon_media_name_' . $taxonomy]) ? $settings['icon_media_name_' . $taxonomy] : '';
-				$settings['terms_box_color'] = isset($settings['terms_box_color_' . $taxonomy]) ? $settings['terms_box_color_' . $taxonomy] : array();
+		if ( class_exists( 'CubeWp_Shortcode_Taxonomy' ) ) {
+			$taxonomy_list = CubeWp_Shortcode_Taxonomy::normalize_taxonomy_list( isset( $settings['taxonomy'] ) ? $settings['taxonomy'] : '' );
+			if ( ! empty( $taxonomy_list ) ) {
+				$settings['taxonomy'] = 1 === count( $taxonomy_list ) ? $taxonomy_list[0] : $taxonomy_list;
 			}
 		}
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		echo apply_filters('cubewp_shortcode_taxonomy_output', '', $settings);
+		echo apply_filters( 'cubewp_shortcode_taxonomy_output', '', $settings );
 	}
 
 	private function cubewp_taxonomy_add_slider_controls()
@@ -1338,14 +1469,33 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base
 		$this->add_control(
 			'slider_device_option',
 			[
-				'label'   => esc_html__('Use Slider for', 'valuepack-addons'),
+				'label'   => esc_html__('Use Slider for', 'cubewp-framework'),
 				'type'    => Controls_Manager::SELECT,
 				'options' => [
-					'all_devices'  => esc_html__('All Devices', 'valuepack-addons'),
-					'mobile_only'  => esc_html__('Mobile Only', 'valuepack-addons'),
+					'all_devices'  => esc_html__('All Devices', 'cubewp-framework'),
+					'mobile_only'  => esc_html__('Mobile Only', 'cubewp-framework'),
 				],
 				'default' => 'all_devices',
 				'condition' => [
+					'cwp_enable_slider' => 'yes',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'slider_vertical',
+			[
+				'label'        => esc_html__('Slider Direction', 'cubewp-framework'),
+				'type'         => Controls_Manager::SELECT,
+				'default'      => 'no',
+				'tablet_default' => 'no',
+				'mobile_default' => 'no',
+				'options'      => [
+					'no'    => esc_html__('Horizontal', 'cubewp-framework'),
+					'yes' => esc_html__('Vertical', 'cubewp-framework'),
+				],
+				'description'  => esc_html__('Choose slider scroll direction per device.', 'cubewp-framework'),
+				'condition'    => [
 					'cwp_enable_slider' => 'yes',
 				],
 			]
@@ -1446,6 +1596,7 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base
 				'description' => esc_html__('Enable fade effect for slides transition.', 'cubewp-framework'),
 				'condition' => [
 					'cwp_enable_slider' => 'yes',
+					'slider_vertical!'  => 'yes',
 				],
 			]
 		);
@@ -1500,7 +1651,7 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base
 					'cwp_enable_slider' => 'yes',
 				],
 				'selectors' => [
-					'{{WRAPPER}} .cubewp-term-slider .slick-list.draggable' => 'overflow: inherit;',
+					'{{WRAPPER}} .cubewp-term-slider .slick-list.draggable' => 'overflow: inherit; max-width: 100%;',
 				],
 			]
 		);
@@ -1774,6 +1925,36 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base
 				'default' => '#FF0000',
 				'selectors' => [
 					'{{WRAPPER}} .cubewp-term-slider .slick-prev:hover svg path, {{WRAPPER}} .cubewp-term-slider .slick-next:hover svg path' => 'fill: {{VALUE}};',
+				],
+				'condition' => [
+					'cwp_enable_slider' => 'yes',
+					'custom_arrows' => 'yes',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'svg_stroke_color',
+			[
+				'label' => esc_html__('SVG Stroke Color', 'cubewp-framework'),
+				'type' => \Elementor\Controls_Manager::COLOR,
+				'selectors' => [
+					'{{WRAPPER}} .cubewp-term-slider .slick-prev svg path, {{WRAPPER}} .cubewp-term-slider .slick-next svg path' => 'stroke: {{VALUE}};',
+				],
+				'condition' => [
+					'cwp_enable_slider' => 'yes',
+					'custom_arrows' => 'yes',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'svg_stroke_hover_color',
+			[
+				'label' => esc_html__('SVG Stroke Hover Color', 'cubewp-framework'),
+				'type' => \Elementor\Controls_Manager::COLOR,
+				'selectors' => [
+					'{{WRAPPER}} .cubewp-term-slider .slick-prev:hover svg path, {{WRAPPER}} .cubewp-term-slider .slick-next:hover svg path' => 'stroke: {{VALUE}};',
 				],
 				'condition' => [
 					'cwp_enable_slider' => 'yes',
@@ -2106,6 +2287,60 @@ class CubeWp_Elementor_Taxonomy_Widget extends Widget_Base
 					'{{WRAPPER}} .cubewp-term-slider .slick-next' => 'right: {{SIZE}}{{UNIT}} !important;',
 				],
 				'condition'    => [
+					'cwp_enable_slider' => 'yes',
+					'custom_arrows' => 'yes',
+				],
+			]
+		);
+
+				$this->add_responsive_control(
+			'prev_arrow_rotate',
+			[
+				'label' => esc_html__('Previous Arrow Rotate', 'cubewp-framework'),
+				'type' => \Elementor\Controls_Manager::SLIDER,
+				'size_units' => ['deg'],
+				'range' => [
+					'deg' => [
+						'min' => -180,
+						'max' => 180,
+						'step' => 1,
+					],
+				],
+				'default' => [
+					'unit' => 'deg',
+					'size' => 0,
+				],
+				'selectors' => [
+					'{{WRAPPER}} .cubewp-term-slider .slick-prev i, {{WRAPPER}} .cubewp-term-slider .slick-prev svg' => 'display: inline-block; transform: rotate({{SIZE}}deg); transform-origin: center center;',
+				],
+				'condition' => [
+					'cwp_enable_slider' => 'yes',
+					'custom_arrows' => 'yes',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'next_arrow_rotate',
+			[
+				'label' => esc_html__('Next Arrow Rotate', 'cubewp-framework'),
+				'type' => \Elementor\Controls_Manager::SLIDER,
+				'size_units' => ['deg'],
+				'range' => [
+					'deg' => [
+						'min' => -180,
+						'max' => 180,
+						'step' => 1,
+					],
+				],
+				'default' => [
+					'unit' => 'deg',
+					'size' => 0,
+				],
+				'selectors' => [
+					'{{WRAPPER}} .cubewp-term-slider .slick-next i, {{WRAPPER}} .cubewp-term-slider .slick-next svg' => 'display: inline-block; transform: rotate({{SIZE}}deg); transform-origin: center center;',
+				],
+				'condition' => [
 					'cwp_enable_slider' => 'yes',
 					'custom_arrows' => 'yes',
 				],

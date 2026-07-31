@@ -40,9 +40,9 @@ class CubeWp_Tag_Post_URL extends Tag
 	{
 
 		if (cubewp_is_elementor_editing()) {
-			echo esc_url(get_post_permalink(cubewp_get_elementor_preview_post_id()));
+			echo esc_url(get_permalink(cubewp_get_elementor_preview_post_id()));
 		} else {
-			echo esc_url(get_post_permalink());
+			echo esc_url(get_permalink());
 		}
 	}
 

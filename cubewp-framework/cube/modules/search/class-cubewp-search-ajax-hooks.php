@@ -75,6 +75,7 @@ class CubeWp_Search_Ajax_Hooks
             echo apply_filters('cubewp/frontend/before/search/loop', '');
 
             $promotional_cards = [];
+            $promotional_cards = [];
             foreach ($_DATA as $key => $value) {
                 if (strpos($key, 'cubewp_promotional_card_option-') !== false) {
                     preg_match('/-(\d+)$/', $key, $matches);
@@ -82,9 +83,22 @@ class CubeWp_Search_Ajax_Hooks
                     if ($index !== null && isset($_DATA["cubewp_promotional_card_position-$index"])) {
                         $position = $_DATA["cubewp_promotional_card_position-$index"] ?? null;
                         if ($position !== null) {
+                            $desktop_width = $_DATA["cubewp_promotional_card_width-$index"] ?? '';
+                            $tablet_width  = $_DATA["cubewp_promotional_card_width_tablet-$index"] ?? '';
+                            $mobile_width  = $_DATA["cubewp_promotional_card_width_mobile-$index"] ?? '';
+                            if ($tablet_width === '') {
+                                $tablet_width = $desktop_width;
+                            }
+                            if ($mobile_width === '') {
+                                $mobile_width = $tablet_width;
+                            }
                             $promotional_cards[$position] = [
-                                'option' => $value, // direct value (string now)
-                                'width'  => $_DATA["cubewp_promotional_card_width-$index"] ?? '',
+                                'option' => $value,
+                                'width'  => array(
+                                    'desktop' => $desktop_width,
+                                    'tablet'  => $tablet_width,
+                                    'mobile'  => $mobile_width,
+                                ),
                             ];
                         }
                     }

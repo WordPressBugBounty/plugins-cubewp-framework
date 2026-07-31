@@ -269,8 +269,54 @@ class CubeWp_Elementor_Archive_Map_Widget extends Widget_Base
                 'range' => ['px' => ['min' => 10, 'max' => 100]],
                 'default' => ['size' => 18, 'unit' => 'px'],
                 'selectors' => [
-                    '{{WRAPPER}} .cwp-map-toggle-btn' => 'font-size: {{SIZE}}{{UNIT}};',
                     '{{WRAPPER}} .cwp-map-toggle-btn svg' => 'width: {{SIZE}}{{UNIT}}; height: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        // Icon Padding
+        $this->add_responsive_control(
+            'popup_btn_icon_padding',
+            [
+                'label' => __('Icon Padding', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em'],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-map-toggle-btn svg' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        // Icon Background Color
+        $this->add_control(
+            'popup_btn_icon_bg_color',
+            [
+                'label' => __('Icon Background Color', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-map-toggle-btn svg' => 'background-color: {{VALUE}};',
+                ],
+            ]
+        );
+
+        // Icon Border
+        $this->add_group_control(
+            \Elementor\Group_Control_Border::get_type(),
+            [
+                'name' => 'popup_btn_icon_border',
+                'selector' => '{{WRAPPER}} .cwp-map-toggle-btn svg',
+            ]
+        );
+
+        // Icon Border Radius
+        $this->add_responsive_control(
+            'popup_btn_icon_border_radius',
+            [
+                'label' => __('Border Radius', 'cubewp-framework'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%'],
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-map-toggle-btn svg' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
                 ],
             ]
         );
@@ -330,6 +376,40 @@ class CubeWp_Elementor_Archive_Map_Widget extends Widget_Base
                 'label' => __('Background', 'cubewp-framework'),
                 'type' => Controls_Manager::COLOR,
                 'selectors' => ['{{WRAPPER}} .cwp-map-toggle-btn:hover' => 'background-color: {{VALUE}}'],
+            ]
+        );
+
+        $this->add_control(
+            'popup_btn_icon_hover_color',
+            [
+                'label' => __('Icon Color', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-map-toggle-btn:hover i' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .cwp-map-toggle-btn:hover svg' => 'fill: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'popup_btn_icon_hover_bg_color',
+            [
+                'label' => __('Icon Background Color', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-map-toggle-btn:hover svg' => 'background-color: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'popup_btn_icon_hover_border_color',
+            [
+                'label' => __('Icon Border Color', 'cubewp-framework'),
+                'type' => Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .cwp-map-toggle-btn:hover svg' => 'border-color: {{VALUE}};',
+                ],
             ]
         );
 
@@ -1009,18 +1089,18 @@ class CubeWp_Elementor_Archive_Map_Widget extends Widget_Base
         $this->add_responsive_control(
             'map_popup_image_position',
             [
-                'label' => __('Image Position', 'plugin-name'),
+                'label' => __('Image Position', 'cubewp-framework'),
                 'type' => \Elementor\Controls_Manager::SELECT,
                 'options' => [
-                    'left top' => __('Top Left', 'plugin-name'),
-                    'center top' => __('Top Center', 'plugin-name'),
-                    'right top' => __('Top Right', 'plugin-name'),
-                    'left center' => __('Center Left', 'plugin-name'),
-                    'center center' => __('Center Center', 'plugin-name'),
-                    'right center' => __('Center Right', 'plugin-name'),
-                    'left bottom' => __('Bottom Left', 'plugin-name'),
-                    'center bottom' => __('Bottom Center', 'plugin-name'),
-                    'right bottom' => __('Bottom Right', 'plugin-name'),
+                    'left top' => __('Top Left', 'cubewp-framework'),
+                    'center top' => __('Top Center', 'cubewp-framework'),
+                    'right top' => __('Top Right', 'cubewp-framework'),
+                    'left center' => __('Center Left', 'cubewp-framework'),
+                    'center center' => __('Center Center', 'cubewp-framework'),
+                    'right center' => __('Center Right', 'cubewp-framework'),
+                    'left bottom' => __('Bottom Left', 'cubewp-framework'),
+                    'center bottom' => __('Bottom Center', 'cubewp-framework'),
+                    'right bottom' => __('Bottom Right', 'cubewp-framework'),
                 ],
                 'default' => 'center center',
                 'selectors' => [

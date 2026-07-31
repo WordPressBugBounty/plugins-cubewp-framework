@@ -293,41 +293,54 @@ jQuery(document).ready(function () {
     // Open the dialog
     jQuery('.ctb-add-new-template').on('click', function() {
         jQuery('#ctb-add-template-dialog').dialog('open');
-        var editLocation = jQuery(this).data('tlocation'),
-            edittype = jQuery(this).data('ttype'),
-            editname = jQuery(this).data('tname'),
-            editid = jQuery(this).data('tid'),
-            editMobileView = jQuery(this).data('tmobileview');
-        //Empty all values    
+        var $trigger = jQuery(this),
+            editLocation = $trigger.attr('data-tlocation') || '',
+            editLocationsRaw = $trigger.attr('data-tlocations') || '',
+            edittype = $trigger.attr('data-ttype') || '',
+            editname = $trigger.attr('data-tname') || '',
+            editid = $trigger.attr('data-tid') || '',
+            editMobileView = $trigger.attr('data-tmobileview') || '',
+            presetLocations = null;
+
+        if (editLocationsRaw) {
+            try {
+                presetLocations = JSON.parse(editLocationsRaw);
+            } catch (e) {
+                presetLocations = null;
+            }
+        }
+        if (!presetLocations || (Array.isArray(presetLocations) && !presetLocations.length)) {
+            if (editLocation) {
+                presetLocations = [editLocation];
+            }
+        }
+        if (presetLocations && !Array.isArray(presetLocations)) {
+            presetLocations = [presetLocations];
+        }
+
+        // Empty all values
         jQuery('#template_name').val('');
         jQuery('#template_type').val('');
-        jQuery('#template_location').val('');
+        cwp_tb_destroy_location_select2();
+        jQuery('#template_location').empty().val(null);
         jQuery('#template_mobile_view').prop('checked', false);
 
-        if(jQuery('.ctb-hidden-post-id').length > 0){
+        if (jQuery('.ctb-hidden-post-id').length > 0) {
             jQuery('.ctb-hidden-post-id').remove();
         }
 
-        if(editname){
+        if (editname) {
             jQuery('#template_name').val(editname);
+            jQuery('#add-template-form').append('<input type="hidden" class="ctb-hidden-post-id" name="ctb_edit_template_id" value="' + editid + '" />');
         }
-        if(edittype){
+
+        if (edittype) {
             jQuery('#template_type').val(edittype);
-            cwp_load_theme_builder_rules(edittype, editname ? editMobileView : undefined);
+            cwp_load_theme_builder_rules(edittype, editname ? editMobileView : undefined, presetLocations);
         } else {
             cwp_tb_toggle_mobile_view_field('');
+            cwp_tb_toggle_multi_location_field('');
         }
-        if(editLocation){
-            setTimeout(function() {
-                jQuery('#template_location').val(editLocation);
-            }, 1000);
-        }else{
-            jQuery('#template_location').append('<option value="">Select Template Display Position</option>');
-        }
-        if(editname){
-            jQuery('#add-template-form').append('<input type="hidden" class="ctb-hidden-post-id" name="ctb_edit_template_id" value="'+ editid +'" />');
-        }
-        
     });
 
     jQuery('.cwp-save-template').on('click', function() {
@@ -384,13 +397,97 @@ function cwp_tb_toggle_mobile_view_field(templateType) {
     }
 }
 
-function cwp_load_theme_builder_rules( templateType = '', presetMobileView ){
-    
+function cwp_tb_destroy_location_select2() {
+    var $select = jQuery('#template_location');
+    if (!$select.length) {
+        return;
+    }
+    if ($select.hasClass('select2-hidden-accessible') && typeof $select.select2 === 'function') {
+        $select.select2('destroy');
+    }
+}
+
+function cwp_tb_is_multi_location_type(templateType) {
+    return ['archive', 'header', 'footer'].indexOf(templateType) !== -1;
+}
+
+function cwp_tb_init_location_select2() {
+    var $select = jQuery('#template_location');
+    if (!$select.length || typeof $select.select2 !== 'function') {
+        return;
+    }
+
+    var placeholder = $select.attr('data-placeholder') || 'Select display location(s)';
+    var $dialog = jQuery('#ctb-add-template-dialog');
+    var dropdownParent = $dialog.length ? $dialog.closest('.ui-dialog') : jQuery('body');
+    if (!dropdownParent.length) {
+        dropdownParent = jQuery('body');
+    }
+
+    $select.select2({
+        width: '100%',
+        placeholder: placeholder,
+        allowClear: true,
+        closeOnSelect: false,
+        minimumResultsForSearch: 10,
+        dropdownParent: dropdownParent
+    });
+}
+
+function cwp_tb_apply_location_values($select, presetLocations, isMulti) {
+    if (!presetLocations || !$select.length) {
+        return;
+    }
+
+    var values = Array.isArray(presetLocations) ? presetLocations : [presetLocations];
+    values = values.filter(function (v) {
+        return v !== null && v !== undefined && String(v) !== '';
+    });
+
+    if (!values.length) {
+        return;
+    }
+
+    if (isMulti) {
+        $select.val(values).trigger('change');
+    } else {
+        $select.val(values[0]).trigger('change');
+    }
+}
+
+function cwp_tb_toggle_multi_location_field(templateType, presetLocations) {
+    var isMulti = cwp_tb_is_multi_location_type(templateType);
+    var $select = jQuery('#template_location');
+    var $wrap = jQuery('#cwp_tb_template_location_wrap');
+
+    cwp_tb_destroy_location_select2();
+
+    if (isMulti) {
+        $wrap.addClass('cwp-tb-location-is-multi');
+        $select.prop('multiple', true);
+        $select.attr('name', 'template_locations[]');
+        jQuery('#cwp_tb_multi_location_hint').show();
+        cwp_tb_init_location_select2();
+        cwp_tb_apply_location_values($select, presetLocations, true);
+    } else {
+        $wrap.removeClass('cwp-tb-location-is-multi');
+        $select.prop('multiple', false);
+        $select.attr('name', 'template_location');
+        jQuery('#cwp_tb_multi_location_hint').hide();
+        cwp_tb_apply_location_values($select, presetLocations, false);
+    }
+}
+
+function cwp_load_theme_builder_rules(templateType, presetMobileView, presetLocations) {
+
     var templateLocation = jQuery('#template_location');
     var excludeLocation = jQuery('#exclude_location');
 
+    cwp_tb_destroy_location_select2();
     templateLocation.empty();
-    excludeLocation.empty();
+    if (excludeLocation.length) {
+        excludeLocation.empty();
+    }
 
     jQuery.ajax({
         url: ajaxurl, // URL to WordPress admin-ajax.php
@@ -413,6 +510,8 @@ function cwp_load_theme_builder_rules( templateType = '', presetMobileView ){
                 }
 
                 cwp_tb_toggle_mobile_view_field(templateType);
+                cwp_tb_toggle_multi_location_field(templateType, presetLocations);
+
                 if (typeof presetMobileView !== 'undefined') {
                     jQuery('#template_mobile_view').prop('checked', presetMobileView == 1 || presetMobileView === '1' || presetMobileView === true);
                 }
@@ -454,9 +553,12 @@ function cwp_load_theme_builder_rules( templateType = '', presetMobileView ){
         var cls = 'notice';
         if (type) cls += ' notice-' + type;
         var $wrap = $('.cubewp-addons-wrap');
+        if (!$wrap.length) {
+            $wrap = $('.cubwp-welcome').first();
+        }
         if (!$wrap.length) return;
-        $wrap.find('.notice').remove();
-        $wrap.find('.cubewp-header').after('<div class="' + cls + ' is-dismissible"><p>' + (message || '') + '</p></div>');
+        $wrap.find('.notice.is-dismissible').remove();
+        $wrap.prepend('<div class="' + cls + ' is-dismissible"><p>' + $('<div/>').text(message || '').html() + '</p></div>');
     }
 
     function openModal() {
@@ -466,31 +568,77 @@ function cwp_load_theme_builder_rules( templateType = '', presetMobileView ){
     function closeModal() {
         var $m = $('#cwp-addon-manage-modal');
         $m.attr('aria-hidden', 'true');
-        $m.removeData('addonSlug').removeData('licenseId');
+        $m.removeData('addonSlug');
         $m.find('[data-cwp-modal-error]').text('');
         $m.find('.cwp-modal__error').hide();
         $m.find('.cwp-modal__content').hide();
         $m.find('.cwp-modal__loading').show();
+        $m.find('[data-cwp-licenses-list]').empty();
     }
 
-    function renderSites($modal, sites) {
-        var $tbody = $modal.find('[data-cwp-sites-body]');
-        $tbody.empty();
+    function escHtml(s) {
+        return $('<div/>').text(s == null ? '' : String(s)).html();
+    }
+
+    function escAttr(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function renderSitesRows(sites, licenseId) {
+        var lid = parseInt(licenseId, 10) || 0;
+        var rows = '';
         if (!sites || !sites.length) {
-            $tbody.append('<tr><td colspan="2">This license has not been activated.</td></tr>');
-            return;
+            return '<tr><td colspan="2">No activations recorded for this license key.</td></tr>';
         }
         sites.forEach(function (s) {
             var siteId = s.site_id || 0;
             var name = s.site_name || '';
-            var escName = $('<div/>').text(name).html();
-            $tbody.append(
-                '<tr>' +
-                '<td>' + escName + '</td>' +
-                '<td><button type="button" class="button-link-delete" data-cwp-site-deactivate="' + siteId + '">Deactivate</button></td>' +
-                '</tr>'
-            );
+            var token = lid + ':' + siteId;
+            rows += '<tr><td>' + escHtml(name) + '</td>' +
+                '<td><button type="button" class="button-link-delete" data-cwp-site-deactivate="' + escAttr(token) + '">Deactivate</button></td></tr>';
         });
+        return rows;
+    }
+
+    function renderManageLicenses($m, data) {
+        var product = (data && data.product) ? data.product : '';
+        var list = (data && data.licenses) ? data.licenses : [];
+        var addonSlug = $m.data('addonSlug') || '';
+        $m.find('[data-cwp-license-product]').text(product);
+        var $list = $m.find('[data-cwp-licenses-list]');
+        $list.empty();
+        if (!list.length) {
+            $list.append('<p class="description">No licenses returned.</p>');
+            return;
+        }
+        list.forEach(function (lic) {
+            var key = lic.key || '';
+            var lid = lic.id || 0;
+            var onSite = !!lic.on_this_site;
+            var summary = lic.summary || '';
+            var sitesHtml = renderSitesRows(lic.sites || [], lid);
+            var actions = '';
+            if (onSite) {
+                actions += '<button type="button" class="button" data-cwp-license-deactivate="1" data-addon-slug="' + escAttr(addonSlug) + '" data-license-key="' + escAttr(key) + '">Deactivate on this site</button> ';
+            } else {
+                actions += '<button type="button" class="button button-primary" data-cwp-license-activate="1" data-addon-slug="' + escAttr(addonSlug) + '" data-license-key="' + escAttr(key) + '">Activate on this site</button> ';
+            }
+            actions += '<a class="button button-link" href="https://cubewp.com/checkout/purchase-history/" target="_blank" rel="noopener noreferrer">View on CubeWP.com</a>';
+            var block = '<div class="cwp-manage-license-block" data-cwp-license-block="' + String(lid) + '">' +
+                '<h4 class="cwp-manage-license-block__title">License <code>' + escHtml(key) + '</code></h4>' +
+                '<p class="description" style="margin:4px 0 10px;">' + escHtml(summary) + '</p>' +
+                '<p style="margin:0 0 10px;">' + actions + '</p>' +
+                '<table class="widefat striped cwp-manage-license-sites"><thead><tr><th>Site</th><th>Actions</th></tr></thead><tbody>' +
+                sitesHtml + '</tbody></table></div>';
+            $list.append(block);
+        });
+        $m.find('[data-cwp-modal-note]').text(
+            'Activating a license on this site saves it as the default key for installs and updates. You can switch keys anytime from this dialog.'
+        );
     }
 
     function loadManageDetails(addonSlug) {
@@ -507,13 +655,7 @@ function cwp_load_theme_builder_rules( templateType = '', presetMobileView ){
                 $m.find('.cwp-modal__error').show();
                 return;
             }
-            var lic = (res.data && res.data.license) ? res.data.license : {};
-            $m.data('licenseId', lic.id || 0);
-            $m.find('[data-cwp-license-key]').text(lic.key || '');
-            $m.find('[data-cwp-license-product]').text(lic.product || '');
-            $m.find('[data-cwp-license-summary]').text(lic.summary || '');
-            renderSites($m, lic.sites || []);
-            $m.find('[data-cwp-modal-note]').text('');
+            renderManageLicenses($m, res.data || {});
             $m.find('.cwp-modal__loading').hide();
             $m.find('.cwp-modal__content').show();
         }).fail(function (xhr) {
@@ -671,14 +813,16 @@ function cwp_load_theme_builder_rules( templateType = '', presetMobileView ){
         $(document).on('click', '[data-cwp-site-deactivate]', function () {
             var $m = $('#cwp-addon-manage-modal');
             var slug = $m.data('addonSlug') || '';
-            var licenseId = $m.data('licenseId') || 0;
-            var siteId = parseInt($(this).attr('data-cwp-site-deactivate') || '0', 10);
+            var raw = $(this).attr('data-cwp-site-deactivate') || '';
+            var parts = raw.split(':');
+            var licenseId = parseInt(parts[0] || '0', 10);
+            var siteId = parseInt(parts[1] || '0', 10);
             if (!slug || !licenseId || !siteId) {
                 $m.find('[data-cwp-modal-error]').text('Missing license/site information. Please close the popup and open Manage again.');
                 $m.find('.cwp-modal__error').show();
                 return;
             }
-            if (!window.confirm('Deactivate this site?')) return;
+            if (!window.confirm('Deactivate this site activation?')) return;
 
             var $btn = $(this);
             $btn.prop('disabled', true).text('Deactivating...');
@@ -699,6 +843,68 @@ function cwp_load_theme_builder_rules( templateType = '', presetMobileView ){
                 $m.find('.cwp-modal__error').show();
             }).always(function () {
                 $btn.prop('disabled', false).text('Deactivate');
+            });
+        });
+
+        $(document).on('click', '[data-cwp-license-activate]', function (e) {
+            e.preventDefault();
+            var $m = $('#cwp-addon-manage-modal');
+            var slug = $(this).attr('data-addon-slug') || $m.data('addonSlug') || '';
+            var key = $(this).attr('data-license-key') || '';
+            if (!slug || !key) return;
+            var msg = 'Activate this license on this site? If your plan is limited to one site, the server will only allow it when a slot is free (deactivate it on another site first if needed).';
+            if (!window.confirm(msg)) return;
+            var $btn = $(this);
+            var prevText = $btn.text();
+            $btn.prop('disabled', true).text('Activating…');
+            ajaxPost({ op: 'license_activate', addon_slug: slug, license_key: key }).done(function (res) {
+                if (!res || !res.success) {
+                    var msg = (res && res.data && res.data.message) ? res.data.message : 'Request failed.';
+                    $m.find('[data-cwp-modal-error]').text(msg);
+                    $m.find('.cwp-modal__error').show();
+                    return;
+                }
+                $m.find('.cwp-modal__error').hide();
+                showTopNotice('success', (res.data && res.data.message) ? res.data.message : 'License activated.');
+                loadManageDetails(slug);
+            }).fail(function (xhr) {
+                var msg = (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message)
+                    ? xhr.responseJSON.data.message
+                    : 'Request failed.';
+                $m.find('[data-cwp-modal-error]').text(msg);
+                $m.find('.cwp-modal__error').show();
+            }).always(function () {
+                $btn.prop('disabled', false).text(prevText);
+            });
+        });
+
+        $(document).on('click', '[data-cwp-license-deactivate]', function (e) {
+            e.preventDefault();
+            var $m = $('#cwp-addon-manage-modal');
+            var slug = $(this).attr('data-addon-slug') || $m.data('addonSlug') || '';
+            var key = $(this).attr('data-license-key') || '';
+            if (!slug || !key) return;
+            if (!window.confirm('Deactivate this license on this site?')) return;
+            var $btn = $(this);
+            $btn.prop('disabled', true);
+            ajaxPost({ op: 'license_deactivate', addon_slug: slug, license_key: key }).done(function (res) {
+                if (!res || !res.success) {
+                    var msg = (res && res.data && res.data.message) ? res.data.message : 'Request failed.';
+                    $m.find('[data-cwp-modal-error]').text(msg);
+                    $m.find('.cwp-modal__error').show();
+                    return;
+                }
+                $m.find('.cwp-modal__error').hide();
+                showTopNotice('success', (res.data && res.data.message) ? res.data.message : 'License deactivated.');
+                loadManageDetails(slug);
+            }).fail(function (xhr) {
+                var msg = (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message)
+                    ? xhr.responseJSON.data.message
+                    : 'Request failed.';
+                $m.find('[data-cwp-modal-error]').text(msg);
+                $m.find('.cwp-modal__error').show();
+            }).always(function () {
+                $btn.prop('disabled', false);
             });
         });
     });

@@ -1,5 +1,8 @@
 <?php
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 $thumbnail_url = cubewp_get_post_thumbnail_url($post_id);
 $post_content = wp_strip_all_tags(get_the_content('', false, $post_id));
 if (str_word_count($post_content, 0) > 10) {

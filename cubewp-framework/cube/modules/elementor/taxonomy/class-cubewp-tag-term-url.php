@@ -27,7 +27,7 @@ class CubeWp_Tag_Term_url extends Data_Tag {
 	}
 
 	public function is_settings_required() {
-		return false;
+		return true;
 	}
 
 	public function get_value( $options = array() ) {

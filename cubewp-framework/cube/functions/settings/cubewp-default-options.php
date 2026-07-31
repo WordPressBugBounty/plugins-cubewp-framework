@@ -80,10 +80,12 @@ foreach ($cubewp_post_types as $cwp_pt_slug => $cwp_pt_label) {
 		'id'      => 'enable_keywords_suggestions_' . esc_attr($cwp_pt_slug),
 		'type'    => 'switch',
 		'title'   => sprintf(
+			/* translators: %s: post type singular name. */
 			__('Enable Keyword Suggestions for %s', 'cubewp-framework'),
 			$label
 		),
 		'desc'    => sprintf(
+			/* translators: %s: post type singular name. */
 			__('Enable keyword suggestions for %s post type. When enabled, select a taxonomy to use for suggestions.', 'cubewp-framework'),
 			$label
 		),
@@ -94,6 +96,7 @@ foreach ($cubewp_post_types as $cwp_pt_slug => $cwp_pt_label) {
 		'type'     => 'select',
 		'multi'  => true,
 		'title'    => sprintf(
+			/* translators: %s: post type singular name. */
 			__('Select Taxonomy for Keyword Suggestions (%s)', 'cubewp-framework'),
 			$label
 		),
@@ -115,6 +118,7 @@ foreach ($cubewp_post_types as $cwp_pt_slug => $cwp_pt_label) {
 		'type'     => 'select',
 		'multi'    => false,
 		'title'    => sprintf(
+			/* translators: %s: post type singular name. */
 			__('Default Taxonomy for Empty Keyword (%s)', 'cubewp-framework'),
 			$label
 		),
@@ -139,6 +143,7 @@ foreach ($cubewp_post_types as $cwp_pt_slug => $cwp_pt_label) {
 				'id'       => 'keywords_suggestions_icon_' . esc_attr($taxonomy_slug),
 				'type'     => 'text',
 				'title'    => sprintf(
+					/* translators: %s: taxonomy singular name. */
 					__('Icon Term Meta key for %s', 'cubewp-framework'),
 					$taxonomy_label
 				),
@@ -259,9 +264,11 @@ foreach ( $cubewp_pt_for_location as $cwp_pt_slug => $cwp_pt_label ) {
     $settings['search_filters']['fields'][] = array(
         'id'       => 'google_address_taxonomy_' . esc_attr( $cwp_pt_slug ),
         'type'     => 'select',
+        /* translators: %s: post type singular name. */
         'title'    => sprintf( __( 'Taxonomy for %s', 'cubewp-framework' ), $pt_label ),
         'options'  => $taxonomy_opts,
         'default'  => '',
+        /* translators: %s: post type singular name. */
         'desc'     => sprintf( __( 'Select taxonomy for location terms when searching %s. When user searches "US", results filter by term "US" in this taxonomy.', 'cubewp-framework' ), $pt_label ),
         'required' => array(
             array( 'google_address_use_terms', 'equals', '1' )

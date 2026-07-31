@@ -143,6 +143,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			'label'   => esc_html__('Number Of Posts', 'cubewp-framework'),
 			'options' => array(
 				'-1' => esc_html__('All Posts', 'cubewp-framework'),
+				'custom' => esc_html__('Custom Number', 'cubewp-framework'),
 				'1'  => esc_html__('1 Post', 'cubewp-framework'),
 				'2'  => esc_html__('2 Posts', 'cubewp-framework'),
 				'3'  => esc_html__('3 Posts', 'cubewp-framework'),
@@ -157,6 +158,14 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 				'20' => esc_html__('20 Posts', 'cubewp-framework')
 			),
 			'default' => '3'
+		));
+		$this->add_control('custom_number_of_posts', array(
+			'type'      => Controls_Manager::NUMBER,
+			'label'     => esc_html__('Custom Number of Posts', 'cubewp-framework'),
+			'default'   => '3',
+			'condition' => array(
+				'number_of_posts' => 'custom',
+			)
 		));
 		$this->add_control('ajax_base_posts', array(
 			'type'    => Controls_Manager::SWITCHER,
@@ -316,7 +325,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			'description'   => esc_html__("Enter the custom field name (meta key) to filter by.", "cubewp-framework"),
 			'label_block' => true,
 			'condition' => array(
-				'meta_key' => 'custom',
+				'meta_key' => 'custom', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Custom-field sorting/filtering is the core purpose of this framework.
 			),
 		));
 
@@ -530,6 +539,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		// Source post selection
 		$this->add_control('related_source_post_' . $post_type, array(
 			'type'        => Controls_Manager::SELECT,
+			/* translators: %s: post type singular name. */
 			'label'       => sprintf(esc_html__('Source Post for %s', 'cubewp-framework'), self::get_post_type_name_by_slug($post_type)),
 			'description' => esc_html__('Select which post to use as the source for finding related posts.', 'cubewp-framework'),
 			'options'     => array(
@@ -545,6 +555,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 
 		$this->add_control('related_source_post_id_' . $post_type, array(
 			'type'        => Controls_Manager::NUMBER,
+			/* translators: %s: post type singular name. */
 			'label'       => sprintf(esc_html__('Source Post ID for %s', 'cubewp-framework'), self::get_post_type_name_by_slug($post_type)),
 			'description' => esc_html__('Enter the post ID to use as the source for finding related posts.', 'cubewp-framework'),
 			'default'     => '',
@@ -575,6 +586,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 
 		$this->add_control('related_posts_' . $post_type, array(
 			'type'        => Controls_Manager::REPEATER,
+			/* translators: %s: post type singular name. */
 			'label'       => sprintf(esc_html__('Related Posts Settings for %s', 'cubewp-framework'), self::get_post_type_name_by_slug($post_type)),
 			'fields'      => $repeater->get_controls(),
 			'default'     => array(),
@@ -591,6 +603,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		// Source post selection
 		$this->add_control('nearby_source_post_' . $post_type, array(
 			'type'        => Controls_Manager::SELECT,
+			/* translators: %s: post type singular name. */
 			'label'       => sprintf(esc_html__('Source Post for %s', 'cubewp-framework'), self::get_post_type_name_by_slug($post_type)),
 			'description' => esc_html__('Select which post to use as the source for finding nearby posts.', 'cubewp-framework'),
 			'options'     => array(
@@ -606,6 +619,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 
 		$this->add_control('nearby_source_post_id_' . $post_type, array(
 			'type'        => Controls_Manager::NUMBER,
+			/* translators: %s: post type singular name. */
 			'label'       => sprintf(esc_html__('Source Post ID for %s', 'cubewp-framework'), self::get_post_type_name_by_slug($post_type)),
 			'description' => esc_html__('Enter the post ID to use as the source for finding nearby posts.', 'cubewp-framework'),
 			'default'     => '',
@@ -623,6 +637,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		if (!empty($google_address_fields)) {
 			$this->add_control('nearby_address_field_' . $post_type, array(
 				'type'        => Controls_Manager::SELECT,
+				/* translators: %s: post type singular name. */
 				'label'       => sprintf(esc_html__('Address Field for %s', 'cubewp-framework'), self::get_post_type_name_by_slug($post_type)),
 				'description' => esc_html__('Select the address field to use for finding nearby posts.', 'cubewp-framework'),
 				'options'     => $google_address_fields,
@@ -638,6 +653,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		// Radius controls
 		$this->add_control('nearby_min_radius_' . $post_type, array(
 			'type'        => Controls_Manager::NUMBER,
+			/* translators: %s: post type singular name. */
 			'label'       => sprintf(esc_html__('Minimum Radius for %s', 'cubewp-framework'), self::get_post_type_name_by_slug($post_type)),
 			'description' => esc_html__('Minimum radius value.', 'cubewp-framework'),
 			'default'     => 1,
@@ -651,6 +667,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 
 		$this->add_control('nearby_default_radius_' . $post_type, array(
 			'type'        => Controls_Manager::NUMBER,
+			/* translators: %s: post type singular name. */
 			'label'       => sprintf(esc_html__('Default Radius for %s', 'cubewp-framework'), self::get_post_type_name_by_slug($post_type)),
 			'description' => esc_html__('Default radius value to use for nearby posts search.', 'cubewp-framework'),
 			'default'     => 10,
@@ -664,6 +681,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 
 		$this->add_control('nearby_max_radius_' . $post_type, array(
 			'type'        => Controls_Manager::NUMBER,
+			/* translators: %s: post type singular name. */
 			'label'       => sprintf(esc_html__('Maximum Radius for %s', 'cubewp-framework'), self::get_post_type_name_by_slug($post_type)),
 			'description' => esc_html__('Maximum radius value.', 'cubewp-framework'),
 			'default'     => 100,
@@ -677,6 +695,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 
 		$this->add_control('nearby_radius_unit_' . $post_type, array(
 			'type'        => Controls_Manager::SELECT,
+			/* translators: %s: post type singular name. */
 			'label'       => sprintf(esc_html__('Radius Unit for %s', 'cubewp-framework'), self::get_post_type_name_by_slug($post_type)),
 			'description' => esc_html__('Select the unit for radius measurement.', 'cubewp-framework'),
 			'options'     => array(
@@ -875,7 +894,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			'custom_author_id' => isset($settings['custom_author_id']) ? $settings['custom_author_id'] : 0,
 			'orderby'         => $settings['orderby'],
 			'order'           => $settings['order'],
-			'number_of_posts' => $settings['number_of_posts'],
+			'number_of_posts' => $settings['number_of_posts'] === 'custom' ? $settings['custom_number_of_posts'] : $settings['number_of_posts'],
 			'load_via_ajax'   => (isset($settings['ajax_base_posts']) && $settings['ajax_base_posts'] === 'yes') ? 'yes' : 'no',
 			'load_more'       => $settings['load_more'],
 			'posts_per_page'  => $settings['posts_per_page'],
@@ -919,6 +938,9 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 				'custom_dots' => $settings['custom_dots'] === 'yes' ? true : false,
 				'enable_wrap_dots_arrows' => $settings['enable_wrap_dots_arrows'] === 'yes' ? true : false,
 				'enable_progress_bar' => $settings['enable_progress_bar'] === 'yes' ? true : false,
+				'slider_vertical' => isset( $settings['slider_vertical'] ) ? $settings['slider_vertical'] : '',
+				'slider_vertical_tablet' => isset( $settings['slider_vertical_tablet'] ) ? $settings['slider_vertical_tablet'] : '',
+				'slider_vertical_mobile' => isset( $settings['slider_vertical_mobile'] ) ? $settings['slider_vertical_mobile'] : '',
 			));
 		}
 
@@ -1169,6 +1191,25 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 			]
 		);
 
+		$this->add_responsive_control(
+			'slider_vertical',
+			[
+				'label'        => esc_html__('Slider Direction', 'cubewp-framework'),
+				'type'         => Controls_Manager::SELECT,
+				'default'      => 'no',
+				'tablet_default' => 'no',
+				'mobile_default' => 'no',
+				'options'      => [
+					'no'    => esc_html__('Horizontal', 'cubewp-framework'),
+					'yes' => esc_html__('Vertical', 'cubewp-framework'),
+				],
+				'description'  => esc_html__('Choose slider scroll direction per device.', 'cubewp-framework'),
+				'condition'    => [
+					'cwp_enable_slider' => 'yes',
+				],
+			]
+		);
+
 		$this->add_control(
 			'fade_effect',
 			[
@@ -1178,6 +1219,7 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 				'description' => esc_html__('Enable fade effect for slides transition.', 'cubewp-framework'),
 				'condition' => [
 					'cwp_enable_slider' => 'yes',
+					'slider_vertical!'  => 'yes',
 				],
 			]
 		);
@@ -3116,6 +3158,18 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 				'name'     => 'load_more_button_box_shadow',
 				'label'    => esc_html__('Box Shadow', 'cubewp-framework'),
 				'selector' => '{{WRAPPER}} .cubewp-load-more-conatiner .cubewp-load-more-button',
+			)
+		);
+		$this->add_control(
+			'load_more_button_transition',
+			array(
+				'label'       => esc_html__( 'Transition', 'cubewp-framework' ),
+				'type'        => \Elementor\Controls_Manager::TEXT,
+				'default'     => '0.3s ease',
+				'placeholder' => '0.3s ease',
+				'selectors'   => array(
+					'{{WRAPPER}} .cubewp-load-more-conatiner .cubewp-load-more-button' => 'transition: {{VALUE}};',
+				),
 			)
 		);
 		$this->add_control(

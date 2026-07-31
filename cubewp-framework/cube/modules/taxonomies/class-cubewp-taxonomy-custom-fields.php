@@ -153,6 +153,17 @@ class CubeWp_Taxonomy_Custom_Fields {
                 'id' => '',
                 'tr_extra_attr' => 'data-equal="text,textarea"',
         );
+        $field_settings['field_file_types'] = array(
+            'label' => esc_html__('File Types (MIME)', 'cubewp-framework'),
+            'name' => 'cwp_tax_fields[file_types]',
+            'type' => 'text',
+            'id' => '',
+            'placeholder' => esc_html__('Enter Allowed File Types. EG: (image/png,image/jpeg,image/jpg,image/webp)', 'cubewp-framework'),
+            'value' => $FieldData['file_types'],
+            'tr_class' => 'conditional-field',
+            'class' => 'field-file-types',
+            'tr_extra_attr' => 'data-equal="image"',
+        );
         $field_settings['field_filter_taxonomy'] = array(
             'label' => esc_html__('Filter by Taxonomy', 'cubewp-framework'),
             'name' => 'cwp_tax_fields[filter_taxonomy]',

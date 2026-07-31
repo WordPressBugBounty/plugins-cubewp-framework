@@ -50,10 +50,10 @@ class CubeWp_Tag_User_Registered extends \Elementor\Core\DynamicTags\Tag
                 'default'     => 'default',
                 'options'     => [
                     'default' => esc_html__('WordPress Default', 'cubewp-framework'),
-                    'F j, Y'  => date('F j, Y'),
-                    'Y-m-d'   => date('Y-m-d'),
-                    'd/m/Y'   => date('d/m/Y'),
-                    'm/d/Y'   => date('m/d/Y'),
+                    'F j, Y'  => date_i18n('F j, Y'),
+                    'Y-m-d'   => date_i18n('Y-m-d'),
+                    'd/m/Y'   => date_i18n('d/m/Y'),
+                    'm/d/Y'   => date_i18n('m/d/Y'),
                     'custom'  => esc_html__('Custom', 'cubewp-framework'),
                 ],
                 'condition' => [
@@ -124,6 +124,7 @@ class CubeWp_Tag_User_Registered extends \Elementor\Core\DynamicTags\Tag
         // Human-readable option
         if ('human_readable' === $display_type) {
             return sprintf(
+                /* translators: %s: human-readable time difference. */
                 esc_html__('%s ago', 'cubewp-framework'),
                 human_time_diff($timestamp, current_time('timestamp'))
             );

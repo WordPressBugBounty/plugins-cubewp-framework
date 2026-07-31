@@ -328,6 +328,7 @@ span.cwp-range-number-field-seprator {
 }
 
 .cwp-range-number-slider-ui.ui-slider {
+	width: 100%;
 	border: 0;
 }
 
@@ -715,18 +716,18 @@ span.cwp-range-number-field-seprator {
 }
 
 .cwp-file-field-container .cwp-file-field-preview span {
-	background: #000000;
-	border-radius: 50%;
-	color: #ffffff;
-	cursor: pointer;
-	opacity: 0;
-	padding: 4px 5px 0 5px;
-	position: absolute;
-	right: 5px;
-	text-align: center;
-	top: 0;
-	transition: 300ms;
-	z-index: 9;
+    background: #000000;
+    border-radius: 50%;
+    color: #ffffff;
+    cursor: pointer;
+    opacity: 0;
+    padding: 1px 5px 3px 5px;
+    position: absolute;
+    right: 5px;
+    text-align: center;
+    top: 0;
+    transition: 300ms;
+    z-index: 9;
 }
 
 .cwp-file-field-container .cwp-file-field-preview p {
@@ -1570,5 +1571,153 @@ button.cwp-add-new-business-hour svg {
 	font-weight: 500;
 	margin: 0;
 	text-transform: capitalize;
+}
+
+/* Taxonomy checkbox hierarchy (filter builder) */
+ul.cwp-taxonomy-checkbox-tree.cwp-field-checkbox-container {
+	display: flex;
+	flex-direction: column;
+	flex-wrap: nowrap;
+	list-style: none;
+}
+
+ul.cwp-taxonomy-checkbox-tree .cwp-taxonomy-children-list {
+	display: flex;
+	flex-direction: column;
+	flex-wrap: nowrap;
+	list-style: none;
+	width: 100%;
+}
+
+ul.cwp-taxonomy-checkbox-tree > li,
+ul.cwp-taxonomy-checkbox-tree .cwp-taxonomy-children-list > li {
+	width: 100%;
+	margin-right: 0;
+}
+
+.cwp-taxonomy-term-head {
+	display: flex;
+	align-items: flex-start;
+	width: 100%;
+	position: relative;
+}
+
+.cwp-taxonomy-term-head .cwp-field-checkbox {
+	flex: 1;
+	min-width: 0;
+}
+
+.cwp-taxonomy-toggle-pos-right .cwp-taxonomy-term-head {
+	flex-direction: row;
+}
+
+.cwp-taxonomy-toggle-pos-left .cwp-taxonomy-term-head {
+	flex-direction: row;
+}
+
+.cwp-taxonomy-toggle-absolute .cwp-taxonomy-term-head {
+	padding-right: 32px;
+}
+
+.cwp-taxonomy-toggle-absolute.cwp-taxonomy-toggle-pos-left .cwp-taxonomy-term-head {
+	padding-right: 0;
+	padding-left: 32px;
+}
+
+.cwp-taxonomy-toggle-absolute .cwp-taxonomy-accordion-toggle {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	margin: 0;
+	z-index: 2;
+}
+
+.cwp-taxonomy-toggle-absolute.cwp-taxonomy-toggle-pos-right .cwp-taxonomy-accordion-toggle {
+	right: 0;
+	left: auto;
+}
+
+.cwp-taxonomy-toggle-absolute.cwp-taxonomy-toggle-pos-left .cwp-taxonomy-accordion-toggle {
+	left: 0;
+	right: auto;
+}
+
+.cwp-taxonomy-toggle-absolute.cwp-taxonomy-toggle-pos-right .cwp-taxonomy-accordion-icon,
+.cwp-taxonomy-toggle-absolute.cwp-taxonomy-toggle-pos-left .cwp-taxonomy-accordion-icon {
+	transform: rotate(45deg);
+}
+
+.cwp-taxonomy-toggle-absolute li.cwp-taxonomy-has-children.is-open > .cwp-taxonomy-term-head .cwp-taxonomy-accordion-icon {
+	transform: rotate(-135deg);
+}
+
+.cwp-taxonomy-accordion-toggle {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	margin: 0;
+	border: 0;
+	background: transparent !important;
+	cursor: pointer;
+	line-height: 1;
+}
+
+.cwp-taxonomy-accordion-icon {
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	border-right: 2px solid #50575e;
+	border-bottom: 2px solid #50575e;
+	transform: rotate(45deg);
+	transition: transform 0.3s ease;
+}
+
+li.cwp-taxonomy-has-children.is-open > .cwp-taxonomy-term-head .cwp-taxonomy-accordion-icon {
+	transform: rotate(-135deg);
+}
+
+.cwp-taxonomy-children-list,
+li.cwp-taxonomy-field {
+	overflow: hidden;
+}
+
+.cwp-taxonomy-children-list.is-collapsed {
+	overflow: hidden;
+}
+
+li.cwp-taxonomy-term-truncated {
+	overflow: hidden;
+}
+
+li.cwp-taxonomy-show-more-item {
+	list-style: none;
+	width: 100%;
+	margin-right: 0;
+}
+
+.cwp-taxonomy-terms-show-more-wrap {
+	display: block;
+	width: 100%;
+}
+
+.cwp-taxonomy-terms-show-more {
+	display: inline-block;
+	border: 0;
+	cursor: pointer;
+	line-height: 1.4;
+	transition: color 0.25s ease, background-color 0.25s ease;
+}
+
+.cwp-taxonomy-terms-show-more.is-processing {
+	pointer-events: none;
+	opacity: 0.85;
+}
+
+.cwp-taxonomy-show-more-item {
+	overflow: hidden;
 }
  

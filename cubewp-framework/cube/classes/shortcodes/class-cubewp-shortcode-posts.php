@@ -37,6 +37,29 @@ class CubeWp_Shortcode_Posts
 		add_action('elementor/document/after_save', array($this, 'clear_elementor_cache'), 10, 2);
 	}
 
+	/**
+	 * Resolve responsive vertical slider setting for data attributes.
+	 *
+	 * @param array  $parameters Widget/shortcode parameters.
+	 * @param string $device     desktop|tablet|mobile.
+	 * @return string "true" or "false".
+	 */
+	private static function posts_slider_vertical_attr( $parameters, $device = 'desktop' ) {
+		$desktop = ( isset( $parameters['slider_vertical'] ) && 'yes' === $parameters['slider_vertical'] ) ? 'yes' : '';
+		$tablet  = isset( $parameters['slider_vertical_tablet'] ) ? $parameters['slider_vertical_tablet'] : '';
+		$mobile  = isset( $parameters['slider_vertical_mobile'] ) ? $parameters['slider_vertical_mobile'] : '';
+
+		if ( 'tablet' === $device ) {
+			$value = ( '' !== $tablet ) ? $tablet : $desktop;
+		} elseif ( 'mobile' === $device ) {
+			$value = ( '' !== $mobile ) ? $mobile : ( ( '' !== $tablet ) ? $tablet : $desktop );
+		} else {
+			$value = $desktop;
+		}
+
+		return ( 'yes' === $value ) ? 'true' : 'false';
+	}
+
 	public static function cubewp_posts($output, array $parameters)
 	{
 		$cwp_enable_slider = isset($parameters['cwp_enable_slider']) ? $parameters['cwp_enable_slider'] : '';
@@ -181,7 +204,7 @@ class CubeWp_Shortcode_Posts
 			$slides_to_scroll_tablet = isset($parameters['slides_to_scroll_tablet']) ? intval($parameters['slides_to_scroll_tablet']) : 1;
 			$slides_to_scroll_tablet_portrait = isset($parameters['slides_to_scroll_tablet_portrait']) ? intval($parameters['slides_to_scroll_tablet_portrait']) : 1;
 			$slides_to_scroll_mobile = isset($parameters['slides_to_scroll_mobile']) ? intval($parameters['slides_to_scroll_mobile']) : 1;
-			$autoplay = isset($parameters['autoplay']) ? $parameters['autoplay'] : 'false';
+			$autoplay = (isset($parameters['autoplay']) && $parameters['autoplay'] === true) ? 'true' : 'false';
 			$autoplay_speed = isset($parameters['autoplay_speed']) ? intval($parameters['autoplay_speed']) : 2000;
 			$speed = isset($parameters['speed']) ? intval($parameters['speed']) : 500;
 			$infinite = (isset($parameters['infinite']) && $parameters['infinite'] === true) ? 'true' : 'false';
@@ -191,6 +214,9 @@ class CubeWp_Shortcode_Posts
 			$enable_progress_bar = (isset($parameters['enable_progress_bar']) && $parameters['enable_progress_bar'] === true) ? 'true' : 'false';
 			$custom_dots = (isset($parameters['custom_dots']) && $parameters['custom_dots'] === true) ? 'true' : 'false';
 			$enable_wrap_dots_arrows = (isset($parameters['enable_wrap_dots_arrows']) && $parameters['enable_wrap_dots_arrows'] === true) ? 'true' : 'false';
+			$slider_vertical         = self::posts_slider_vertical_attr( $parameters, 'desktop' );
+			$slider_vertical_tablet  = self::posts_slider_vertical_attr( $parameters, 'tablet' );
+			$slider_vertical_mobile  = self::posts_slider_vertical_attr( $parameters, 'mobile' );
 		}
 		$promotional_card = $parameters['promotional_card'];
 		$promotional_card_list = $parameters['promotional_cards'];
@@ -318,6 +344,26 @@ class CubeWp_Shortcode_Posts
 			self::cubewp_handle_nearby_posts_query($parameters, $args);
 		}
 
+		// Limit query to boosted posts so posts_per_page applies to boosted results only.
+		if ( $show_boosted_posts === 'yes' && function_exists( 'cubewp_boosted_posts' ) ) {
+			$boosted_post_types = isset( $args['post_type'] ) ? $args['post_type'] : array();
+			if ( ! is_array( $boosted_post_types ) ) {
+				$boosted_post_types = array( $boosted_post_types );
+			}
+			$boosted_ids = cubewp_boosted_posts( $boosted_post_types );
+			if ( empty( $boosted_ids ) ) {
+				$args['post__in'] = array( 0 );
+			} elseif ( ! empty( $args['post__in'] ) ) {
+				$args['post__in'] = array_values( array_intersect( array_map( 'intval', (array) $args['post__in'] ), $boosted_ids ) );
+				if ( empty( $args['post__in'] ) ) {
+					$args['post__in'] = array( 0 );
+				}
+			} else {
+				$args['post__in'] = $boosted_ids;
+			}
+		}
+		
+
 		$layout = $parameters['layout'];
 		$row_class = 'grid-view';
 		if ($layout == 'list') {
@@ -383,6 +429,9 @@ class CubeWp_Shortcode_Posts
 			$container_open .= ' data-custom-dots="' . esc_attr($custom_dots) . '"';
 			$container_open .= ' data-enable-progress-bar="' . esc_attr($enable_progress_bar) . '"';
 			$container_open .= ' data-enable-wrapper="' . esc_attr($enable_wrap_dots_arrows) . '"';
+			$container_open .= ' data-vertical="' . esc_attr( $slider_vertical ) . '"';
+			$container_open .= ' data-vertical-tablet="' . esc_attr( $slider_vertical_tablet ) . '"';
+			$container_open .= ' data-vertical-mobile="' . esc_attr( $slider_vertical_mobile ) . '"';
 		}
 		// For Reviews Filter
 		if (class_exists('CubeWp_Reviews_Load')) {
@@ -426,7 +475,7 @@ class CubeWp_Shortcode_Posts
 					// Check required keys exist and are valid
 					if (isset($promotional_card['cubewp_promotional_card_option'])) {
 						$option = $promotional_card['cubewp_promotional_card_option'];
-						$width = $promotional_card['cubewp_promotional_card_width']['size'] . $promotional_card['cubewp_promotional_card_width']['unit'];
+						$width = cubewp_get_promotional_card_responsive_widths($promotional_card);
 						$position = $promotional_card['cubewp_promotional_card_position'];
 
 						$promotional_cards[$position] = [
@@ -436,37 +485,20 @@ class CubeWp_Shortcode_Posts
 					}
 				}
 			}
-			if ($show_boosted_posts == 'yes') {
-				if (class_exists('CubeWp_Booster_Load')) {
-					while ($posts->have_posts()): $posts->the_post();
-						$post_type = get_post_type(get_the_ID());
-						$style = isset($parameters['card_style'][$post_type]) ? $parameters['card_style'][$post_type] : '';
-						if (function_exists('is_boosted')) {
-							if (is_boosted(get_the_ID())) {
-								if ($promotional_card && isset($promotional_cards[$counter]) && !empty($promotional_cards[$counter])) {
-									$promotional_cardID =  $promotional_cards[$counter]['option'];
-									$width = $promotional_cards[$counter]['width'];
-									$post_markup .= cubewp_promotional_card_output($promotional_cardID, $width);
-								}
-								$counter++;
-								$post_markup .= CubeWp_frontend_grid_HTML(get_the_ID(), '', $style);
-							}
-						}
-					endwhile;
+			while ($posts->have_posts()) : $posts->the_post();
+				if ($show_boosted_posts === 'yes' && function_exists('is_boosted') && ! is_boosted(get_the_ID())) {
+					continue;
 				}
-			} else {
-				while ($posts->have_posts()): $posts->the_post();
-					$post_type = get_post_type(get_the_ID());
-					$style = isset($parameters['card_style'][$post_type]) ? $parameters['card_style'][$post_type] : '';
-					if ($promotional_card && isset($promotional_cards[$counter]) && !empty($promotional_cards[$counter])) {
-						$promotional_cardID =  $promotional_cards[$counter]['option'];
-						$width = $promotional_cards[$counter]['width'];
-						$post_markup .= cubewp_promotional_card_output($promotional_cardID, $width);
-					}
-					$counter++;
-					$post_markup .= CubeWp_frontend_grid_HTML(get_the_ID(), '', $style);
-				endwhile;
-			}
+				$post_type = get_post_type(get_the_ID());
+				$style     = isset($parameters['card_style'][$post_type]) ? $parameters['card_style'][$post_type] : '';
+				if ($promotional_card && isset($promotional_cards[$counter]) && ! empty($promotional_cards[$counter])) {
+					$promotional_cardID = $promotional_cards[$counter]['option'];
+					$width              = $promotional_cards[$counter]['width'];
+					$post_markup       .= cubewp_promotional_card_output($promotional_cardID, $width);
+				}
+				$counter++;
+				$post_markup .= CubeWp_frontend_grid_HTML(get_the_ID(), '', $style);
+			endwhile;
 			if (isset($parameters['load_more']) && $parameters['load_more'] == 'yes') {
 
 				// Get current page number for pagination check
@@ -954,8 +986,9 @@ class CubeWp_Shortcode_Posts
 			'post_status' => 'publish',
 			'posts_per_page' => -1,
 			'fields' => 'ids',
+			// phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_post__not_in -- Excludes only the single source post; VIP-specific advisory.
 			'post__not_in' => array($source_post_id), // Exclude source post
-			'tax_query' => $taxonomies_to_query
+			'tax_query' => $taxonomies_to_query // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- Taxonomy filtering is required to find related posts.
 		);
 
 		$tax_query = new WP_Query($tax_args);

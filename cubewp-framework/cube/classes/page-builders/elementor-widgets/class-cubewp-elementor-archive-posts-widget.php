@@ -352,7 +352,7 @@ class CubeWp_Elementor_Archive_Posts_Widget extends Widget_Base
                     'rem' => ['min' => 0, 'max' => 80],
                 ],
                 'selectors' => [
-                    '{{WRAPPER}} .cwp-archive-container .cwp-search-result-output .cwp-row.list-view>div' => 'width: {{SIZE}}{{UNIT}};',
+                    '{{WRAPPER}} .cwp-archive-container .cwp-search-result-output .cwp-row.list-view>div' => 'width: {{SIZE}}{{UNIT}}; !important',
                 ],
             ]
         );
@@ -612,16 +612,18 @@ class CubeWp_Elementor_Archive_Posts_Widget extends Widget_Base
 
         CubeWp_Enqueue::enqueue_script('cwp-search-filters');
 
-        echo CubeWp_Frontend_Search_Filter::cwp_filter_results() ;
+        echo CubeWp_Frontend_Search_Filter::cwp_filter_results() ; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Returns static container markup with no dynamic data.
         echo '<form name="cwp-search-filters" class="cwp-search-filters" method="post">';
-        echo CubeWp_Frontend_Search_Filter::filter_hidden_fields( $type, $page_num, $card_style );
-        echo   CubeWp_Frontend_Search_Filter::get_hidden_field_if_tax() ;
+        echo CubeWp_Frontend_Search_Filter::filter_hidden_fields( $type, $page_num, $card_style ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Returns hidden input markup; all values escaped with esc_attr() inside the method.
+        echo   CubeWp_Frontend_Search_Filter::get_hidden_field_if_tax() ; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Method prints its own esc_attr() escaped input markup.
         $count = 1;
         if ($promotional_card && !empty($promotional_card_list) && is_array($promotional_card_list)) {
             foreach ($promotional_card_list as $_promotional_card) {
                 echo '<input type="hidden" class="cubewp-promotional-card" name="cubewp_promotional_card_option-'.esc_attr($count).'" value="' . esc_attr($_promotional_card['cubewp_promotional_card_option']) . '" />';
                 echo '<input type="hidden" class="cubewp-promotional-card" name="cubewp_promotional_card_position-'.esc_attr($count).'" value="' . esc_attr($_promotional_card['cubewp_promotional_card_position']) . '" />';
-                echo '<input type="hidden" class="cubewp-promotional-card" name="cubewp_promotional_card_width-'.esc_attr($count).'" value="' . esc_attr($_promotional_card['cubewp_promotional_card_width']['size']) .esc_attr($_promotional_card['cubewp_promotional_card_width']['unit']). '" />';
+                echo '<input type="hidden" class="cubewp-promotional-card" name="cubewp_promotional_card_width-'.esc_attr($count).'" value="' . esc_attr(cubewp_format_promotional_card_slider_width($_promotional_card['cubewp_promotional_card_width'] ?? array())) . '" />';
+                echo '<input type="hidden" class="cubewp-promotional-card" name="cubewp_promotional_card_width_tablet-'.esc_attr($count).'" value="' . esc_attr(cubewp_format_promotional_card_slider_width($_promotional_card['cubewp_promotional_card_width_tablet'] ?? array())) . '" />';
+                echo '<input type="hidden" class="cubewp-promotional-card" name="cubewp_promotional_card_width_mobile-'.esc_attr($count).'" value="' . esc_attr(cubewp_format_promotional_card_slider_width($_promotional_card['cubewp_promotional_card_width_mobile'] ?? array())) . '" />';
                 $count++;
             }
         }

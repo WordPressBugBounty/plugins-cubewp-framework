@@ -32,6 +32,7 @@ class CubeWp_Shortcodes {
 	private static function load_shortcodes() {
 		// Frontend Shortcodes
 		add_action('init', array('CubeWp_Shortcode_Taxonomy', 'init'), 10);
+		add_action('init', array('CubeWp_Shortcode_Users', 'init'), 10);
 		add_action('init', array('CubeWp_Shortcode_Posts', 'init'), 10);
 		add_action('init', array('CubeWp_Shortcode_Search', 'init'), 10);
 	}

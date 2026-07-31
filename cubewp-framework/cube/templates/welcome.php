@@ -1,5 +1,8 @@
 <?php
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 wp_enqueue_style('cubewp-welcome');
 $token   = (string) get_option( 'cubewp_hub_token', '' );
 $expires = (int) get_option( 'cubewp_hub_token_expires', 0 );
@@ -38,16 +41,52 @@ foreach ( $hub_items as $it ) {
 	}
 }
 
+$cwp_hub_item_primary = static function ( $it ) {
+	if ( ! is_array( $it ) ) {
+		return array( 'license_key' => '', 'license_id' => 0 );
+	}
+	if ( ! empty( $it['licenses'] ) && is_array( $it['licenses'] ) ) {
+		$list = $it['licenses'];
+		$last = end( $list );
+		if ( is_array( $last ) ) {
+			return array(
+				'license_key' => (string) ( $last['license_key'] ?? '' ),
+				'license_id'  => (int) ( $last['license_id'] ?? 0 ),
+			);
+		}
+	}
+	return array(
+		'license_key' => (string) ( $it['license_key'] ?? '' ),
+		'license_id'  => (int) ( $it['license_id'] ?? 0 ),
+	);
+};
+
+$cwp_hub_item_has_licenses = static function ( $it ) {
+	if ( ! is_array( $it ) ) {
+		return false;
+	}
+	if ( ! empty( $it['licenses'] ) && is_array( $it['licenses'] ) ) {
+		foreach ( $it['licenses'] as $row ) {
+			if ( is_array( $row ) && ( (int) ( $row['license_id'] ?? 0 ) > 0 || (string) ( $row['license_key'] ?? '' ) !== '' ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+	return ( (int) ( $it['license_id'] ?? 0 ) > 0 && (string) ( $it['license_key'] ?? '' ) !== '' );
+};
+
 // Helpers for status.
 $cwp_get_plugin_base = static function( $item ) {
 	$slug = isset( $item['slug'] ) ? sanitize_key( (string) $item['slug'] ) : '';
 	$base = isset( $item['base'] ) ? (string) $item['base'] : '';
 	if ( empty( $base ) && ! empty( $slug ) ) {
 		$saved = get_option( $slug.'_base', '' );
-		$base  = is_string( $saved ) ? $slug . '/' . $saved . '.php' : '';
-	}
-	if ( empty( $base ) && ! empty( $slug ) ) {
-		$base = $slug . '/' . $slug . '.php';
+        if( $saved ){
+            $base = $saved;
+        }else{
+            $base = $slug . '/' . $slug . '.php';
+        }
 	}
 	return $base;
 };
@@ -596,9 +635,9 @@ if( $current_user->user_firstname ){
 								$title = ! empty( $it['item_name'] ) ? (string) $it['item_name'] : $slug;
 								$base  = $cwp_get_plugin_base( $it );
 								$status = $cwp_plugin_status( $base );
-								$license_key = ! empty( $it['license_key'] ) ? (string) $it['license_key'] : '';
-								$saved_license_key = get_option( $slug.'_key', '' );
-                                $license_id  = ! empty( $it['license_id'] ) ? (int) $it['license_id'] : 0;
+								$prim = $cwp_hub_item_primary( $it );
+								$license_key = $prim['license_key'];
+								$license_id  = $prim['license_id'];
 								$img = $cwp_resolve_addon_image( $slug, $title );
 								?>
 								<div class="cwp-lead-content-imges two cwp-lead-tile cubewp-card" data-addon-slug="<?php echo esc_attr( $slug ); ?>" data-addon-type="plugin" data-license-id="<?php echo esc_attr( (string) $license_id ); ?>">
@@ -629,9 +668,9 @@ if( $current_user->user_firstname ){
 											</form>
 										<?php endif; ?>
 
-										<?php if ( ! empty( $license_key ) && $license_id > 0 && $saved_license_key === $license_key && 'missing' !== $status ) : ?>
+										<?php //if ( $cwp_hub_item_has_licenses( $it ) && 'missing' !== $status ) : ?>
 											<button type="button" class="button button-small" data-cwp-manage="<?php echo esc_attr( $slug ); ?>"><?php esc_html_e( 'Manage', 'cubewp-framework' ); ?></button>
-										<?php endif; ?>
+										<?php //endif; ?>
 									</div>
 								</div>
 							<?php endforeach; ?>
@@ -651,8 +690,9 @@ if( $current_user->user_firstname ){
 								$title = ! empty( $it['item_name'] ) ? (string) $it['item_name'] : $slug;
 								$sheet = ! empty( $it['stylesheet'] ) ? (string) $it['stylesheet'] : $slug;
 								$status = $cwp_theme_status( $sheet );
-								$license_key = ! empty( $it['license_key'] ) ? (string) $it['license_key'] : '';
-								$license_id  = ! empty( $it['license_id'] ) ? (int) $it['license_id'] : 0;
+								$prim = $cwp_hub_item_primary( $it );
+								$license_key = $prim['license_key'];
+								$license_id  = $prim['license_id'];
 								$img = $cwp_resolve_addon_image( $slug, $title );
 								?>
 								<div class="cwp-lead-content-imges two cwp-lead-tile cubewp-card" data-addon-slug="<?php echo esc_attr( $slug ); ?>" data-addon-type="theme" data-license-id="<?php echo esc_attr( (string) $license_id ); ?>">
@@ -674,7 +714,7 @@ if( $current_user->user_firstname ){
 											</form>
 										<?php endif; ?>
 
-										<?php if ( ! empty( $license_key ) && $license_id > 0 && 'missing' !== $status ) : ?>
+										<?php if ( $cwp_hub_item_has_licenses( $it ) && 'missing' !== $status ) : ?>
 											<button type="button" class="button button-small" data-cwp-manage="<?php echo esc_attr( $slug ); ?>"><?php esc_html_e( 'Manage', 'cubewp-framework' ); ?></button>
 										<?php endif; ?>
 									</div>
@@ -758,7 +798,7 @@ if( $current_user->user_firstname ){
 	<div class="cwp-modal__backdrop" data-cwp-modal-close></div>
 	<div class="cwp-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="cwp-modal-title">
 		<div class="cwp-modal__header">
-			<h2 id="cwp-modal-title"><?php esc_html_e( 'Manage License', 'cubewp-framework' ); ?></h2>
+			<h2 id="cwp-modal-title"><?php esc_html_e( 'Manage Licenses', 'cubewp-framework' ); ?></h2>
 			<button type="button" class="cwp-modal__close" data-cwp-modal-close aria-label="<?php esc_attr_e( 'Close', 'cubewp-framework' ); ?>">×</button>
 		</div>
 		<div class="cwp-modal__body">
@@ -767,22 +807,12 @@ if( $current_user->user_firstname ){
 				<span class="cwp-modal__loading-text"><?php esc_html_e( 'Loading…', 'cubewp-framework' ); ?></span>
 			</div>
 			<div class="cwp-modal__content" style="display:none;">
-				<p class="edd-sl-manage-license-details">
-					<span class="edd-sl-manage-license-key"><?php esc_html_e( 'License', 'edd_sl' ); ?>: <code data-cwp-license-key></code></span>
-					<span class="edd-sl-manage-license-product"><?php esc_html_e( 'Product', 'edd_sl' ); ?>: <span data-cwp-license-product></span></span>
+				<p class="description" style="margin:0 0 12px;">
+					<strong><?php esc_html_e( 'Product', 'cubewp-framework' ); ?>:</strong>
+					<span data-cwp-license-product></span>
 				</p>
-				<p class="description" data-cwp-license-summary style="margin:6px 0 14px;"></p>
-
-				<table class="widefat striped" id="cwp_license_sites">
-					<thead>
-						<tr>
-							<th><?php esc_html_e( 'Activation ID', 'edd_sl' ); ?></th>
-							<th><?php esc_html_e( 'Actions', 'edd_sl' ); ?></th>
-						</tr>
-					</thead>
-					<tbody data-cwp-sites-body></tbody>
-				</table>
-				<p class="description" data-cwp-modal-note></p>
+				<div data-cwp-licenses-list class="cwp-manage-licenses-list"></div>
+				<p class="description" data-cwp-modal-note style="margin-top:12px;"></p>
 			</div>
 			<div class="cwp-modal__error notice notice-error" style="display:none;"><p data-cwp-modal-error></p></div>
 		</div>

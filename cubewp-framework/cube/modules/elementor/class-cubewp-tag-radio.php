@@ -88,6 +88,7 @@ class CubeWp_Tag_Radio extends \Elementor\Core\DynamicTags\Tag
 		$field_type = $field_type ? $field_type : 'post';
 	
 		$value = '';
+		$raw_value = null;
 	
 		if ( 'user' === $field_type ) {
 	
@@ -96,7 +97,7 @@ class CubeWp_Tag_Radio extends \Elementor\Core\DynamicTags\Tag
 				return;
 			}
 	
-			$value = get_user_field_value( $field );
+			$raw_value = get_user_field_value( $field );
 	
 		} else {
 	
@@ -105,9 +106,19 @@ class CubeWp_Tag_Radio extends \Elementor\Core\DynamicTags\Tag
 				return;
 			}
 	
-			$value = get_field_value( $field );
+			$raw_value = get_field_value( $field );
+		}
+
+		// Build classes from raw value(s) before normalization.
+		$classes = array( 'cubewp-radio-tag' );
+		$class_values = is_array( $raw_value ) ? $raw_value : array( $raw_value );
+		$class_values = array_filter( array_map( 'strval', $class_values ) );
+		foreach ( $class_values as $class_value ) {
+			$classes[] = 'cubewp-radio-value-' . sanitize_html_class( sanitize_title( $class_value ) );
 		}
 	
+		$value = $raw_value;
+
 		// Normalize value
 		if ( is_array( $value ) ) {
 			$value = implode( ', ', $value );
@@ -118,8 +129,15 @@ class CubeWp_Tag_Radio extends \Elementor\Core\DynamicTags\Tag
 		if ( '' === $value || null === $value ) {
 			return;
 		}
-	
-		echo esc_html( cubewp_core_data( $value ) );
+
+		$classes = apply_filters(
+			'cubewp/elementor/radio/dynamic_tag/classes',
+			array_values( array_unique( array_filter( $classes ) ) ),
+			$value,
+			$this->get_settings()
+		);
+
+		echo '<span class="' . esc_attr( implode( ' ', $classes ) ) . '">' . esc_html( cubewp_core_data( $value ) ) . '</span>';
 	}
 	
 }

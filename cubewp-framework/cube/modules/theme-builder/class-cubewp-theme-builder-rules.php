@@ -162,6 +162,27 @@ class CubeWp_Theme_Builder_Rules {
         $template_options .= '</optgroup>';
         return $template_options;
     }
+
+    /**
+     * Method render_usercard_options
+     *
+     * @return string
+     * @since   1.1.30
+     */
+    public static function render_usercard_options() {
+        $template_options = '';
+        $template_options .= '<optgroup label="User Roles">';
+        $template_options .= '<option value="usercard_all">' . esc_html__('All Users', 'cubewp-framework') . '</option>';
+        if (! function_exists('get_editable_roles')) {
+            require_once ABSPATH . 'wp-admin/includes/user.php';
+        }
+        foreach (get_editable_roles() as $role_key => $role_data) {
+            $label = isset($role_data['name']) ? $role_data['name'] : $role_key;
+            $template_options .= '<option value="usercard_' . esc_attr($role_key) . '">' . esc_html($label) . '</option>';
+        }
+        $template_options .= '</optgroup>';
+        return $template_options;
+    }
     
     /**
      * Method render_pages_options
@@ -314,6 +335,10 @@ class CubeWp_Theme_Builder_Rules {
                 
                 case 'termcard':
                     $template_options .= self::render_termcard_options();
+                    break;
+
+                case 'usercard':
+                    $template_options .= self::render_usercard_options();
                     break;
 
                 case 'block':

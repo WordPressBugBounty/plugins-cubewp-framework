@@ -1,4 +1,5 @@
 <?php
+
 /**
  * CubeWp Initialization.
  *
@@ -6,7 +7,7 @@
  * @version 1.0
  */
 
- // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
 
 defined('ABSPATH') || exit;
 
@@ -24,7 +25,7 @@ final class CubeWp_Load
      *
      * @var string
      */
-    public static $CubeWp_version = '1.1.30';
+    public static $CubeWp_version = '1.1.31';
 
     /**
      * Wordpress required version.
@@ -130,7 +131,6 @@ final class CubeWp_Load
         add_action('cubewp_loaded', array('CubeWp_Elementor', 'init'));
         add_action('cubewp_loaded', array('CubeWp_Vc_Elements', 'init'));
         add_action('cubewp_loaded', array('CubeWp_Relationships', 'init'));
-        require_once(CUBEWP_FILES . 'modules/theme-update/theme-updater.php');
         // Google Address City and Terms Modules
         add_action('cubewp_loaded', array('CubeWp_Google_Address_City_Module', 'init'), 12);
         add_action('cubewp_loaded', array('CubeWp_Google_Address_Terms_Module', 'init'), 12);
@@ -140,6 +140,27 @@ final class CubeWp_Load
         if (self::is_request('frontend')) {
             self::frontend_includes();
         }
+
+        add_action('elementor/init', array($this, 'cubewp_load_elementor_typography'));
+    }
+
+    public function cubewp_load_elementor_typography()
+    {
+        $typography_class_file = CUBEWP_FILES . 'classes/class-cubewp-elementor-typography.php';
+        if (file_exists($typography_class_file)) {
+            require_once $typography_class_file;
+        }
+        // Override existing Elementor Typography group control to allow CSS vars in font-family.
+        add_action('elementor/controls/register', array('CubeWp_Elementor_Typography', 'register_typography_group_control_override'), 100, 1);
+
+        // Add CubeWP typography variables in existing font-family dropdown.
+        add_filter('elementor/fonts/groups', array('CubeWp_Elementor_Typography', 'register_cubewp_font_group'), 10, 1);
+
+        add_filter('elementor/fonts/additional_fonts', array('CubeWp_Elementor_Typography', 'add_fonts_to_elementor_typography_control'), 10, 1);
+
+        add_action('elementor/editor/after_enqueue_scripts', array('CubeWp_Elementor_Typography', 'enqueue_editor_font_option_label_script'), 20);
+
+        add_action('wp_head', array('CubeWp_Elementor_Typography', 'print_root_typography_css_variables'), 10);
     }
 
     /**
