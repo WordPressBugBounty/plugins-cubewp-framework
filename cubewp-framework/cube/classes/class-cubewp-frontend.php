@@ -238,9 +238,56 @@ class CubeWp_Frontend {
         $select2 = isset($args['select2_ui']) && $args['select2_ui'] ? self::cwp_frontend_field_select2($args['select2_ui']) : '';
         $field_size = isset($args['field_size']) ? $args['field_size'] : '';
         $classes = "cwp-field-container cwp-field-{$args['type']} form-group {$args['container_class']} {$field_size} {$required_class} {$conditionalClass} {$select2}";
-   
+
         return '<div class="'.$classes.'" '. $container_attr .'>';
 
+    }
+
+    /**
+     * Apply the per-field output filter `cubewp/frontend/{name}/field`, guarded
+     * against re-entering the renderer that is already running.
+     *
+     * ⚠ WHY THIS GUARD EXISTS — infinite recursion, 512 MB fatal.
+     *
+     * Every field TYPE registers a renderer on `cubewp/frontend/{type}/field`
+     * (gallery, text, image, file, user, taxonomy … 26 of them). Each renderer
+     * then ends by firing `cubewp/frontend/{NAME}/field` so integrators can
+     * filter one specific field's output.
+     *
+     * Those two hooks share a namespace. When a site builder names a field
+     * exactly like a type — `gallery`, `text`, `image`, `email`, `user` are all
+     * natural choices — the per-field filter resolves to the SAME hook as the
+     * type renderer, so the renderer calls itself, forever.
+     *
+     * Observed 2026-10-06 on site 579: a field named `gallery` of type
+     * `gallery` recursed past 8,000 iterations and exhausted 512 MB — then
+     * 1 GB — producing an HTTP 500 with no PHP error reaching any log,
+     * because WordPress's own fatal handler runs first and die()s before
+     * later shutdown functions. Memory climbed super-linearly because
+     * render_gallery_field() APPENDS to $args['container_attrs'] on each pass.
+     *
+     * Re-entry returns the output unchanged rather than throwing: the type
+     * renderer has already produced the markup, and the name filter simply has
+     * nothing further to contribute when it is the same callback.
+     */
+    public static function cwp_field_output_filter( $output, $args ) {
+        static $running = array();
+
+        $name = isset( $args['name'] ) ? (string) $args['name'] : '';
+        if ( '' === $name ) {
+            return $output;
+        }
+
+        // Already inside this field's filter — the name collides with a type.
+        if ( ! empty( $running[ $name ] ) ) {
+            return $output;
+        }
+
+        $running[ $name ] = true;
+        $output = apply_filters( "cubewp/frontend/{$name}/field", $output, $args );
+        unset( $running[ $name ] );
+
+        return $output;
     }
         
     /**

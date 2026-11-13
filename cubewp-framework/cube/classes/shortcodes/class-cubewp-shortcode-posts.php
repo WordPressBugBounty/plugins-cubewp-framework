@@ -738,6 +738,12 @@ class CubeWp_Shortcode_Posts
 			isset($parameters['taxonomy']) ? md5(serialize($parameters['taxonomy'])) : '',
 			isset($parameters['meta_query']) ? md5(serialize($parameters['meta_query'])) : '',
 			isset($parameters['layout']) ? $parameters['layout'] : 'grid',
+			/* The arrow icons belong in the key. They change the rendered markup,
+			 * so without them a slider whose arrows were changed keeps serving
+			 * the cached copy with the OLD icons — which reads as "the icon fix
+			 * did not work" rather than "the cache is stale". */
+			isset($parameters['prev_icon']) ? $parameters['prev_icon'] : '',
+			isset($parameters['next_icon']) ? $parameters['next_icon'] : '',
 			isset($parameters['card_style']) ? md5(serialize($parameters['card_style'])) : '',
 			isset($parameters['posts_by']) ? $parameters['posts_by'] : '',
 			isset($parameters['nearby_address_field']) ? $parameters['nearby_address_field'] : '',

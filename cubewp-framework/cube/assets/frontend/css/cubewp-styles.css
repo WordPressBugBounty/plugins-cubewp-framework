@@ -1002,7 +1002,7 @@ ul.cwp-single-category-widget-inner li p {
 .cubewp-search-element .cwp-field-checkbox-container li,
 .cwp-field-radio-container li {
     padding: 0;
-    margin: 0 !important;
+    margin: 0;
 }
 
 body .cwp-frontend-search-form .cubewp-field-container .cwp-field-container.cwp-search-field {

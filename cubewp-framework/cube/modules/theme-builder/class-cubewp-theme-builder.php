@@ -278,6 +278,14 @@ class CubeWp_Theme_Builder
             return;
         }
 
+        // Security (2026-09-17): creating, renaming or deactivating site-wide
+        // templates is an administrator task. The nonce is printed on profile.php
+        // and post screens, so any logged-in user used to be able to call this.
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'You are not allowed to manage templates']);
+            return;
+        }
+
         // Check if data is set
 
         if (!isset($_POST['data'])) {
@@ -1135,13 +1143,35 @@ class CubeWp_Theme_Builder
             return;
         }
 
-        $old_value = is_array($old_value) ? $old_value : array();
-        $value     = is_array($value) ? $value : array();
-
-        $old_enabled = ! empty($old_value['cwp_tb_enable_cache']);
-        $new_enabled = ! empty($value['cwp_tb_enable_cache']);
-
-        if ($old_enabled !== $new_enabled) {
+        /*
+         * FLUSH ON ANY REAL CHANGE TO cwpOptions, not only on the cache toggle.
+         *
+         * This method used to compare `cwp_tb_enable_cache` before and after,
+         * and flush only when that one key flipped. Every OTHER setting change
+         * left the cached header and footer HTML in place until the TTL
+         * expired — 12 hours by default.
+         *
+         * The header renders settings from this array: the logo keys
+         * (`value-pack-sitelogo*`), colours, contact details, menus. So changing
+         * a logo on the settings screen saved correctly and showed the OLD logo
+         * to visitors for the rest of the day, and the only reliable way to see
+         * it was to toggle the cache off and on — which worked precisely because
+         * that was the one key being watched. Reported from a live site,
+         * 2026-10-05.
+         *
+         * WHY NOT A LIST OF "KEYS THAT AFFECT THE HEADER": because it would be
+         * wrong the moment a template used one that was not on it, and it would
+         * fail silently, exactly as this did. A list of what must invalidate a
+         * cache has to be maintained forever by whoever adds the next setting.
+         *
+         * OVER-FLUSHING IS CHEAP HERE. `update_option()` compares old and new
+         * and does not fire this hook unless the array actually changed, so this
+         * runs on deliberate saves — a settings submit, an import, a token
+         * refresh — never per request. The cost is one header rebuild on the
+         * next page view. The cost of the old behaviour was a customer seeing
+         * their previous logo for twelve hours.
+         */
+        if (! is_array($old_value) || ! is_array($value) || $old_value !== $value) {
             self::flush_header_footer_cache();
         }
     }

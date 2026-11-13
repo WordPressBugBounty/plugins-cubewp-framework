@@ -133,7 +133,7 @@ class CubeWp_Frontend_Gallery_Field extends CubeWp_Frontend
 		$output .= ob_get_clean();
 		$output .= '</div>';
 
-		return apply_filters("cubewp/frontend/{$args['name']}/field", $output, $args);
+		return CubeWp_Frontend::cwp_field_output_filter($output, $args);
 	}
 }
 

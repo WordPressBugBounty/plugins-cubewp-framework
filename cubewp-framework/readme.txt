@@ -4,8 +4,8 @@ Donate link: https://cubewp.com/
 Tags: custom fields, custom post types, custom taxonomies, acf, metabox
 Requires at least: 6.5
 Requires PHP: 7.4
-Tested up to: 7.0
-Stable tag: 1.1.31
+Tested up to: 7.1
+Stable tag: 1.1.32
 License: GPLv2 or later
 
 CubeWP is an end-to-end dynamic content framework for WordPress to help you shrink time and cut cost of development up to 90%.
@@ -376,11 +376,16 @@ To getting started with the plugin, please go to [Documentation](https://support
 
 == Changelog ==
 
+= 1.1.32 2026-11-13
+
+- SECURITY: Fixed a stored cross-site scripting issue where custom field values saved through the REST API (cubewp_user_meta, cubewp_post_meta and cubewp_term_meta) were stored without sanitisation and then printed on author and single pages. A subscriber could store a script in a colour field through /wp/v2/users/me. Values are now sanitised by field type before they are saved, the colour field only outputs a valid hex colour in its style attribute, and the Google address field escapes its address and coordinates.
+- SECURITY: Fixed a stored cross-site scripting issue in the Business Hours field, where the day key of a saved schedule was stored exactly as submitted and then concatenated into class, name and data attributes. A subscriber could store a script through the cubewp_user_meta REST field that ran when an administrator opened their profile under Users. Day keys are now restricted to the seven week-day values the field itself offers, and the day, field name and times are escaped everywhere the schedule is rendered.
+
 = 1.1.31 2026-07-30
 
-- SECURITY: Fixed a SQL injection vulnerability in the cubewp_remove_relation AJAX action by casting request IDs to integers, using prepared statements, and adding a capability check on the object the relation belongs to. Reported by Muni Nitish Kumar Yaddala.
-- SECURITY: Fixed an arbitrary post and user meta disclosure (IDOR) in the cubewp-custom-fields/v1/render REST route by adding per-object read authorization and restricting requests to registered CubeWP custom fields. Reported by Muni Nitish Kumar Yaddala.
-- SECURITY: Fixed a path traversal issue (CVE-2026-13339) that allowed arbitrary local files to be read through slider arrow icon parameters. Icon files are now restricted to .svg files inside the uploads or plugin directory, with the resolved path canonicalised and containment verified before reading. Reported by Nhien Pham (nhienit) of GalaxyOne.
+- SECURITY: Fixed a SQL injection vulnerability in the cubewp_remove_relation AJAX action by casting request IDs to integers, using prepared statements, and adding a capability check on the object the relation belongs to..
+- SECURITY: Fixed an arbitrary post and user meta disclosure (IDOR) in the cubewp-custom-fields/v1/render REST route by adding per-object read authorization and restricting requests to registered CubeWP custom fields..
+- SECURITY: Fixed a path traversal issue (CVE-2026-13339) that allowed arbitrary local files to be read through slider arrow icon parameters. Icon files are now restricted to .svg files inside the uploads or plugin directory, with the resolved path canonicalised and containment verified before reading.
 - SECURITY: Fixed a cross-site scripting issue where search filter hidden field values were output without escaping.
 - ADDED: New CubeWP Users Widget for Elementor and cubewp_shortcode_users shortcode to display users with filtering by roles, specific IDs, current user, or post author, including slider, grid, and boxed view layouts.
 - ADDED: CubeWP typography settings are now available inside the Elementor typography control, allowing site-wide font variables to be selected on any Elementor widget.
@@ -400,6 +405,7 @@ To getting started with the plugin, please go to [Documentation](https://support
 - ADDED: Allowed file types (MIME) option for file and image fields in CubeWP Taxonomy Custom Fields.
 - ADDED: Separate desktop, tablet, and mobile width options for promotional cards in CubeWP Archive Posts.
 - ADDED: New cubewpLoadMoreSuccess JavaScript event so developers can hook into load more completion.
+- CHANGED: Removed the built-in add-on and theme update checkers to comply with WordPress.org plugin guidelines. Premium add-on and theme updates will be handled by the products themselves in an upcoming release.
 - IMPROVED: reCAPTCHA is now loaded only on forms where it is enabled, reducing unnecessary script loading on other pages.
 - IMPROVED: Post slider now supports vertical mode per device and respects RTL layouts.
 - IMPROVED: Enhanced CubeWP admin interface styling and dashboard experience.
@@ -900,6 +906,9 @@ Note: It is necessory to update if you want to update Frontend PRO or CubeWP For
 Plug released.
 
 == Upgrade Notice ==
+
+= 1.1.32 =
+Security release. Fixes a stored cross-site scripting issue in custom fields saved through the REST API. Updating is strongly recommended.
 
 = 1.1.31 =
 Security release. Fixes a SQL injection, an arbitrary post and user meta disclosure, a path traversal (CVE-2026-13339), and a cross-site scripting issue. Updating is strongly recommended.

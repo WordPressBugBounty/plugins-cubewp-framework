@@ -65,7 +65,15 @@ class CubeWp_Enqueue extends CubeWp_Admin_Enqueue {
 			CubeWp_Enqueue::enqueue_style( 'cwp-alert-ui' );
 			CubeWp_Enqueue::enqueue_script( 'cwp-alert-ui' );
 			$file_path = CUBEWP_POST_CARDS_DIR . '/cubewp-post-cards.css';
-			if (file_exists(dirname($file_path))) {
+			// Test the FILE, not its directory: the directory survives a migration
+			// while the file may not, and a <link> to a missing stylesheet is a 404
+			// on every page load (site 417, 2026-09-07). The file is written only
+			// when Post Cards settings are saved in wp-admin; if it is missing but its
+			// source exists, rebuild it here so one lost file does not need a human.
+			if ( ! file_exists( $file_path ) && class_exists( 'CubeWp_Admin' ) && method_exists( 'CubeWp_Admin', 'cubewp_rebuild_post_card_css' ) ) {
+				CubeWp_Admin::cubewp_rebuild_post_card_css();
+			}
+			if ( file_exists( $file_path ) ) {
 				CubeWp_Enqueue::enqueue_style( 'cwp-post-cards' );
 			}
 		}

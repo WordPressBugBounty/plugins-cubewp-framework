@@ -124,15 +124,76 @@ class CubeWp_Sanitize {
                 }
 
             }else{
-                
+
                 $new_input[ $key ] = $this->sanitize_cwp_field($field_type, $val );
-                
+
             }
-                
+
         }
 
         return $new_input;
 
+    }
+
+    /**
+     * Normalise a business_hours value before it is stored.
+     *
+     * Keys are constrained to the seven week-day literals the field itself
+     * offers (see cwp_booking_days()); anything else is dropped rather than
+     * stored. A day holds either the literal '24-hours-open' or an open/close
+     * pair, matching what cwp_business_hours_status() and the field renderers
+     * already read.
+     *
+     * @since 1.1.32
+     *
+     * @param mixed $val Posted value.
+     * @return array Sanitized schedule.
+     */
+    public function sanitize_business_hours( $val ) {
+
+        $week_days = array( 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' );
+        $clean     = array();
+
+        if ( ! is_array( $val ) ) {
+            return $clean;
+        }
+
+        foreach ( $val as $day => $times ) {
+
+            $day = strtolower( sanitize_key( (string) $day ) );
+            if ( ! in_array( $day, $week_days, true ) ) {
+                continue;
+            }
+
+            if ( ! is_array( $times ) ) {
+                if ( '24-hours-open' === (string) $times ) {
+                    $clean[ $day ] = '24-hours-open';
+                }
+                continue;
+            }
+
+            $slots = array();
+            foreach ( array( 'open', 'close' ) as $bound ) {
+                if ( ! isset( $times[ $bound ] ) ) {
+                    continue;
+                }
+                $values = array();
+                foreach ( (array) $times[ $bound ] as $time ) {
+                    if ( is_scalar( $time ) ) {
+                        $values[] = sanitize_text_field( (string) $time );
+                    }
+                }
+                if ( ! empty( $values ) ) {
+                    $slots[ $bound ] = $values;
+                }
+            }
+
+            if ( ! empty( $slots ) ) {
+                $clean[ $day ] = $slots;
+            }
+        }
+
+        return $clean;
     }
 
     /**
@@ -175,7 +236,21 @@ class CubeWp_Sanitize {
      * @return   array    $new_input    The sanitized input.
      */
     public function sanitize_cwp_field($field_type, $val ) {
-                
+
+        /*
+         * Security: a business_hours value is keyed by week day, and the key was
+         * previously stored exactly as posted. Because the renderers concatenate
+         * that key straight into class/name/data attributes, an attacker-chosen
+         * key (for example via the cubewp_user_meta REST field) became stored
+         * XSS. The structure is normalised here, before the generic array
+         * handling below, so both the form save paths and the REST write path
+         * get the same guarantee: only the seven week-day literals can ever be
+         * stored as keys.
+         */
+        if ( 'business_hours' === $field_type ) {
+            return $this->sanitize_business_hours( $val );
+        }
+
         if(is_array($val)){
             return $this->sanitize_text_array($val);
         }

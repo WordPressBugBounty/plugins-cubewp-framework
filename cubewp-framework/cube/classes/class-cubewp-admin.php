@@ -41,6 +41,11 @@ class CubeWp_Admin {
         add_action( 'cubewp_loaded', array( 'CubeWp_Theme_Builder_Rules', 'init' ) );
         add_filter('elementor/documents/register', [$this, 'add_elementor_support']);
         add_filter('cubewp/posttypes/new', [$this, 'register_theme_builder_post_type']);
+        /*
+         * Security (2026-10-07): close anonymous reads of the Theme Builder over
+         * the core REST API. Registered here, beside the post type that opens it.
+         */
+        add_filter('rest_pre_dispatch', array($this, 'restrict_theme_builder_rest'), 10, 3);
         add_filter('cubewp-submenu', array($this, 'Cubewp_Menu'), 10);
         new CubeWp_Ajax( '', 'CubeWp_Theme_Builder', 'cubewp_theme_builder_template' );
         add_action('admin_footer', ['CubeWp_Theme_Builder', 'add_custom_popup_form']);
@@ -120,11 +125,43 @@ class CubeWp_Admin {
      * @return void
      * @since  1.0.0
      */
+    /**
+     * Rebuild uploads/cubewp-post-cards/cubewp-post-cards.css from the saved
+     * option. Called by the front-end enqueue when the file is missing. Returns
+     * true only when the file exists afterwards; false when there is no saved
+     * CSS yet (nothing has ever been saved on the Post Cards screen) or the
+     * directory is not writable — in both cases the stylesheet is simply not
+     * enqueued, which is a missing style, not a 404.
+     */
+    public static function cubewp_rebuild_post_card_css() {
+        if ( ! defined( 'CUBEWP_POST_CARDS_DIR' ) ) {
+            return false;
+        }
+        $css_code = (string) get_option( 'cubewp_post_cards_css', '' );
+        if ( $css_code === '' ) {
+            return false;
+        }
+        $file_path = CUBEWP_POST_CARDS_DIR . '/cubewp-post-cards.css';
+        if ( ! file_exists( dirname( $file_path ) ) ) {
+            wp_mkdir_p( dirname( $file_path ) );
+        }
+        if ( ! is_writable( dirname( $file_path ) ) ) {
+            return false;
+        }
+        return @file_put_contents( $file_path, $css_code ) !== false && file_exists( $file_path );
+    }
+
     public static function cubewp_process_post_card_css() {
         if ( empty( $_POST['security_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['security_nonce'] ) ), 'cubewp-admin-nonce' ) ) {
 			wp_send_json_error(array(
 				'msg' => esc_html__('Sorry! Security Verification Failed.', 'cubewp-framework'),
 			), 404);
+		}
+        // Security (2026-09-17): writes a site-wide stylesheet and option; admins only.
+        if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error(array(
+				'msg' => esc_html__('Sorry! Security Verification Failed.', 'cubewp-framework'),
+			), 403);
 		}
         if ( isset( $_POST['styles'] ) ) {
             /*phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized */
@@ -155,6 +192,13 @@ class CubeWp_Admin {
                     wp_mkdir_p( dirname( $file_path ) );
                 }
     
+                // Keep the SOURCE of the file, not just the file. The stylesheet lives in
+                // uploads/, outside the media library, so a migration or a restore can
+                // carry the directory and lose the file — and then every page 404s on it
+                // until someone re-saves this screen (site 417, 2026-09-07). With the CSS
+                // in an option, the front end rebuilds the file on its own.
+                update_option( 'cubewp_post_cards_css', $css_code, false );
+
                 if (file_put_contents($file_path, $css_code) !== false) {
                     wp_send_json_success(array('message' => 'CSS file created successfully', 'file' => $file_path));
                 } else {
@@ -733,6 +777,63 @@ public static function register_elementor_tags($module) {
         $output .= self::cwp_tr_end();
 
         return $output;
+    }
+
+    /**
+     * Refuse anonymous reads of `/wp/v2/cubewp-tb`.
+     *
+     * THE EXPOSURE. `cubewp-tb` is registered below as `public => false` but with
+     * `show_in_rest => true`, so WordPress publishes `/wp/v2/cubewp-tb` and served
+     * it to anybody. Measured 2026-10-07: HTTP 200 and a list of Theme Builder
+     * documents on every site tried, customer sites included.
+     *
+     * WHY THAT MATTERS even though templates hold no personal data: the slugs name
+     * the template a site was built from (`classic-2-post-archive-tags`,
+     * `automotive-header-single`), which is exactly what a white-labelled agency
+     * site must not disclose. It is also a free map of a site's structure. The
+     * related `guid` leak of the template SOURCE domain was closed in
+     * `cwp-white-label`, but the feed itself stayed open — this closes the feed.
+     *
+     * WHY NOT JUST SET `show_in_rest => false`. Two reasons. Theme Builder editing
+     * may rely on the route, and breaking template editing across the estate is a
+     * worse outcome than the leak. And the framework's own REST API decides which
+     * types it supports from that same flag
+     * (`CubeWp_Rest_Api::get_types()` drops anything with `empty($object->show_in_rest)`),
+     * so flipping it would silently withdraw `cubewp-tb` from our own API too.
+     * Gating the core route changes one thing only.
+     *
+     * `edit_posts` is the bar because that is what editing a template already
+     * requires, so every legitimate caller keeps working.
+     *
+     * @param mixed            $result  Pre-computed response, if any.
+     * @param WP_REST_Server   $server  Server instance.
+     * @param WP_REST_Request  $request Request.
+     * @return mixed
+     */
+    public function restrict_theme_builder_rest($result, $server, $request) {
+        /* Something already answered this request; do not override it. */
+        if (null !== $result) {
+            return $result;
+        }
+
+        if (! is_object($request) || ! method_exists($request, 'get_route')) {
+            return $result;
+        }
+
+        /* The collection and single-item routes, and nothing that merely starts alike. */
+        if (! preg_match('#^/wp/v2/cubewp-tb(/|$)#', (string) $request->get_route())) {
+            return $result;
+        }
+
+        if (current_user_can('edit_posts')) {
+            return $result;
+        }
+
+        return new WP_Error(
+            'rest_forbidden',
+            __('Sorry, you are not allowed to do that.', 'cubewp-framework'),
+            array('status' => function_exists('rest_authorization_required_code') ? rest_authorization_required_code() : 401)
+        );
     }
 
     public function register_theme_builder_post_type($defaultCPT) {

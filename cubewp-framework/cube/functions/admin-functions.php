@@ -1441,14 +1441,20 @@ if (! function_exists("cubewp_kses_allowed_html")) {
 			'd'    => true,
 			'fill' => true,
 		];
-		$allowed['span'] = [
-			'class' => true,
-			'style' => true,
-		];
-		$allowed['div'] = [
-			'class' => true,
-			'style' => true,
-		];
+		$allowed['span'] = array_merge(
+			isset($allowed['span']) && is_array($allowed['span']) ? $allowed['span'] : [],
+			[
+				'class' => true,
+				'style' => true,
+			]
+		);
+		$allowed['div'] = array_merge(
+			isset($allowed['div']) && is_array($allowed['div']) ? $allowed['div'] : [],
+			[
+				'class' => true,
+				'style' => true,
+			]
+		);
 		return $allowed;
 	}
 	add_filter('wp_kses_allowed_html', 'cubewp_kses_allowed_html', 10, 2);
@@ -3012,30 +3018,77 @@ if (! function_exists("cwp_custom_mime_types")) {
 }
 
 if (! function_exists("cubewp_add_user_roles_caps")) {
+	/**
+	 * Security fix (2026-09-17).
+	 *
+	 * This used to call add_cap()/remove_cap() on the subscriber and contributor
+	 * roles on EVERY request: add edit_posts/read/delete_posts on front-end, AJAX
+	 * and REST requests, remove them on wp-admin requests. add_cap()/remove_cap()
+	 * write the role definitions to the database, so the stored roles flipped with
+	 * each request, and during REST requests every subscriber could create and
+	 * delete posts through /wp-json/wp/v2 (bypassing CubeWP plans and moderation).
+	 *
+	 * The same front-end/admin behaviour is now applied at runtime with the
+	 * user_has_cap filter (nothing is written per request), REST requests are left
+	 * with WordPress's normal role capabilities, and the stored roles are restored
+	 * to WordPress defaults once.
+	 */
 	function cubewp_add_user_roles_caps()
 	{
-		$roles = array(
-			"subscriber",
-			"contributor"
-		);
-		foreach ($roles as $role) {
-			$role_obj = get_role($role);
-			if (! is_wp_error($role_obj) && is_object($role_obj) && ! empty($role_obj)) {
-				// Add a new capability.
-				if (cwp()->is_request("frontend")) {
-					$role_obj->add_cap('edit_posts');
-					$role_obj->add_cap('read');
-					$role_obj->add_cap('delete_posts');
-				} else {
-					$role_obj->remove_cap('edit_posts');
-					$role_obj->remove_cap('read');
-					$role_obj->remove_cap('delete_posts');
-				}
+		if ('1' !== get_option('cubewp_role_caps_restored')) {
+			$subscriber = get_role('subscriber');
+			if ($subscriber) {
+				$subscriber->remove_cap('edit_posts');
+				$subscriber->remove_cap('delete_posts');
+				$subscriber->add_cap('read');
 			}
+			$contributor = get_role('contributor');
+			if ($contributor) {
+				$contributor->add_cap('edit_posts');
+				$contributor->add_cap('delete_posts');
+				$contributor->add_cap('read');
+			}
+			update_option('cubewp_role_caps_restored', '1', true);
 		}
 	}
 
 	add_action('init', 'cubewp_add_user_roles_caps');
+}
+
+if (! function_exists("cubewp_frontend_role_caps")) {
+	/**
+	 * Runtime version of the old per-request role toggle (see cubewp_add_user_roles_caps).
+	 *
+	 * @param array   $allcaps All capabilities of the user.
+	 * @param array   $caps    Required primitive capabilities.
+	 * @param array   $args    Arguments of the capability check.
+	 * @param WP_User $user    User being checked.
+	 * @return array
+	 */
+	function cubewp_frontend_role_caps($allcaps, $caps, $args, $user)
+	{
+		if (! $user instanceof WP_User || ! array_intersect((array) $user->roles, array('subscriber', 'contributor'))) {
+			return $allcaps;
+		}
+		// Never widen capabilities for REST requests (keeps /wp-json/wp/v2 writes closed).
+		if (defined('REST_REQUEST') && REST_REQUEST) {
+			return $allcaps;
+		}
+		$doing_ajax = function_exists('wp_doing_ajax') ? wp_doing_ajax() : defined('DOING_AJAX');
+		$doing_cron = function_exists('wp_doing_cron') ? wp_doing_cron() : defined('DOING_CRON');
+		if ((! is_admin() || $doing_ajax) && ! $doing_cron) {
+			$allcaps['edit_posts']   = true;
+			$allcaps['delete_posts'] = true;
+			$allcaps['read']         = true;
+		} else {
+			$allcaps['edit_posts']   = false;
+			$allcaps['delete_posts'] = false;
+			$allcaps['read']         = false;
+		}
+		return $allcaps;
+	}
+
+	add_filter('user_has_cap', 'cubewp_frontend_role_caps', 10, 4);
 }
 
 if (! function_exists("cubewp_custom_field_group_visibility")) {
@@ -3610,10 +3663,15 @@ function cwp_business_hours_status($schedule)
 		if (!is_array($times) && is_string($times) && $times == '24-hours-open') {
 			$isOpen = true;
 		} else {
-			$openTimes = $times['open'];
-			$closeTimes = $times['close'];
+			/* Same normalisation as the field renderers: a day may hold one slot
+			 * as a scalar or several as an array, and a malformed day may hold
+			 * neither. count() on a string or null is fatal in PHP 8, and this
+			 * helper runs on the public single page. */
+			$openTimes = array_values((array) (isset($times['open']) ? $times['open'] : array()));
+			$closeTimes = array_values((array) (isset($times['close']) ? $times['close'] : array()));
 			// Check if the current time falls within any open and close period
-			for ($i = 0; $i < count($openTimes); $i++) {
+			$slot_count = min(count($openTimes), count($closeTimes));
+			for ($i = 0; $i < $slot_count; $i++) {
 				$openTime = $openTimes[$i];
 				$closeTime = $closeTimes[$i];
 
@@ -4164,12 +4222,19 @@ if (!function_exists('cubewp_save_elementor_postcard_settings')) {
 				update_post_meta($post_id, 'default_col_class', $data['settings']['default_col_class']);
 			}
 
-			// Handle Primary Postcard Logic
-			$primary_post_card = isset($data['settings']['primary_post_card']) ? $data['settings']['primary_post_card'] : 'no';
-			update_post_meta($post_id, 'primary_post_card', $primary_post_card);
+			/* Handle Primary Postcard Logic — ONLY when the save actually carries
+			 * the setting. Elementor's after_save fires for saves whose payload
+			 * does not include this control, and defaulting the absent case to
+			 * 'no' wrote that default over a card the user had marked Primary:
+			 * the status silently disappeared on an unrelated save. Every other
+			 * setting in this function is already guarded the same way. */
+			if (isset($data['settings']['primary_post_card'])) {
+				$primary_post_card = $data['settings']['primary_post_card'] === 'yes' ? 'yes' : 'no';
+				update_post_meta($post_id, 'primary_post_card', $primary_post_card);
 
-			if ($primary_post_card === 'yes') {
-				cubewp_disable_other_elementor_primary_postcards($post_id);
+				if ($primary_post_card === 'yes') {
+					cubewp_disable_other_elementor_primary_postcards($post_id);
+				}
 			}
 
 			if (isset($data['settings']['preview_term_slug'])) {

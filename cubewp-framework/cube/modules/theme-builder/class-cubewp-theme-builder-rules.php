@@ -303,6 +303,10 @@ class CubeWp_Theme_Builder_Rules {
      */
     public static function get_template_options()
     {
+        // Security (2026-09-17): admin screen helper; lists post types, taxonomies and pages.
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Not allowed'], 403);
+        }
         /* phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing */
         if (!isset($_POST['template_type'])) {
             wp_send_json_error(['message' => 'Template type not specified']);

@@ -25,7 +25,7 @@ final class CubeWp_Load
      *
      * @var string
      */
-    public static $CubeWp_version = '1.1.31';
+    public static $CubeWp_version = '1.1.32';
 
     /**
      * Wordpress required version.
@@ -131,6 +131,7 @@ final class CubeWp_Load
         add_action('cubewp_loaded', array('CubeWp_Elementor', 'init'));
         add_action('cubewp_loaded', array('CubeWp_Vc_Elements', 'init'));
         add_action('cubewp_loaded', array('CubeWp_Relationships', 'init'));
+        require_once(CUBEWP_FILES . 'modules/theme-update/theme-updater.php');
         // Google Address City and Terms Modules
         add_action('cubewp_loaded', array('CubeWp_Google_Address_City_Module', 'init'), 12);
         add_action('cubewp_loaded', array('CubeWp_Google_Address_Terms_Module', 'init'), 12);

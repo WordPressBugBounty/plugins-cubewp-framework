@@ -87,9 +87,15 @@ class CubeWp_Frontend_Business_Hours_Field extends CubeWp_Frontend {
                     $output .= self::business_hours_display_render();
                 }else{
                     if ( empty($fullhoursclass) && !empty($business_hour['open']) && !empty($business_hour['close'])) {
-                        $open_time = $business_hour['open'];
-                        $close_time = $business_hour['close'];
-                        for ($i = 0; $i < count($open_time); $i++) {
+                        /* A day may store one slot as a scalar ('09:00') or several as
+                         * an array. Normalise both to a list before counting: count() on
+                         * a string is a TypeError in PHP 8 and took the edit screen down.
+                         * array_values() also re-indexes gappy keys left by a removed slot,
+                         * which $open_time[$i] would otherwise miss. */
+                        $open_time = array_values((array) $business_hour['open']);
+                        $close_time = array_values((array) $business_hour['close']);
+                        $slot_count = min(count($open_time), count($close_time));
+                        for ($i = 0; $i < $slot_count; $i++) {
                             self::$timings = [
                                 'fullday' => '',
                                 'open_time' => $open_time[$i],
@@ -157,24 +163,31 @@ class CubeWp_Frontend_Business_Hours_Field extends CubeWp_Frontend {
                         </svg>
                     </button>';
         $output .= '</div>';
-        return apply_filters("cubewp/frontend/{$args['name']}/field", $output, $args);
+        return CubeWp_Frontend::cwp_field_output_filter($output, $args);
     }
 
     private static function business_hours_display_render(){
         $timings = self::$timings;
-        $output = '<div class="business-hours ' . $timings['day'] . ' ' . $timings['day'] . '-' . $timings['field_name'] . ' ' . $timings['fullhoursclass'] . ' ">
+        /* Security: the day key and field name are stored values and land in
+         * attribute and text contexts, so they are escaped here rather than
+         * trusted. The write path also constrains day keys to week-day
+         * literals; this is the matching output-side guarantee. */
+        $day_attr        = esc_attr( $timings['day'] );
+        $field_name_attr = esc_attr( $timings['field_name'] );
+
+        $output = '<div class="business-hours ' . $day_attr . ' ' . $day_attr . '-' . $field_name_attr . ' ' . esc_attr( $timings['fullhoursclass'] ) . ' ">
                     <div class="day-hours">
-                    <span class="weekday">' . ucfirst($timings['day']) . '</span>
-                    <span class="start-end fullday">' . $timings['fullday'] . '</span>
-                    <span class="open">' . $timings['start_time'] . '</span>
-                    <span class="dash">' . $timings['dash'] . '</span>
-                    <span class="close">' . $timings['end_time'] . '</span>
-                    <a class="remove-business-hours" href="#" data-field_name ="' . $timings['field_name'] . '" data-weekday ="' . $timings['day'] . '">
+                    <span class="weekday">' . esc_html( ucfirst( $timings['day'] ) ) . '</span>
+                    <span class="start-end fullday">' . esc_html( $timings['fullday'] ) . '</span>
+                    <span class="open">' . esc_html( $timings['start_time'] ) . '</span>
+                    <span class="dash">' . esc_html( $timings['dash'] ) . '</span>
+                    <span class="close">' . esc_html( $timings['end_time'] ) . '</span>
+                    <a class="remove-business-hours" href="#" data-field_name ="' . $field_name_attr . '" data-weekday ="' . $day_attr . '">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5ZM11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H2.506a.58.58 0 0 0-.01 0H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1h-.995a.59.59 0 0 0-.01 0H11Zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5h9.916Zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47ZM8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5Z"></path></svg>
                     </a>';
                     
-        $output .= '<input class="' . $timings['day'] . '-open" name="cwp_user_form[cwp_meta][' . $timings['field_name'] . '][' . $timings['day'] . ']' .$timings['meta_open'] . '" value="' . $timings['open_time'] . '" type="hidden">
-        <input class="' . $timings['day'] . '-close" name="cwp_user_form[cwp_meta][' . $timings['field_name'] . '][' . $timings['day'] . ']' .$timings['meta_close'] . '" value="' . $timings['close_time'] . '" type="hidden">';
+        $output .= '<input class="' . $day_attr . '-open" name="cwp_user_form[cwp_meta][' . $field_name_attr . '][' . $day_attr . ']' .$timings['meta_open'] . '" value="' . esc_attr( $timings['open_time'] ) . '" type="hidden">
+        <input class="' . $day_attr . '-close" name="cwp_user_form[cwp_meta][' . $field_name_attr . '][' . $day_attr . ']' .$timings['meta_close'] . '" value="' . esc_attr( $timings['close_time'] ) . '" type="hidden">';
     
         $output .= '</div></div>';
         return $output;

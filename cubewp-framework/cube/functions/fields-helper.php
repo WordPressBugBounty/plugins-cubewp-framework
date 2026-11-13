@@ -932,8 +932,79 @@ if ( ! function_exists("cubewp_dynamic_options")) {
 					}
 				}
 			} else if ($dropdown_type == 'user') {
+				/*
+				 * Security (2026-09-25): this branch searches the user table by role
+				 * and returns display names and ids. The only gate is a nonce that is
+				 * printed for any logged-in visitor, so it was usable to enumerate the
+				 * site's accounts a role at a time — and a single-character keyword
+				 * returned essentially everyone.
+				 *
+				 * PARTIAL FIX, deliberately. The complete fix is to require list_users,
+				 * but this same endpoint backs user-picker fields on FRONT-END forms
+				 * (cube/assets/frontend/js/frontend-fields.js), where the people using
+				 * it are ordinary members by design. Adding the capability check
+				 * without knowing which sites rely on that would break real forms, so
+				 * it is left as a product decision.
+				 *
+				 * What is safe to do now, and is done here: make bulk enumeration
+				 * expensive without changing anything a person typing a name sees.
+				 * A real search has at least three characters and never needs hundreds
+				 * of rows back.
+				 */
+				/*
+				 * Security (2026-09-25, part 2): searching the USER table required
+				 * being signed in.
+				 *
+				 * This endpoint is registered for wp_ajax_nopriv_ as well, so the
+				 * branch was reachable by logged-out visitors using a nonce printed on
+				 * public pages — an anonymous scrape of display names and ids, a role
+				 * at a time, on every site running the framework.
+				 *
+				 * Dropping the nopriv registration outright would have been the
+				 * obvious fix, but it also serves post and taxonomy dropdowns that
+				 * public forms legitimately use. Refusing just this branch closed the
+				 * anonymous enumeration and left those working.
+				 */
+				/*
+				 * Security (2026-10-07, part 3): now requires `list_users`.
+				 *
+				 * Being signed in was not enough. A plain subscriber — which, on a
+				 * directory or classifieds site, is every member who ever registered —
+				 * could still enumerate accounts by role, 20 rows at a time. The three
+				 * character minimum and the cap below slow that down; they do not stop
+				 * it.
+				 *
+				 * The capability check was deliberately NOT added on 2026-09-25,
+				 * because this branch exists to serve front-end user-picker fields
+				 * where ordinary members are the intended users, and nobody knew which
+				 * sites relied on that. That question is now answered: an inventory of
+				 * every WordPress site on the platform (2026-10-07) found **no site
+				 * configuring a `user` field at all** — neither the autocomplete path
+				 * that reaches this endpoint, nor the preload path in
+				 * `cube/fields/frontend/cubewp-frontend-user-field.php`. So the check
+				 * breaks nothing that exists.
+				 *
+				 * WHAT THIS FORECLOSES, AND HOW TO RESTORE IT. A member-facing user
+				 * picker will no longer work for non-admins. That is intentional: the
+				 * right way to serve one is a purpose-built route returning only the
+				 * fields a picker needs, scoped to the roles that picker is configured
+				 * for — not a general user search handed to every logged-in visitor.
+				 * Build that when a real requirement appears, rather than keeping an
+				 * enumeration endpoint open for a feature no site uses.
+				 */
+				if (! current_user_can('list_users')) {
+					wp_send_json_error(array(
+						'msg' => esc_html__('No Result Found.', 'cubewp-framework'),
+					), 404);
+				}
+				if (mb_strlen($keyword) < 3) {
+					wp_send_json_error(array(
+						'msg' => esc_html__('No Result Found.', 'cubewp-framework'),
+					), 404);
+				}
 				$query_args = array(
 					'search' => "*{$keyword}*",
+					'number'         => 20,
 					'role__in'       => array($dropdown_values),
 					'search_columns' => array(
 						'user_login',

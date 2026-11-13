@@ -285,7 +285,13 @@ class CubeWp_Admin_Enqueue{
 			'cwp-form-builder'                  => array(
 				'src'     => CWP_PLUGIN_URI . 'cube/assets/admin/css/cwpform-builder.css' ,
 				'deps'    => array(),
-				'version' => CUBEWP_VERSION,
+				// Keyed on the file's mtime rather than the plugin version: this
+				// stylesheet changes between releases, and a stale cached copy
+				// silently hides builder CSS fixes. Falls back to the plugin
+				// version if the file cannot be stat'd.
+				'version' => file_exists( CWP_PLUGIN_PATH . 'cube/assets/admin/css/cwpform-builder.css' )
+					? filemtime( CWP_PLUGIN_PATH . 'cube/assets/admin/css/cwpform-builder.css' )
+					: CUBEWP_VERSION,
 				'has_rtl' => false,
 			),
             'cubewp-admin'                  => array(

@@ -25,6 +25,10 @@ class CubeWp_Query
     public function __construct(array $args)
     {
         self::$q_args = $args;
+        // Fix (2026-09-17): meta clauses are collected in a static property, so each
+        // new query must start empty; otherwise several CubeWP queries in one request
+        // (e.g. multiple post widgets) inherited each other's filters.
+        self::$meta_query = array();
     }
 
     /**

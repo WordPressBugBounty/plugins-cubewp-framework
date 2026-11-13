@@ -392,6 +392,43 @@ class CubeWp_Form_Builder {
             'value'       => $field['name'],
             'extra_attrs' => 'data-name="name"',
         );
+        // Date Picker Style — per-field selector for the Search Form Date Picker.
+        // Only shown when BOTH conditions hold so other field types / form types
+        // are untouched. Default 'default' preserves the existing appearance
+        // for every saved Search Form that doesn't carry this key.
+        if ($field['form_type'] == 'search_fields' && $field['type'] == 'date_picker') {
+            $field_args['date_picker_style'] = array(
+                'class'       => 'group-field field-date-picker-style',
+                'label'       => esc_html__('Date Picker Style', 'cubewp-framework'),
+                'name'        => 'date_picker_style',
+                'type'        => 'dropdown',
+                // Empty placeholder suppresses the default "Select Option"
+                // placeholder <option> that cwp_render_dropdown_input emits —
+                // operator should only see Default / Style 1 in the list.
+                'placeholder' => '',
+                'options'     => array(
+                    'default' => esc_html__('Default', 'cubewp-framework'),
+                    'style_1' => esc_html__('Style 1', 'cubewp-framework'),
+                ),
+                'value'       => isset($field['date_picker_style']) && !empty($field['date_picker_style']) ? $field['date_picker_style'] : 'default',
+                'extra_attrs' => 'data-name="date_picker_style"',
+            );
+            // Style 1 accent colour. `type` stays 'text' because the builder
+            // routes renderers by that key (cwp_render_<type>_input) and there
+            // is no cwp_render_color_input; `input_type` swaps the rendered
+            // <input>'s HTML type attribute instead (see the input_type branch
+            // further down this method), giving a native colour swatch.
+            $field_args['date_picker_primary_color'] = array(
+                'class'       => 'group-field field-date-picker-primary-color',
+                'label'       => esc_html__('Date Picker Primary Color (Style 1)', 'cubewp-framework'),
+                'name'        => 'date_picker_primary_color',
+                'type'        => 'text',
+                'input_type'  => 'color',
+                'value'       => isset($field['date_picker_primary_color']) && !empty($field['date_picker_primary_color'])
+                    ? $field['date_picker_primary_color'] : '#007bff',
+                'extra_attrs' => 'data-name="date_picker_primary_color"',
+            );
+        }
         if($field['form_type'] == 'search_filters' || $field['form_type'] == 'search_fields' && $field['type'] == 'number'){
             $field_args['range_slider_ui'] = array(
                 'class'       => 'group-field field-range_number',

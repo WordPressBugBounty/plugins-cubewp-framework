@@ -37,7 +37,7 @@ class CubeWp_Frontend_oEmbed_Field extends CubeWp_Frontend {
         $args['type'] = 'text'; 
         $output = apply_filters("cubewp/frontend/text/field", $output, $args);
         
-        $output = apply_filters("cubewp/frontend/{$args['name']}/field", $output, $args);
+        $output = CubeWp_Frontend::cwp_field_output_filter($output, $args);
         
         return $output;
     }

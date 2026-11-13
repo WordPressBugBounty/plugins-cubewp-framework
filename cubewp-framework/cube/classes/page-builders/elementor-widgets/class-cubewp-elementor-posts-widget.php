@@ -918,8 +918,13 @@ class CubeWp_Elementor_Posts_Widget extends Widget_Base
 		// Add slider parameters only if the slider is enabled
 		if ($settings['cwp_enable_slider'] === 'yes') {
 			$args = array_merge($args, array(
-				'prev_icon' => $settings['prev_icon']['value'] ?? '',
-				'next_icon' => $settings['next_icon']['value'] ?? '',
+				/* The WHOLE icon control, not just ['value']. Elementor's ICONS
+				 * control is ['value' => …, 'library' => …], and the renderer
+				 * needs the library to know what it is holding — a font class or
+				 * an uploaded SVG. Passing the value alone left it unable to
+				 * tell, so the chosen arrow never appeared. */
+				'prev_icon' => $settings['prev_icon'] ?? '',
+				'next_icon' => $settings['next_icon'] ?? '',
 				'slides_to_show' => $settings['slides_to_show'],
 				'slides_to_scroll' => $settings['slides_to_scroll'],
 				'slides_to_show_tablet' => $settings['slides_to_show_tablet'],

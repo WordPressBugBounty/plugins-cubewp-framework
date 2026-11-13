@@ -460,6 +460,16 @@ button .dashicons {
     padding: 2px 15px;
     width: 100%;
 }
+/* Native colour swatch in the form builder. The generic input rule above
+   sets width:100% with no height, which stretches the swatch into a filled
+   bar. Scoped to #cwpform-builder so no other admin colour input changes. */
+#cwpform-builder input[type="color"] {
+    width: 60px !important;
+    min-width: 60px !important;
+    height: 34px !important;
+    padding: 2px !important;
+    cursor: pointer;
+}
 #cwpform-builder .cubewp-builder-sidebar {
     background-color: #ffffff;
     border-left: 1px solid #dddddd;

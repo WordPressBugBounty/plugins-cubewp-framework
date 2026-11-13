@@ -54,7 +54,27 @@ class CubeWp_Frontend_User_Field extends CubeWp_Frontend {
 		    $args['class']  = $args['class'] . ' cubewp-remote-options ';
 		    $args['extra_attrs']  = $args['extra_attrs'] . ' data-dropdown-type="user" data-dropdown-values="' . $args['filter_user_roles'] . '" ';
 	    }else {
-		    $args['options'] = cwp_get_users_by_role($args['filter_user_roles']);
+		    /*
+		     * Security (2026-10-07): the PRELOAD path needs the same gate as the
+		     * autocomplete path above, and it never had one.
+		     *
+		     * Without `auto_complete`, this field does not call
+		     * `cubewp_dynamic_options` at all — it renders EVERY user of the
+		     * configured role straight into the select, because
+		     * `cwp_get_users_by_role()` applies no capability check, no login check
+		     * and no limit. On a public form that is a bulk disclosure of display
+		     * names and ids to anonymous visitors: strictly worse than the AJAX
+		     * branch, which at least demands a keyword and caps the result set.
+		     *
+		     * The 2026-09-25 hardening covered only the AJAX branch, so this one
+		     * stayed open and unnoticed. It has no live instance — the 2026-10-07
+		     * inventory found no site on the platform configuring a `user` field —
+		     * which is precisely why it is cheap to close now, before the first
+		     * person configures one on a public form and leaks a member list.
+		     */
+		    $args['options'] = current_user_can('list_users')
+			    ? cwp_get_users_by_role($args['filter_user_roles'])
+			    : array();
 	    }
 
 	    return apply_filters("cubewp/frontend/{$args['type']}/field", $output, $args);

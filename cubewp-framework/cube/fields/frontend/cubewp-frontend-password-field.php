@@ -55,7 +55,7 @@ class CubeWp_Frontend_Password_Field extends CubeWp_Frontend {
 
         $output .= '</div>';
 
-        $output = apply_filters("cubewp/frontend/{$args['name']}/field", $output, $args);
+        $output = CubeWp_Frontend::cwp_field_output_filter($output, $args);
 
         return $output;
     }

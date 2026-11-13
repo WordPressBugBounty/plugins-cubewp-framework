@@ -261,9 +261,45 @@ class CubeWp_Rest_API extends WP_REST_Controller
 		return $query_params;
 	}
 
+	/**
+	 * Restrict a public cwp_query to published posts of public post types.
+	 *
+	 * Security (2026-09-17): these routes are public and passed the caller's array
+	 * straight into WP_Query, so anyone could query drafts/private posts, any
+	 * post type (including internal ones), raw meta_query/author filters and
+	 * unlimited page sizes (and count hidden rows through max_num_pages).
+	 *
+	 * @param mixed $cwp_query Raw request value.
+	 * @return array|null Safe query args, or null when the request is not allowed.
+	 */
+	private function restrict_public_query($cwp_query)
+	{
+		if (!is_array($cwp_query)) {
+			return null;
+		}
+		$post_types = isset($cwp_query['post_type']) ? (array) $cwp_query['post_type'] : array('post');
+		$allowed_types = array();
+		foreach ($post_types as $post_type) {
+			$post_type = sanitize_key((string) $post_type);
+			$type_obj = get_post_type_object($post_type);
+			if ($type_obj && $type_obj->public && !in_array($post_type, array('attachment', 'cubewp-tb', 'cwp_form_fields', 'cwp_user_fields', 'cwp_settings_fields', 'price_plan', 'cwp_booking', 'cwp_claim', 'cwp_booster'), true)) {
+				$allowed_types[] = $post_type;
+			}
+		}
+		if (empty($allowed_types)) {
+			return null;
+		}
+		$cwp_query['post_type'] = count($allowed_types) === 1 ? $allowed_types[0] : $allowed_types;
+		$cwp_query['post_status'] = 'publish';
+		$per_page = isset($cwp_query['posts_per_page']) ? (int) $cwp_query['posts_per_page'] : 10;
+		$cwp_query['posts_per_page'] = ($per_page < 1 || $per_page > 50) ? 10 : $per_page;
+		unset($cwp_query['meta_query'], $cwp_query['author'], $cwp_query['fields'], $cwp_query['perm']);
+		return $cwp_query;
+	}
+
 	public function get_cubewp_posts($request)
 	{
-		$cwp_query =   $request->get_param(self::CWP_QUERY);
+		$cwp_query =   $this->restrict_public_query($request->get_param(self::CWP_QUERY));
 		if ($cwp_query) {
 			$query  = new CubeWp_Query($cwp_query);
 			$posts  = $query->cubewp_post_query();
@@ -298,7 +334,7 @@ class CubeWp_Rest_API extends WP_REST_Controller
 
 	public function get_cubewp_posts_object($request)
 	{
-		$cwp_query =   $request->get_param(self::CWP_QUERY);
+		$cwp_query =   $this->restrict_public_query($request->get_param(self::CWP_QUERY));
 		if ($cwp_query) {
 			$query  = new CubeWp_Query($cwp_query);
 			$posts  = $query->cubewp_post_query();
@@ -588,7 +624,54 @@ class CubeWp_Rest_API extends WP_REST_Controller
 			$post_id   = $object['id'];
 			$fields = CubeWp_Single_Cpt::cubewp_post_metas($post_id, true);
 			if (isset($object['type']) && $object['type'] == 'price_plan') {
-				$fields = get_post_meta($post_id);
+				/*
+				 * Security (2026-09-25): this returned EVERY meta row on the plan,
+				 * including keys WordPress treats as protected (leading underscore) —
+				 * which is where payment-gateway ids, linked product ids and other
+				 * internals sit. Protected keys are never exposed by WordPress's own
+				 * REST meta handling; there is no reason for this field to be the
+				 * exception.
+				 *
+				 * Underscore-prefixed keys were dropped. That was called "a floor, not
+				 * a complete answer", because a plan may also carry non-underscore
+				 * internals and naming them needed a read of what actually gets written
+				 * here.
+				 *
+				 * Security (2026-10-07): now an ALLOWLIST, and the list is measured
+				 * rather than guessed. Every `price_plan` post on all 284 WordPress
+				 * sites was enumerated: the real surface is 15 plan-descriptive keys,
+				 * all `plan_*` apart from three, plus exactly two strays that are not
+				 * plan data at all —
+				 *
+				 *   - `cubewp_post_views`, a view counter; harmless, but not a plan field;
+				 *   - `amazonS3_cache`, WP Offload Media's metadata, which carries the
+				 *     provider, region, BUCKET NAME and object key path. Internal
+				 *     storage structure in a public API response.
+				 *
+				 * Neither has a leading underscore, so the denylist could never have
+				 * caught them — which is the general lesson: a denylist closes the
+				 * instances you have seen, an allowlist closes the class. Same reasoning
+				 * as the dashboard's per-post-type field allowlist (R1).
+				 *
+				 * The `plan_` prefix is matched rather than the 12 keys spelled out, so
+				 * a plan field added later is published by convention; anything that is
+				 * not plan data has to be named deliberately to get out.
+				 */
+				$allowed_exact = array(
+					'no_of_posts',
+					'claim_associated_post_type',
+					'show_in_plan_features',
+				);
+				$fields = array();
+				foreach ((array) get_post_meta($post_id) as $meta_key => $meta_value) {
+					if (! is_string($meta_key)) {
+						continue;
+					}
+					if (0 !== strpos($meta_key, 'plan_') && ! in_array($meta_key, $allowed_exact, true)) {
+						continue;
+					}
+					$fields[$meta_key] = $meta_value;
+				}
 			}
 			return $fields;
 		}
@@ -631,16 +714,33 @@ class CubeWp_Rest_API extends WP_REST_Controller
 	public static function update_post_meta($data, $object)
 	{
 		$data = is_array($data) ? $data : array();
+		// Security (2026-09-17): this REST field used to write ANY meta key (including
+		// protected ones like _elementor_data, and payment/plan/expiry state) on any post
+		// the caller can edit. Only defined CubeWP fields may be written now.
+		$server_owned_keys = apply_filters('cubewp/rest/server_owned_meta_keys', array(
+			'payment_status', 'post_expired', 'plan_id', 'order_id', 'payment_args', 'cwp_claim_status',
+			'cubewp_overall_rating', 'cubewp_review_count', 'cubewp_reviews_ids', 'cubewp_rating_metas',
+			'cubewp_review_reply', 'cwp_campaign_id', 'cwp_remaining_budget', 'cubewp_post_views',
+		));
+		if (!is_object($object) || empty($object->ID) || !current_user_can('edit_post', $object->ID)) {
+			return;
+		}
 		foreach ($data as $field_id => $value) {
+			if (!is_string($field_id) || in_array($field_id, $server_owned_keys, true)) {
+				continue;
+			}
 			$options = get_field_options($field_id);
+			if (empty($options) || !is_array($options) || empty($options['type'])) {
+				continue;
+			}
 			$meta_val = !empty($value) ? $value : '';
 			if ($options['type'] == 'google_address') {
 				if (isset($meta_val['address']) && !empty($meta_val['address'])) {
-					update_post_meta($object->ID, $field_id, $meta_val['address']);
+					update_post_meta($object->ID, $field_id, self::clean_meta_value('google_address', $meta_val['address']));
 				} elseif (isset($meta_val['lat']) && !empty($meta_val['lat'])) {
-					update_post_meta($object->ID, $field_id . '_lat', $meta_val['lat']);
+					update_post_meta($object->ID, $field_id . '_lat', self::clean_meta_value('text', $meta_val['lat']));
 				} elseif (isset($meta_val['lng']) && !empty($meta_val['lng'])) {
-					update_post_meta($object->ID, $field_id . '_lng', $meta_val['lng']);
+					update_post_meta($object->ID, $field_id . '_lng', self::clean_meta_value('text', $meta_val['lng']));
 				}
 			} elseif ($options['type'] == 'repeating_field') {
 				$repeater_vals =  get_post_meta($object->ID, $field_id, true);
@@ -656,21 +756,21 @@ class CubeWp_Rest_API extends WP_REST_Controller
 						$subOptions = get_field_options($k);
 						if ($subOptions['type'] == 'google_address') {
 							if (isset($sub_data['value']['address']) && !empty($sub_data['value']['address'])) {
-								$sub_meta_val[$i][$k] = $sub_data['value']['address'];
+								$sub_meta_val[$i][$k] = self::clean_meta_value('google_address', $sub_data['value']['address']);
 							} else {
 								$sub_meta_val[$i][$k] = $org_val;
 							}
 						} else {
 							if (isset($sub_lat_data['value']['lat']) || isset($sub_lng_data['value']['lng'])) {
 								if (isset($sub_lat_data['value']['lat']) && !empty($sub_lat_data['value']['lat'])) {
-									$sub_meta_val[$i][$lat_key . '_lat'] = $sub_lat_data['value']['lat'];
+									$sub_meta_val[$i][$lat_key . '_lat'] = self::clean_meta_value('text', $sub_lat_data['value']['lat']);
 								}
 								if (isset($sub_lng_data['value']['lng']) && !empty($sub_lng_data['value']['lng'])) {
-									$sub_meta_val[$i][$lng_key . '_lng'] = $sub_lng_data['value']['lng'];
+									$sub_meta_val[$i][$lng_key . '_lng'] = self::clean_meta_value('text', $sub_lng_data['value']['lng']);
 								}
 							} else {
 								if (isset($sub_data['value']) && !empty($sub_data['value'])) {
-									$sub_meta_val[$i][$k] = $sub_data['value'];
+									$sub_meta_val[$i][$k] = self::clean_meta_value(isset($subOptions['type']) ? $subOptions['type'] : '', $sub_data['value']);
 								} else {
 									$sub_meta_val[$i][$k] = $org_val;
 								}
@@ -680,7 +780,7 @@ class CubeWp_Rest_API extends WP_REST_Controller
 				}
 				update_post_meta($object->ID, $field_id, $sub_meta_val);
 			} else {
-				update_post_meta($object->ID, $field_id, $meta_val);
+				update_post_meta($object->ID, $field_id, self::clean_meta_value($options['type'], $meta_val));
 			}
 		}
 	}
@@ -714,18 +814,29 @@ class CubeWp_Rest_API extends WP_REST_Controller
 	public static function update_term_meta($data, $object)
 	{
 		$data = is_array($data) ? $data : array();
+		// Security (2026-09-17): only the taxonomy's defined CubeWP term fields may be
+		// written (any term meta key used to be accepted).
+		if (!is_object($object) || empty($object->term_id) || !current_user_can('edit_term', $object->term_id)) {
+			return;
+		}
+		$tax_fields = CWP()->get_custom_fields('taxonomy');
+		$allowed_term_keys = (isset($object->taxonomy) && isset($tax_fields[$object->taxonomy]) && is_array($tax_fields[$object->taxonomy])) ? array_keys($tax_fields[$object->taxonomy]) : array();
 		foreach ($data as $field_id => $value) {
+			if (!in_array($field_id, $allowed_term_keys, true)) {
+				continue;
+			}
 			$meta_val = isset($value['meta_value']) ? $value['meta_value'] : '';
 			if (isset($meta_val['lng']) || isset($meta_val['lat']) || isset($meta_val['address'])) {
 				if (isset($meta_val['address']) && !empty($meta_val['address'])) {
-					update_term_meta($object->term_id, $field_id, $meta_val['address']);
+					update_term_meta($object->term_id, $field_id, self::clean_meta_value('google_address', $meta_val['address']));
 				} elseif (isset($meta_val['lat']) && !empty($meta_val['lat'])) {
-					update_term_meta($object->term_id, $field_id . '_lat', $meta_val['lat']);
+					update_term_meta($object->term_id, $field_id . '_lat', self::clean_meta_value('text', $meta_val['lat']));
 				} elseif (isset($meta_val['lng']) && !empty($meta_val['lng'])) {
-					update_term_meta($object->term_id, $field_id . '_lng', $meta_val['lng']);
+					update_term_meta($object->term_id, $field_id . '_lng', self::clean_meta_value('text', $meta_val['lng']));
 				}
 			} else {
-				update_term_meta($object->term_id, $field_id, $meta_val);
+				$term_type = isset($tax_fields[$object->taxonomy][$field_id]['type']) ? $tax_fields[$object->taxonomy][$field_id]['type'] : '';
+				update_term_meta($object->term_id, $field_id, self::clean_meta_value($term_type, $meta_val));
 			}
 		}
 	}
@@ -767,11 +878,11 @@ class CubeWp_Rest_API extends WP_REST_Controller
 			$meta_val = isset($value['meta_value']) ? $value['meta_value'] : '';
 			if ($options['type'] == 'google_address') {
 				if (isset($meta_val['address']) && !empty($meta_val['address'])) {
-					update_user_meta($object->ID, $field_id, $meta_val['address']);
+					update_user_meta($object->ID, $field_id, self::clean_meta_value('google_address', $meta_val['address']));
 				} elseif (isset($meta_val['lat']) && !empty($meta_val['lat'])) {
-					update_user_meta($object->ID, $field_id . '_lat', $meta_val['lat']);
+					update_user_meta($object->ID, $field_id . '_lat', self::clean_meta_value('text', $meta_val['lat']));
 				} elseif (isset($meta_val['lng']) && !empty($meta_val['lng'])) {
-					update_user_meta($object->ID, $field_id . '_lng', $meta_val['lng']);
+					update_user_meta($object->ID, $field_id . '_lng', self::clean_meta_value('text', $meta_val['lng']));
 				}
 			} elseif ($options['type'] == 'repeating_field') {
 				$repeater_vals =  get_post_meta($object->ID, $field_id, true);
@@ -787,21 +898,21 @@ class CubeWp_Rest_API extends WP_REST_Controller
 						$subOptions = get_user_field_options($k);
 						if ($subOptions['type'] == 'google_address') {
 							if (isset($sub_data['value']['address']) && !empty($sub_data['value']['address'])) {
-								$sub_meta_val[$i][$k] = $sub_data['value']['address'];
+								$sub_meta_val[$i][$k] = self::clean_meta_value('google_address', $sub_data['value']['address']);
 							} else {
 								$sub_meta_val[$i][$k] = $org_val;
 							}
 						} else {
 							if (isset($sub_lat_data['value']['lat']) || isset($sub_lng_data['value']['lng'])) {
 								if (isset($sub_lat_data['value']['lat']) && !empty($sub_lat_data['value']['lat'])) {
-									$sub_meta_val[$i][$lat_key . '_lat'] = $sub_lat_data['value']['lat'];
+									$sub_meta_val[$i][$lat_key . '_lat'] = self::clean_meta_value('text', $sub_lat_data['value']['lat']);
 								}
 								if (isset($sub_lng_data['value']['lng']) && !empty($sub_lng_data['value']['lng'])) {
-									$sub_meta_val[$i][$lng_key . '_lng'] = $sub_lng_data['value']['lng'];
+									$sub_meta_val[$i][$lng_key . '_lng'] = self::clean_meta_value('text', $sub_lng_data['value']['lng']);
 								}
 							} else {
 								if (isset($sub_data['value']) && !empty($sub_data['value'])) {
-									$sub_meta_val[$i][$k] = $sub_data['value'];
+									$sub_meta_val[$i][$k] = self::clean_meta_value(isset($subOptions['type']) ? $subOptions['type'] : '', $sub_data['value']);
 								} else {
 									$sub_meta_val[$i][$k] = $org_val;
 								}
@@ -811,9 +922,56 @@ class CubeWp_Rest_API extends WP_REST_Controller
 				}
 				update_user_meta($object->ID, $field_id, $sub_meta_val);
 			} else {
-				update_user_meta($object->ID, $field_id, $meta_val);
+				update_user_meta($object->ID, $field_id, self::clean_meta_value(isset($options['type']) ? $options['type'] : '', $meta_val));
 			}
 		}
+	}
+
+	/**
+	 * Clean a CubeWP field value arriving over the REST API before it is stored.
+	 *
+	 * Security (2026-09-22): the cubewp_post_meta / cubewp_user_meta /
+	 * cubewp_term_meta update callbacks stored meta_value exactly as posted, so
+	 * any user who could edit their own profile (a subscriber, via
+	 * /wp/v2/users/me) could store '"><script>' in a colour field and have it run
+	 * on their author page (stored XSS). Values now go through the same
+	 * type-aware sanitiser the front-end forms use; a type that sanitiser does not
+	 * know is reduced to plain text rather than passed through untouched.
+	 *
+	 * @param string $type  CubeWP field type.
+	 * @param mixed  $value Posted value.
+	 *
+	 * @return mixed
+	 */
+	private static function clean_meta_value($type, $value)
+	{
+		/*
+		 * business_hours is keyed by week day and the key is concatenated into
+		 * class/name/data attributes by the field renderers, so an
+		 * attacker-chosen key was stored XSS. Normalise the whole structure
+		 * before the generic array handling below, which only sanitises leaf
+		 * values and would let a crafted key through.
+		 */
+		if ('business_hours' === (string) $type && class_exists('CubeWp_Sanitize')) {
+			return (new CubeWp_Sanitize())->sanitize_business_hours($value);
+		}
+		if (is_array($value)) {
+			$clean = array();
+			foreach ($value as $k => $v) {
+				$clean[sanitize_text_field((string) $k)] = self::clean_meta_value($type, $v);
+			}
+			return $clean;
+		}
+		if (! is_scalar($value)) {
+			return '';
+		}
+		$value = (string) $value;
+		$known = array('text', 'number', 'color', 'email', 'url', 'password', 'textarea', 'wysiwyg_editor', 'oembed', 'file', 'image', 'gallery', 'switch', 'dropdown', 'checkbox', 'radio', 'google_address');
+		if (in_array((string) $type, $known, true) && class_exists('CubeWp_Sanitize')) {
+			$clean = (new CubeWp_Sanitize())->sanitize_cwp_field((string) $type, $value);
+			return $clean === null ? '' : $clean;   // sanitize_hex_color() returns null for a non-colour
+		}
+		return sanitize_text_field($value);
 	}
 
 	/**

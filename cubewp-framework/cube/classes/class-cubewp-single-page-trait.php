@@ -457,23 +457,28 @@ trait CubeWp_Single_Page_Trait
 		if (!empty($args['value']) && is_array($args['value'])) {
 			$status = cwp_business_hours_status($args['value']);
 			$output = '<div class="cwp-cpt-single-business_hours cwp-cpt-single-field-container' . esc_attr($args['container_class']) . ' ' . esc_attr($args['field_size']) . '">
-				<h4>' . $args['label'] . '</h4>
-				<p class="cwp-business-status ' . $status . '">' . $status . '</p>
-				<div class="cwp-business-hours ' . $args['class'] . '">';
+				<h4>' . esc_html($args['label']) . '</h4>
+				<p class="cwp-business-status ' . esc_attr($status) . '">' . esc_html($status) . '</p>
+				<div class="cwp-business-hours ' . esc_attr($args['class']) . '">';
 			$time_format = get_option('time_format');
 			foreach ($args['value'] as $day => $times) {
 				$output .= '<div class="cwp-cpt-single-field-container">';
-				$output .= '<h6>' . ucfirst($day) . '</h6>';
+				// Security: $day is a stored array key and is rendered as text here.
+				$output .= '<h6>' . esc_html(ucfirst($day)) . '</h6>';
 				if (!is_array($times) && is_string($times) && $times == '24-hours-open') {
 					$output .= '<p> ' . __('24 Hours Open', 'cubewp-framework') . '</p>';
 				} else {
-					$openTimes = $times['open'];
-					$closeTimes = $times['close'];
+					/* A day may hold one slot as a scalar or several as an array, and a
+					 * malformed day may hold neither. count() on a string or null is fatal
+					 * in PHP 8. array_values() also re-indexes gappy keys. */
+					$openTimes = array_values((array) (isset($times['open']) ? $times['open'] : array()));
+					$closeTimes = array_values((array) (isset($times['close']) ? $times['close'] : array()));
 					$output .= '<div class="cwp-single-day-timings">';
-					for ($i = 0; $i < count($openTimes); $i++) {
+					$slot_count = min(count($openTimes), count($closeTimes));
+					for ($i = 0; $i < $slot_count; $i++) {
 						$otime = date_i18n($time_format, strtotime($openTimes[$i]));
 						$ctime = date_i18n($time_format, strtotime($closeTimes[$i]));
-						$output .= '<p>' . $otime . ' ~ ' . $ctime . '</p>';
+						$output .= '<p>' . esc_html($otime) . ' ~ ' . esc_html($ctime) . '</p>';
 					}
 					$output .= '</div>';
 				}
@@ -515,10 +520,10 @@ trait CubeWp_Single_Page_Trait
 			$output  .= '<div class="cwp-cpt-single-google_address cwp-cpt-single-field-container ' . esc_attr($args['container_class']) . ' ' . esc_attr($args['field_size']) . '">
                 <h4>' . $args['label'] . '</h4>
                 <div class="cwp-single-loc ' . $args['class'] . '">
-                    <div class="cpt-single-map" data-latitude="' . $lat . '" data-longitude="' . $lng . '" data-pinicon="' . $pin . '" style="height: 300px;width: 100%;"></div>
+                    <div class="cpt-single-map" data-latitude="' . esc_attr($lat) . '" data-longitude="' . esc_attr($lng) . '" data-pinicon="' . esc_attr($pin) . '" style="height: 300px;width: 100%;"></div>
                     <div class="cwp-map-address">
                         <p>
-                            <span id="cpt-single" class="address">' . $address . '</span>
+                            <span id="cpt-single" class="address">' . esc_html($address) . '</span>
                         </p>
                         <a href="https://www.google.com/maps?daddr=' . esc_attr($lat) . ',' . esc_attr($lng) . '" target="_blank" >
                             ' . esc_html__("Get Directions", "cubewp-framework") . '
@@ -837,10 +842,15 @@ trait CubeWp_Single_Page_Trait
 		$args['container_class'] = isset($args['container_class']) ? $args['container_class'] : '';
 		$output = null;
 		if (!empty($args['value'])) {
+			// Security (2026-09-22): the value lands in a style attribute, and REST
+			// clients could store anything in it (stored XSS via '"><script>'). Only a
+			// real hex colour reaches the attribute; anything else is shown as text.
+			$hex   = is_string($args['value']) ? sanitize_hex_color($args['value']) : '';
+			$style = $hex ? ' style="color: ' . esc_attr($hex) . ';"' : '';
 			$output = '<div class="cwp-cpt-single-color-container cwp-cpt-single-field-container ' . esc_attr($args['container_class']) . ' ' . esc_attr($args['field_size']) . '">
 				<h4>' . $args['label'] . '</h4>
 				<div class="cwp-cpt-single-text ' . $args['class'] . '">
-					<p style="color: ' . $args['value'] . ';">' . esc_html($args['value']) . '</p>
+					<p' . $style . '>' . esc_html(is_scalar($args['value']) ? (string) $args['value'] : '') . '</p>
 				</div>
 			</div>';
 		}

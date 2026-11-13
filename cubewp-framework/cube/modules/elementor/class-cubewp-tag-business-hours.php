@@ -349,10 +349,14 @@ class CubeWp_Tag_Business_hours extends \Elementor\Core\DynamicTags\Tag
                 $isOpen = true;
                 $is24Hours = true;
             } else {
-                $openTimes = $times['open'];
-                $closeTimes = $times['close'];
+                /* A day may hold one slot as a scalar or several as an array, and a
+                 * malformed day may hold neither. count() on a string or null is fatal
+                 * in PHP 8. array_values() also re-indexes gappy keys. */
+                $openTimes = array_values((array) (isset($times['open']) ? $times['open'] : array()));
+                $closeTimes = array_values((array) (isset($times['close']) ? $times['close'] : array()));
                 // Check if the current time falls within any open and close period
-                for ($i = 0; $i < count($openTimes); $i++) {
+                $slot_count = min(count($openTimes), count($closeTimes));
+                for ($i = 0; $i < $slot_count; $i++) {
                     $openTime = $openTimes[$i];
                     $closeTime = $closeTimes[$i];
 
