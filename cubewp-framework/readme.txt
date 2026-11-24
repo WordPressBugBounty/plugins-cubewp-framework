@@ -5,7 +5,7 @@ Tags: custom fields, custom post types, custom taxonomies, acf, metabox
 Requires at least: 6.5
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 1.1.32
+Stable tag: 1.1.33
 License: GPLv2 or later
 
 CubeWP is an end-to-end dynamic content framework for WordPress to help you shrink time and cut cost of development up to 90%.
@@ -375,6 +375,10 @@ To getting started with the plugin, please go to [Documentation](https://support
 
 
 == Changelog ==
+
+= 1.1.33 2026-11-23
+
+- SECURITY: Fixed a privilege escalation issue where subscriber and contributor accounts were granted post editing capabilities on XML-RPC and admin-ajax requests. The capability change is now limited to CubeWP's own front-end requests and is never applied to XML-RPC, REST or core ajax actions.
 
 = 1.1.32 2026-11-13
 

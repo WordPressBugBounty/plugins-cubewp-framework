@@ -3070,12 +3070,33 @@ if (! function_exists("cubewp_frontend_role_caps")) {
 		if (! $user instanceof WP_User || ! array_intersect((array) $user->roles, array('subscriber', 'contributor'))) {
 			return $allcaps;
 		}
-		// Never widen capabilities for REST requests (keeps /wp-json/wp/v2 writes closed).
-		if (defined('REST_REQUEST') && REST_REQUEST) {
-			return $allcaps;
-		}
 		$doing_ajax = function_exists('wp_doing_ajax') ? wp_doing_ajax() : defined('DOING_AJAX');
 		$doing_cron = function_exists('wp_doing_cron') ? wp_doing_cron() : defined('DOING_CRON');
+		// Never widen capabilities for REST, XML-RPC or cron requests.
+		if ((defined('REST_REQUEST') && REST_REQUEST) || (defined('XMLRPC_REQUEST') && XMLRPC_REQUEST) || $doing_cron) {
+			return $allcaps;
+		}
+		if ($doing_ajax) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading the action name only, to decide whether this is a CubeWP request.
+			$cwp_action = isset($_REQUEST['action']) ? sanitize_key(wp_unslash($_REQUEST['action'])) : '';
+			/**
+			 * Filter the admin-ajax action prefixes that CubeWP widens capabilities for.
+			 *
+			 * @param array $prefixes Action name prefixes.
+			 */
+			$cwp_prefixes = apply_filters('cubewp_frontend_caps_ajax_prefixes', array('cubewp', 'cwp'));
+			$cwp_matched  = false;
+			foreach ((array) $cwp_prefixes as $cwp_prefix) {
+				if ('' !== $cwp_prefix && 0 === strpos($cwp_action, $cwp_prefix)) {
+					$cwp_matched = true;
+					break;
+				}
+			}
+			// Core and third party ajax actions keep the role's own capabilities.
+			if (! $cwp_matched) {
+				return $allcaps;
+			}
+		}
 		if ((! is_admin() || $doing_ajax) && ! $doing_cron) {
 			$allcaps['edit_posts']   = true;
 			$allcaps['delete_posts'] = true;
