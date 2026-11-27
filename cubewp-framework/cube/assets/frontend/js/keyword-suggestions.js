@@ -463,28 +463,29 @@
                 var extraAttrs = '';
 
                 if (suggestion.type === 'post' && suggestion.url) {
-                    extraAttrs = ' data-post-url="' + suggestion.url + '"';
-                    extraAttrs += ' data-thumbnail="' + suggestion.thumbnail + '"';
+                    extraAttrs = ' data-post-url="' + escapeHtml(suggestion.url) + '"';
+                    extraAttrs += ' data-thumbnail="' + escapeHtml(suggestion.thumbnail) + '"';
                 }
 
                 html += '<li class="cubewp-keyword-suggestion-item ' + typeClass + '" ' +
-                    'data-term-id="' + suggestion.id + '" ' +
-                    'data-term-name="' + suggestion.name + '" ' +
-                    'data-term-slug="' + suggestion.slug + '" ' +
-                    'data-taxonomy="' + suggestion.taxonomy + '" ' +
-                    'data-type="' + suggestion.type + '"' +
+                    'data-term-id="' + escapeHtml(suggestion.id) + '" ' +
+                    'data-term-name="' + escapeHtml(suggestion.name) + '" ' +
+                    'data-term-slug="' + escapeHtml(suggestion.slug) + '" ' +
+                    'data-taxonomy="' + escapeHtml(suggestion.taxonomy) + '" ' +
+                    'data-type="' + escapeHtml(suggestion.type) + '"' +
                     extraAttrs + '>';
 
                 if (suggestion.type === 'post' && suggestion.thumbnail) {
-                    html += '<span class="suggestion-thumbnail"><img src="' + suggestion.thumbnail + '" alt="' + suggestion.name + '" /></span>';
+                    html += '<span class="suggestion-thumbnail"><img src="' + escapeHtml(suggestion.thumbnail) + '" alt="' + escapeHtml(suggestion.name) + '" /></span>';
                 }
 
+                // suggestion.icon is markup built and escaped server side.
                 if (suggestion.type === 'term' && suggestion.icon) {
                     html += '<span class="suggestion-icon">' + suggestion.icon + '</span>';
                 }
 
-                html += '<span class="suggestion-name">' + suggestion.name + '</span>' +
-                    '<span class="suggestion-type">' + taxonomyInfo + '</span>' +
+                html += '<span class="suggestion-name">' + escapeHtml(suggestion.name) + '</span>' +
+                    '<span class="suggestion-type">' + escapeHtml(taxonomyInfo) + '</span>' +
                     '</li>';
             });
             html += '</ul>';
@@ -521,6 +522,10 @@
 
     // Helper function to escape HTML
     function escapeHtml(text) {
+        // Values may be numbers, null or undefined as well as strings.
+        if (text === null || typeof text === 'undefined') {
+            return '';
+        }
         var map = {
             '&': '&amp;',
             '<': '&lt;',
@@ -528,7 +533,7 @@
             '"': '&quot;',
             "'": '&#039;'
         };
-        return text.replace(/[&<>"']/g, function (m) { return map[m]; });
+        return String(text).replace(/[&<>"']/g, function (m) { return map[m]; });
     }
 
     // Initialize on document ready

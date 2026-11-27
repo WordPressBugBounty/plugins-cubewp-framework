@@ -4,8 +4,8 @@ Donate link: https://cubewp.com/
 Tags: custom fields, custom post types, custom taxonomies, acf, metabox
 Requires at least: 6.5
 Requires PHP: 7.4
-Tested up to: 7.1
-Stable tag: 1.1.33
+Tested up to: 7.2
+Stable tag: 1.1.34
 License: GPLv2 or later
 
 CubeWP is an end-to-end dynamic content framework for WordPress to help you shrink time and cut cost of development up to 90%.
@@ -375,6 +375,12 @@ To getting started with the plugin, please go to [Documentation](https://support
 
 
 == Changelog ==
+
+= 1.1.34 2026-11-26
+
+- SECURITY: Fixed a cross-site scripting issue in the keyword suggestions dropdown, where taxonomy term names and related values were inserted into the suggestion markup without escaping.
+- IMPROVED: Range field current value display no longer builds its markup from the field value.
+- IMPROVED: Declared compatibility with WordPress 7.2.
 
 = 1.1.33 2026-11-23
 

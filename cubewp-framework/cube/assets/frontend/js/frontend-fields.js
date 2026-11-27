@@ -609,7 +609,7 @@ function cubewp_init_range_pickers(range_picker) {
             current_value_input = thisObj.find("input[type=range]");
         if (thisObj.parents('.cwp-repeating-single-field-template').length == 0) {
             if (!thisObj.find('.cubewp-current-value').length) {
-                current_value_input.before("<span class='cubewp-current-value'>" + current_value_input.val() + "</span>");
+                current_value_input.before(jQuery("<span class='cubewp-current-value'></span>").text(current_value_input.val()));
                 current_value_input.on("input", function () {
                     jQuery(this).closest(".cwp-field-range").find(".cubewp-current-value").text(jQuery(this).val());
                 });

@@ -670,7 +670,7 @@ function cubewp_init_range_pickers(range_picker) {
         var thisObj = jQuery(this),
             current_value_input = thisObj.closest("td");
         if (!current_value_input.find('.cubewp-current-value').length) {
-            current_value_input.prepend("<span class='cubewp-current-value'>" + thisObj.val() + "</span>");
+            current_value_input.prepend(jQuery("<span class='cubewp-current-value'></span>").text(thisObj.val()));
             thisObj.on("input", function () {
                 jQuery(this).closest("td").find(".cubewp-current-value").text(jQuery(this).val());
             });
